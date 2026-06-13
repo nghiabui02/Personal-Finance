@@ -1,8 +1,18 @@
-export default function WalletsPage() {
-  return (
-    <div>
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Wallets</h1>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon</p>
-    </div>
-  )
+import type { Metadata } from 'next'
+import WalletsClient from './_components/wallets-client'
+import { createClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = { title: 'Wallets' }
+
+export const dynamic = 'force-dynamic'
+
+export default async function WalletsPage() {
+  const supabase = await createClient()
+  const { data: wallets } = await supabase
+    .from('wallets')
+    .select('*')
+    .order('is_default', { ascending: false })
+    .order('created_at')
+
+  return <WalletsClient wallets={wallets ?? []} />
 }

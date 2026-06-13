@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import CategoriesClient from './_components/categories-client'
 import { createClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = { title: 'Categories' }
 
 export const dynamic = 'force-dynamic'
 

@@ -1,3 +1,6 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Debts' }
+
 export default function DebtsPage() {
   return (
     <div>

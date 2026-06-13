@@ -1,4 +1,7 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = { title: 'Dashboard' }
 import { BudgetProgress } from './_components/budget-progress'
 import { MonthSelector } from './_components/month-selector'
 import { RecentTransactions } from './_components/recent-transactions'
