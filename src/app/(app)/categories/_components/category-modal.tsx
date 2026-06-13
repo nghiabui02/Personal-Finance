@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { type Category, categoriesApi } from '@/lib/api/categories'
@@ -49,8 +50,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
   return (
     <Modal title={editing ? 'Edit category' : 'New category'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Icon (emoji)" name="icon" defaultValue={editing?.icon ?? ''}
-          placeholder={activeTab === 'expense' ? '🍔' : '💼'} />
+        <EmojiPickerInput label="Icon" name="icon" defaultValue={editing?.icon ?? ''} />
         <Input label="Name" name="name" defaultValue={editing?.name ?? ''} required
           placeholder={activeTab === 'expense' ? 'e.g. Food & Drinks' : 'e.g. Salary'} />
 

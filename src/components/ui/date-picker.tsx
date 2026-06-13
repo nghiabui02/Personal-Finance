@@ -45,7 +45,9 @@ interface DatePickerProps {
 
 export function DatePicker({ label, name, value, onChange, required }: DatePickerProps) {
   const [open, setOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   const today = toDateString(new Date())
   const [viewYear, setViewYear] = useState(() => {
@@ -90,8 +92,15 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
       {/* Trigger */}
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={() => {
+          if (!open && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect()
+            setOpenUpward(window.innerHeight - rect.bottom < 320)
+          }
+          setOpen(v => !v)
+        }}
         className={`w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors outline-none ${
           open
             ? 'border-blue-500 ring-2 ring-blue-500/20'
@@ -116,7 +125,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
       {/* Calendar */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-3">
+        <div className={`absolute z-50 left-0 min-w-[260px] w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-3 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
           {/* Month navigation */}
           <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={() => navigate(-1)}

@@ -19,16 +19,19 @@ interface TransactionModalProps {
   onClose: () => void
 }
 
-const todayStr = new Date().toISOString().slice(0, 10)
-
 export function TransactionModal({ editing, categories, wallets, onClose }: TransactionModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
-  const [walletId, setWalletId] = useState(editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
-  const [date, setDate] = useState(editing?.transaction_date ?? todayStr)
+  // When editing: use the saved wallet (may be empty). When creating: pre-select default wallet.
+  const [walletId, setWalletId] = useState(
+    editing ? (editing.wallet_id ?? '') : (wallets.find(w => w.is_default)?.id ?? '')
+  )
+  const [date, setDate] = useState(
+    editing?.transaction_date ?? new Date().toISOString().slice(0, 10)
+  )
 
   const categoryOptions = [
     { value: '', label: 'No category' },
@@ -42,7 +45,6 @@ export function TransactionModal({ editing, categories, wallets, onClose }: Tran
     ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
   ]
 
-  // Reset category when type changes
   function handleTypeChange(t: 'income' | 'expense') {
     setTxType(t)
     setCategoryId('')
@@ -82,7 +84,7 @@ export function TransactionModal({ editing, categories, wallets, onClose }: Tran
   }
 
   return (
-    <Modal title={editing ? 'Edit transaction' : 'New transaction'} onClose={onClose}>
+    <Modal title={editing ? 'Edit transaction' : 'New transaction'} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* Type toggle */}
@@ -105,41 +107,37 @@ export function TransactionModal({ editing, categories, wallets, onClose }: Tran
           ))}
         </div>
 
-        <AmountInput
-          label="Amount"
-          name="amount"
-          defaultValue={editing?.amount}
-          required
-        />
+        {/* Row 1: Amount + Date */}
+        <div className="grid grid-cols-2 gap-3">
+          <AmountInput label="Amount" name="amount" defaultValue={editing?.amount} required />
+          <DatePicker label="Date" name="transaction_date" value={date} onChange={setDate} required />
+        </div>
 
-        <CustomSelect
-          label="Category"
-          name="category_id"
-          options={categoryOptions}
-          value={categoryId}
-          onChange={setCategoryId}
-          placeholder="No category"
-        />
-
-        {wallets.length > 0 && (
+        {/* Row 2: Category + Wallet */}
+        <div className="grid grid-cols-2 gap-3">
           <CustomSelect
-            label="Wallet"
-            name="wallet_id"
-            options={walletOptions}
-            value={walletId}
-            onChange={setWalletId}
-            placeholder="No wallet"
+            label="Category"
+            name="category_id"
+            options={categoryOptions}
+            value={categoryId}
+            onChange={setCategoryId}
+            placeholder="None"
           />
-        )}
+          {wallets.length > 0 ? (
+            <CustomSelect
+              label="Wallet"
+              name="wallet_id"
+              options={walletOptions}
+              value={walletId}
+              onChange={setWalletId}
+              placeholder="None"
+            />
+          ) : (
+            <div />
+          )}
+        </div>
 
-        <DatePicker
-          label="Date"
-          name="transaction_date"
-          value={date}
-          onChange={setDate}
-          required
-        />
-
+        {/* Note */}
         <Input
           label="Note (optional)"
           name="note"

@@ -2,7 +2,7 @@
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { type Wallet, WALLET_TYPE_LABELS, walletsApi } from '@/lib/api/wallets'
@@ -75,11 +75,10 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
           required
         />
 
-        <Input
-          label="Icon (emoji)"
+        <EmojiPickerInput
+          label="Icon"
           name="icon"
           defaultValue={editing?.icon ?? ''}
-          placeholder="💳"
         />
 
         <div>

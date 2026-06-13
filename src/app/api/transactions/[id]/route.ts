@@ -1,5 +1,28 @@
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+
+async function adjustBalance(
+  supabase: SupabaseClient,
+  walletId: string,
+  delta: number,
+  userId: string,
+) {
+  const { data: wallet } = await supabase
+    .from('wallets')
+    .select('balance')
+    .eq('id', walletId)
+    .eq('user_id', userId)
+    .single()
+
+  if (!wallet) return
+
+  await supabase
+    .from('wallets')
+    .update({ balance: Number(wallet.balance) + delta })
+    .eq('id', walletId)
+    .eq('user_id', userId)
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -17,6 +40,23 @@ export async function PATCH(
     return NextResponse.json({ error: 'Type, amount and date are required.' }, { status: 400 })
   }
 
+  // Fetch original to reverse its balance effect
+  const { data: original } = await supabase
+    .from('transactions')
+    .select('type, amount, wallet_id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!original) return NextResponse.json({ error: 'Transaction not found.' }, { status: 404 })
+
+  // Reverse old effect
+  if (original.wallet_id) {
+    const oldDelta = original.type === 'income' ? -Number(original.amount) : Number(original.amount)
+    await adjustBalance(supabase, original.wallet_id, oldDelta, user.id)
+  }
+
+  // Update transaction
   const { data, error } = await supabase
     .from('transactions')
     .update({
@@ -33,6 +73,13 @@ export async function PATCH(
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Apply new effect
+  if (wallet_id) {
+    const newDelta = type === 'income' ? Number(amount) : -Number(amount)
+    await adjustBalance(supabase, wallet_id, newDelta, user.id)
+  }
+
   return NextResponse.json(data)
 }
 
@@ -45,6 +92,14 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Fetch transaction to reverse balance
+  const { data: tx } = await supabase
+    .from('transactions')
+    .select('type, amount, wallet_id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+
   const { error } = await supabase
     .from('transactions')
     .delete()
@@ -52,5 +107,12 @@ export async function DELETE(
     .eq('user_id', user.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Reverse balance effect after successful delete
+  if (tx?.wallet_id) {
+    const delta = tx.type === 'income' ? -Number(tx.amount) : Number(tx.amount)
+    await adjustBalance(supabase, tx.wallet_id, delta, user.id)
+  }
+
   return new NextResponse(null, { status: 204 })
 }

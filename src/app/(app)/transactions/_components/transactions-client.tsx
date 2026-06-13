@@ -9,7 +9,7 @@ import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { TransactionModal } from './transaction-modal'
-import { MonthSelector } from './month-selector'
+import { PeriodNavigator, ViewSelector, type ViewMode } from './period-navigator'
 
 type Filter = 'all' | 'income' | 'expense'
 
@@ -36,14 +36,16 @@ interface TransactionsClientProps {
   transactions: Transaction[]
   categories: Category[]
   wallets: Wallet[]
-  month: string
+  view: ViewMode
+  period: string
 }
 
 export default function TransactionsClient({
   transactions,
   categories,
   wallets,
-  month,
+  view,
+  period,
 }: TransactionsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -75,20 +77,23 @@ export default function TransactionsClient({
   return (
     <>
       {/* Header */}
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex items-start justify-between mb-4">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Transactions</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Track your income and expenses</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <MonthSelector month={month} basePath="/transactions" />
-          <Button onClick={() => openModal()}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Add
-          </Button>
-        </div>
+        <Button onClick={() => openModal()} className="shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Add
+        </Button>
+      </div>
+
+      {/* View + Period navigation */}
+      <div className="flex items-center justify-between mb-5">
+        <ViewSelector view={view} />
+        <PeriodNavigator view={view} period={period} />
       </div>
 
       {/* Summary */}
@@ -125,10 +130,16 @@ export default function TransactionsClient({
       {/* List */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-gray-400 text-sm">No transactions this month.</p>
-          <button onClick={() => openModal()} className="mt-2 text-sm text-blue-600 hover:underline">
-            Add your first one
-          </button>
+          <p className="text-gray-400 text-sm">
+            {filter === 'all'
+              ? 'No transactions this month.'
+              : `No ${filter} transactions this month.`}
+          </p>
+          {filter === 'all' && (
+            <button onClick={() => openModal()} className="mt-2 text-sm text-blue-600 hover:underline">
+              Add your first one
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-5">
