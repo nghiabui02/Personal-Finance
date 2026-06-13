@@ -1,11 +1,32 @@
 'use client'
 
-import { signUp } from '@/app/actions/auth'
+import { authApi } from '@/lib/api/auth'
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function RegisterPage() {
-  const [state, action, pending] = useActionState(signUp, undefined)
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, setIsPending] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const form = e.currentTarget
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value
+    const password = (form.elements.namedItem('password') as HTMLInputElement).value
+
+    setError(null)
+    setIsPending(true)
+
+    try {
+      await authApi.signUp({ email, password })
+      router.push('/login?message=check_email')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign up failed.')
+      setIsPending(false)
+    }
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
@@ -14,7 +35,7 @@ export default function RegisterPage() {
         <p className="mt-1 text-sm text-gray-500">Start managing your finances today</p>
       </div>
 
-      <form action={action} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email
@@ -45,16 +66,14 @@ export default function RegisterPage() {
           />
         </div>
 
-        {state?.error && (
-          <p className="text-sm text-red-600">{state.error}</p>
-        )}
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"
-          disabled={pending}
+          disabled={isPending}
           className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
         >
-          {pending ? 'Creating account...' : 'Create account'}
+          {isPending ? 'Creating account...' : 'Create account'}
         </button>
       </form>
 

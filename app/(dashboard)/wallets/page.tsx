@@ -1,8 +1,8 @@
-export default function Page() {
+export default function WalletsPage() {
   return (
     <div>
-      <h1 className="text-xl font-semibold text-gray-900">Wallets</h1>
-      <p className="mt-1 text-sm text-gray-500">Coming soon</p>
+      <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Wallets</h1>
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon</p>
     </div>
   )
 }

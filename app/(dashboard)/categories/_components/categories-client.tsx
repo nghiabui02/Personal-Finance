@@ -210,21 +210,6 @@ export default function CategoriesClient({
     router.replace(`/categories?type=${t}`, { scroll: false })
   }
 
-  function openCreate() {
-    setEditingCategory(null)
-    setModalOpen(true)
-  }
-
-  function openEdit(cat: Category) {
-    setEditingCategory(cat)
-    setModalOpen(true)
-  }
-
-  function closeModal() {
-    setModalOpen(false)
-    setEditingCategory(null)
-  }
-
   function handleDelete(id: string) {
     setDeletingId(id)
     startTransition(async () => {
@@ -232,7 +217,7 @@ export default function CategoriesClient({
         await categoriesApi.delete(id)
         router.refresh()
       } catch {
-        // silently ignore — could add a toast here later
+        // silently ignore
       } finally {
         setDeletingId(null)
       }
@@ -247,7 +232,7 @@ export default function CategoriesClient({
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Manage your income and expense categories</p>
         </div>
         <button
-          onClick={openCreate}
+          onClick={() => { setEditingCategory(null); setModalOpen(true) }}
           className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors shrink-0"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -276,7 +261,10 @@ export default function CategoriesClient({
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="text-gray-400 text-sm">No {tab} categories yet.</p>
-          <button onClick={openCreate} className="mt-2 text-sm text-blue-600 hover:underline">
+          <button
+            onClick={() => { setEditingCategory(null); setModalOpen(true) }}
+            className="mt-2 text-sm text-blue-600 hover:underline"
+          >
             Create your first one
           </button>
         </div>
@@ -290,7 +278,7 @@ export default function CategoriesClient({
                   <CategoryCard
                     key={cat.id}
                     category={cat}
-                    onEdit={() => openEdit(cat)}
+                    onEdit={() => { setEditingCategory(cat); setModalOpen(true) }}
                     onDelete={() => handleDelete(cat.id)}
                     isDeleting={deletingId === cat.id}
                   />
@@ -307,7 +295,7 @@ export default function CategoriesClient({
                   <CategoryCard
                     key={cat.id}
                     category={cat}
-                    onEdit={() => openEdit(cat)}
+                    onEdit={() => { setEditingCategory(cat); setModalOpen(true) }}
                     onDelete={() => handleDelete(cat.id)}
                     isDeleting={deletingId === cat.id}
                   />
@@ -323,7 +311,7 @@ export default function CategoriesClient({
           key={editingCategory?.id ?? 'new'}
           editing={editingCategory}
           activeTab={tab}
-          onClose={closeModal}
+          onClose={() => { setModalOpen(false); setEditingCategory(null) }}
         />
       )}
     </>
