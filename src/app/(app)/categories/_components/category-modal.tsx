@@ -49,33 +49,18 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
   return (
     <Modal title={editing ? 'Edit category' : 'New category'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Icon (emoji)"
-          name="icon"
-          defaultValue={editing?.icon ?? ''}
-          placeholder={activeTab === 'expense' ? '🍔' : '💼'}
-        />
-        <Input
-          label="Name"
-          name="name"
-          defaultValue={editing?.name ?? ''}
-          required
-          placeholder={activeTab === 'expense' ? 'e.g. Food & Drinks' : 'e.g. Salary'}
-        />
+        <Input label="Icon (emoji)" name="icon" defaultValue={editing?.icon ?? ''}
+          placeholder={activeTab === 'expense' ? '🍔' : '💼'} />
+        <Input label="Name" name="name" defaultValue={editing?.name ?? ''} required
+          placeholder={activeTab === 'expense' ? 'e.g. Food & Drinks' : 'e.g. Salary'} />
 
         <div>
           <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</p>
           <div className="flex gap-2 flex-wrap">
             {PRESET_COLORS.map(c => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setSelectedColor(c)}
-                className={`w-7 h-7 rounded-full transition-all ${
-                  selectedColor === c ? 'scale-110 ring-2 ring-offset-2 ring-gray-400' : 'hover:scale-105'
-                }`}
-                style={{ backgroundColor: c }}
-              />
+              <button key={c} type="button" onClick={() => setSelectedColor(c)}
+                className={`w-7 h-7 rounded-full transition-all ${selectedColor === c ? 'scale-110 ring-2 ring-offset-2 ring-gray-400' : 'hover:scale-105'}`}
+                style={{ backgroundColor: c }} />
             ))}
           </div>
         </div>
@@ -83,9 +68,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>
-            Cancel
-          </Button>
+          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>
             {isPending ? 'Saving...' : 'Save'}
           </Button>

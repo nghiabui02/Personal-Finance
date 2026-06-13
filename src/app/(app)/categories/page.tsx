@@ -18,10 +18,5 @@ export default async function CategoriesPage({
     .order('is_default', { ascending: false })
     .order('name')
 
-  return (
-    <CategoriesClient
-      categories={categories ?? []}
-      initialTab={initialTab}
-    />
-  )
+  return <CategoriesClient categories={categories ?? []} initialTab={initialTab} />
 }

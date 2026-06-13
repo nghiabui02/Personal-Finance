@@ -6,6 +6,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* injected by next/font at runtime; fallbacks keep editors happy */
+  --font-geist-sans: system-ui, sans-serif;
+  --font-geist-mono: 'Courier New', monospace;
 }
 
 .dark {
