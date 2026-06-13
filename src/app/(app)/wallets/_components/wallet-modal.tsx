@@ -3,6 +3,7 @@
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
+import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { type Wallet, WALLET_TYPE_LABELS, walletsApi } from '@/lib/api/wallets'

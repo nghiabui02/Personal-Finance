@@ -45,6 +45,8 @@ const CATEGORIES = [
   },
 ] as const
 
+type CategoryKey = typeof CATEGORIES[number]['key']
+
 interface EmojiPickerInputProps {
   label: string
   name: string
@@ -55,7 +57,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
   const [value, setValue] = useState(defaultValue)
   const [open, setOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
-  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].key)
+  const [activeCategory, setActiveCategory] = useState<CategoryKey>(CATEGORIES[0].key)
   const ref = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
 
@@ -156,7 +158,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
                 type="button"
                 title={cat.label}
                 onClick={() => setActiveCategory(cat.key)}
-                className={`flex-shrink-0 text-base px-1.5 py-1 rounded-t-md transition-colors ${
+                className={`shrink-0 text-base px-1.5 py-1 rounded-t-md transition-colors ${
                   activeCategory === cat.key
                     ? 'bg-gray-100 dark:bg-gray-800'
                     : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 text-gray-500'
