@@ -24,7 +24,8 @@ export default function Header({
   }
 
   return (
-    <header className="h-14 shrink-0 flex items-center gap-2 px-4 md:px-6 bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800">
+    <header className="shrink-0 bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800 pt-safe">
+      <div className="h-14 flex items-center gap-2 px-4 md:px-6">
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuToggle}
@@ -56,6 +57,7 @@ export default function Header({
       >
         {signingOut ? 'Signing out...' : 'Sign out'}
       </button>
+      </div>
     </header>
   )
 }

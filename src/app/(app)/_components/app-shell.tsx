@@ -24,9 +24,9 @@ export default function AppShell({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex h-dvh overflow-hidden overscroll-none bg-gray-50 dark:bg-gray-950">
       {/* Desktop sidebar */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex">
         <Sidebar />
       </div>
 
@@ -45,7 +45,7 @@ export default function AppShell({
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header user={user} onMenuToggle={() => setSidebarOpen(p => !p)} />
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 pb-safe">{children}</main>
       </div>
     </div>
   )
