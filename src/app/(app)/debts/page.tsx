@@ -1,11 +1,24 @@
 import type { Metadata } from 'next'
-export const metadata: Metadata = { title: 'Debts' }
+import { createClient } from '@/lib/supabase/server'
+import DebtsClient from './_components/debts-client'
 
-export default function DebtsPage() {
+export const metadata: Metadata = { title: 'Debts' }
+export const dynamic = 'force-dynamic'
+
+export default async function DebtsPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data: debts } = await supabase
+    .from('debts')
+    .select('*, debt_payments(id, amount, note, paid_at)')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
   return (
-    <div>
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Debts</h1>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon</p>
-    </div>
+    <DebtsClient
+      debts={(debts ?? []) as unknown as Parameters<typeof DebtsClient>[0]['debts']}
+    />
   )
 }
