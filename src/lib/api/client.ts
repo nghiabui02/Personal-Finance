@@ -18,6 +18,12 @@ export async function apiFetch<T = unknown>(
 
   const body = await res.json().catch(() => ({}))
 
+  if (res.status === 401) {
+    await fetch('/api/auth/sign-out', { method: 'POST' }).catch(() => {})
+    window.location.href = '/login'
+    throw new ApiError(401, 'Session expired. Please sign in again.')
+  }
+
   if (!res.ok) {
     throw new ApiError(res.status, body.error ?? `Request failed (${res.status})`)
   }
