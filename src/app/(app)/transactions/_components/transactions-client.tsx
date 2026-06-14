@@ -200,6 +200,16 @@ export default function TransactionsClient({
     ? transactions.filter(tx => tx.transaction_date === selectedDate)
     : transactions
 
+  // When adding a new transaction, pre-fill the date based on the current view:
+  // - day view  → the specific day being viewed
+  // - month view with a selected calendar date → that date
+  // - otherwise → let the modal default to today
+  function getDefaultDate(): string | undefined {
+    if (view === 'day') return period
+    if (view === 'month' && selectedDate) return selectedDate
+    return undefined
+  }
+
   function openModal(tx: Transaction | null = null) {
     setEditingTx(tx)
     setModalOpen(true)
@@ -279,6 +289,7 @@ export default function TransactionsClient({
           editing={editingTx}
           categories={categories}
           wallets={wallets}
+          defaultDate={editingTx ? undefined : getDefaultDate()}
           onClose={() => { setModalOpen(false); setEditingTx(null) }}
         />
       )}

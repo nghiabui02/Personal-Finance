@@ -16,10 +16,11 @@ interface TransactionModalProps {
   editing: Transaction | null
   categories: Category[]
   wallets: Wallet[]
+  defaultDate?: string   // pre-fill date when creating new transaction
   onClose: () => void
 }
 
-export function TransactionModal({ editing, categories, wallets, onClose }: TransactionModalProps) {
+export function TransactionModal({ editing, categories, wallets, defaultDate, onClose }: TransactionModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -30,7 +31,7 @@ export function TransactionModal({ editing, categories, wallets, onClose }: Tran
     editing ? (editing.wallet_id ?? '') : (wallets.find(w => w.is_default)?.id ?? '')
   )
   const [date, setDate] = useState(
-    editing?.transaction_date ?? new Date().toISOString().slice(0, 10)
+    editing?.transaction_date ?? defaultDate ?? new Date().toISOString().slice(0, 10)
   )
 
   const categoryOptions = [

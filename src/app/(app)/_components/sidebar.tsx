@@ -47,7 +47,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
 
   return (
     <aside className="w-60 shrink-0 flex flex-col bg-white border-r border-gray-200 dark:bg-gray-900 dark:border-gray-800 h-full">
-      <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+      <div className="h-14 px-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
         <span className="text-base font-semibold text-gray-900 dark:text-gray-100">Finance</span>
         {onClose && (
           <button
