@@ -10,6 +10,7 @@ export type DebtPayment = {
 export type Debt = {
   id: string
   user_id: string
+  wallet_id: string | null
   type: 'lend' | 'borrow'
   person_name: string
   person_contact: string | null
@@ -19,6 +20,7 @@ export type Debt = {
   status: 'active' | 'completed' | 'overdue'
   note: string | null
   debt_payments: DebtPayment[]
+  wallets: { id: string; name: string } | null
 }
 
 export const debtsApi = {
@@ -31,6 +33,7 @@ export const debtsApi = {
     person_name: string
     person_contact?: string
     amount: number
+    wallet_id?: string
     due_date?: string
     note?: string
   }): Promise<Debt> {
@@ -50,7 +53,7 @@ export const debtsApi = {
     return apiFetch(`/api/debts/${id}`, { method: 'DELETE' })
   },
 
-  addPayment(id: string, payload: { amount: number; note?: string }): Promise<{ remaining_amount: number; settled: boolean }> {
+  addPayment(id: string, payload: { amount: number; note?: string; wallet_id?: string }): Promise<{ remaining_amount: number; settled: boolean }> {
     return apiFetch(`/api/debts/${id}/payments`, { method: 'POST', body: JSON.stringify(payload) })
   },
 }

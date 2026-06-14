@@ -3,22 +3,40 @@
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { AmountInput } from '@/components/ui/amount-input'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { formatVND } from '@/lib/utils/currency'
 import { type Debt, debtsApi } from '@/lib/api/debts'
+import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
 // ── Debt Modal (create/edit) ──────────────────────────────────────────────────
 
-function DebtModal({ editing, onClose }: { editing: Debt | null; onClose: () => void }) {
+function DebtModal({
+  editing,
+  wallets,
+  onClose,
+}: {
+  editing: Debt | null
+  wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
+  onClose: () => void
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [type, setType] = useState<'lend' | 'borrow'>(editing?.type ?? 'lend')
   const [dueDate, setDueDate] = useState(editing?.due_date ?? '')
+  const [walletId, setWalletId] = useState(
+    editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? ''
+  )
+
+  const walletOptions = [
+    { value: '', label: 'No wallet' },
+    ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
+  ]
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -46,6 +64,7 @@ function DebtModal({ editing, onClose }: { editing: Debt | null; onClose: () => 
             person_name,
             person_contact: get('person_contact') || undefined,
             amount,
+            wallet_id: walletId || undefined,
             due_date: dueDate || undefined,
             note: get('note') || undefined,
           })
@@ -79,7 +98,19 @@ function DebtModal({ editing, onClose }: { editing: Debt | null; onClose: () => 
         <Input label="Person name" name="person_name" defaultValue={editing?.person_name ?? ''} required placeholder="e.g. Nguyen Van A" />
         <Input label="Contact (optional)" name="person_contact" defaultValue={editing?.person_contact ?? ''} placeholder="Phone / email" />
 
-        {!editing && <AmountInput label="Amount" name="amount" required />}
+        {!editing && (
+          <div className="grid grid-cols-2 gap-3">
+            <AmountInput label="Amount" name="amount" required />
+            <CustomSelect
+              label="Wallet"
+              name="wallet_id"
+              options={walletOptions}
+              value={walletId}
+              onChange={setWalletId}
+              placeholder="None"
+            />
+          </div>
+        )}
 
         <DatePicker label="Due date (optional)" name="due_date" value={dueDate} onChange={setDueDate} />
         <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="Purpose..." />
@@ -96,10 +127,26 @@ function DebtModal({ editing, onClose }: { editing: Debt | null; onClose: () => 
 
 // ── Payment Modal ─────────────────────────────────────────────────────────────
 
-function PaymentModal({ debt, onClose }: { debt: Debt; onClose: () => void }) {
+function PaymentModal({
+  debt,
+  wallets,
+  onClose,
+}: {
+  debt: Debt
+  wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
+  onClose: () => void
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
+
+  const walletOptions = [
+    { value: '', label: 'No wallet' },
+    ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
+  ]
+
+  const isLend = debt.type === 'lend'
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -113,7 +160,7 @@ function PaymentModal({ debt, onClose }: { debt: Debt; onClose: () => void }) {
     setError(null)
     startTransition(async () => {
       try {
-        await debtsApi.addPayment(debt.id, { amount, note: note || undefined })
+        await debtsApi.addPayment(debt.id, { amount, note: note || undefined, wallet_id: walletId || undefined })
         router.refresh()
         onClose()
       } catch (err) {
@@ -129,7 +176,17 @@ function PaymentModal({ debt, onClose }: { debt: Debt; onClose: () => void }) {
         <p className="font-semibold text-gray-900 dark:text-gray-100">{formatVND(debt.remaining_amount)}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <AmountInput label="Payment amount" name="amount" required />
+        <div className="grid grid-cols-2 gap-3">
+          <AmountInput label="Payment amount" name="amount" required />
+          <CustomSelect
+            label={isLend ? 'Receive to wallet' : 'Pay from wallet'}
+            name="wallet_id"
+            options={walletOptions}
+            value={walletId}
+            onChange={setWalletId}
+            placeholder="None"
+          />
+        </div>
         <Input label="Note (optional)" name="note" placeholder="e.g. Bank transfer" />
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex gap-2 pt-1">
@@ -175,12 +232,17 @@ function DebtCard({
               </span>
               {isCompleted && <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-400 font-medium shrink-0">Done</span>}
             </div>
-            {debt.due_date && (
-              <p className={`text-xs ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>
-                Due {new Date(debt.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                {isOverdue && ' · Overdue'}
-              </p>
-            )}
+            <div className="flex items-center gap-2">
+              {debt.due_date && (
+                <p className={`text-xs ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>
+                  Due {new Date(debt.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {isOverdue && ' · Overdue'}
+                </p>
+              )}
+              {debt.wallets && (
+                <p className="text-xs text-gray-400">{debt.wallets.name}</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -220,7 +282,13 @@ function DebtCard({
 
 // ── Main client ───────────────────────────────────────────────────────────────
 
-export default function DebtsClient({ debts }: { debts: Debt[] }) {
+export default function DebtsClient({
+  debts,
+  wallets,
+}: {
+  debts: Debt[]
+  wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
@@ -310,10 +378,10 @@ export default function DebtsClient({ debts }: { debts: Debt[] }) {
       )}
 
       {modalOpen && (
-        <DebtModal key={editingDebt?.id ?? 'new'} editing={editingDebt} onClose={() => { setModalOpen(false); setEditingDebt(null) }} />
+        <DebtModal key={editingDebt?.id ?? 'new'} editing={editingDebt} wallets={wallets} onClose={() => { setModalOpen(false); setEditingDebt(null) }} />
       )}
       {payingDebt && (
-        <PaymentModal debt={payingDebt} onClose={() => setPayingDebt(null)} />
+        <PaymentModal debt={payingDebt} wallets={wallets} onClose={() => setPayingDebt(null)} />
       )}
       {confirmId && (
         <ConfirmModal
