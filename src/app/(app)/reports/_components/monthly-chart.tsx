@@ -47,10 +47,10 @@ export function MonthlyChart({ data }: { data: MonthlyData[] }) {
               width={70}
             />
             <Tooltip
-              formatter={(value: number, name: string) => [
-                formatVND(value),
-                name.charAt(0).toUpperCase() + name.slice(1),
-              ]}
+              formatter={((value: unknown, name: unknown) => [
+                formatVND(typeof value === 'number' ? value : 0),
+                String(name ?? ''),
+              ]) as never}
               contentStyle={{ borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '12px' }}
             />
             <Legend
