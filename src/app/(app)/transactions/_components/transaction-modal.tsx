@@ -16,7 +16,7 @@ interface TransactionModalProps {
   editing: Transaction | null
   categories: Category[]
   wallets: Wallet[]
-  defaultDate?: string   // pre-fill date when creating new transaction
+  defaultDate?: string
   onClose: () => void
 }
 
@@ -26,13 +26,13 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
   const [error, setError] = useState<string | null>(null)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
-  // When editing: use the saved wallet (may be empty). When creating: pre-select default wallet.
   const [walletId, setWalletId] = useState(
     editing ? (editing.wallet_id ?? '') : (wallets.find(w => w.is_default)?.id ?? '')
   )
   const [date, setDate] = useState(
     editing?.transaction_date ?? defaultDate ?? new Date().toISOString().slice(0, 10)
   )
+  const [showFee, setShowFee] = useState(false)
 
   const categoryOptions = [
     { value: '', label: 'No category' },
@@ -54,8 +54,11 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const amount = Number((form.elements.namedItem('amount') as HTMLInputElement).value)
-    const note = (form.elements.namedItem('note') as HTMLInputElement).value
+    const getValue = (name: string) => (form.elements.namedItem(name) as HTMLInputElement)?.value ?? ''
+
+    const amount = Number(getValue('amount'))
+    const fee    = Number(getValue('fee') || '0')
+    const note   = getValue('note')
 
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     if (!date) { setError('Please pick a date.'); return }
@@ -63,7 +66,7 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
     setError(null)
     startTransition(async () => {
       try {
-        const payload = {
+        const base = {
           type: txType,
           amount,
           category_id: categoryId || undefined,
@@ -71,11 +74,24 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
           transaction_date: date,
           note: note || undefined,
         }
+
         if (editing) {
-          await transactionsApi.update(editing.id, payload)
+          await transactionsApi.update(editing.id, base)
         } else {
-          await transactionsApi.create(payload)
+          await transactionsApi.create(base)
+
+          // Auto-create a separate expense transaction for the bank fee
+          if (fee > 0 && walletId) {
+            await transactionsApi.create({
+              type: 'expense',
+              amount: fee,
+              wallet_id: walletId,
+              transaction_date: date,
+              note: `Bank fee${note ? ` (${note})` : ''}`,
+            })
+          }
         }
+
         router.refresh()
         onClose()
       } catch (err) {
@@ -84,6 +100,8 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
     })
   }
 
+  const canAddFee = !editing && txType === 'expense' && !!walletId
+
   return (
     <Modal title={editing ? 'Edit transaction' : 'New transaction'} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,60 +109,65 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
         {/* Type toggle */}
         <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
           {(['expense', 'income'] as const).map(t => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => handleTypeChange(t)}
+            <button key={t} type="button" onClick={() => handleTypeChange(t)}
               className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 txType === t
-                  ? t === 'expense'
-                    ? 'bg-red-500 text-white shadow-sm'
-                    : 'bg-green-500 text-white shadow-sm'
+                  ? t === 'expense' ? 'bg-red-500 text-white shadow-sm' : 'bg-green-500 text-white shadow-sm'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}
-            >
+              }`}>
               {t === 'expense' ? '− Expense' : '+ Income'}
             </button>
           ))}
         </div>
 
-        {/* Row 1: Amount + Date */}
+        {/* Amount + Date */}
         <div className="grid grid-cols-2 gap-3">
           <AmountInput label="Amount" name="amount" defaultValue={editing?.amount} required />
           <DatePicker label="Date" name="transaction_date" value={date} onChange={setDate} required />
         </div>
 
-        {/* Row 2: Category + Wallet */}
+        {/* Category + Wallet */}
         <div className="grid grid-cols-2 gap-3">
-          <CustomSelect
-            label="Category"
-            name="category_id"
-            options={categoryOptions}
-            value={categoryId}
-            onChange={setCategoryId}
-            placeholder="None"
-          />
-          {wallets.length > 0 ? (
-            <CustomSelect
-              label="Wallet"
-              name="wallet_id"
-              options={walletOptions}
-              value={walletId}
-              onChange={setWalletId}
-              placeholder="None"
-            />
-          ) : (
-            <div />
-          )}
+          <CustomSelect label="Category" name="category_id" options={categoryOptions}
+            value={categoryId} onChange={setCategoryId} placeholder="None" />
+          {wallets.length > 0
+            ? <CustomSelect label="Wallet" name="wallet_id" options={walletOptions}
+                value={walletId} onChange={setWalletId} placeholder="None" />
+            : <div />}
         </div>
 
         {/* Note */}
-        <Input
-          label="Note (optional)"
-          name="note"
-          defaultValue={editing?.note ?? ''}
-          placeholder="e.g. Lunch with colleagues"
-        />
+        <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''}
+          placeholder="e.g. Lunch with colleagues" />
+
+        {/* Bank fee — only for new expense with a wallet selected */}
+        {canAddFee && (
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
+            {!showFee ? (
+              <button type="button" onClick={() => setShowFee(true)}
+                className="text-xs text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                Add bank fee (for international transactions)
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Bank fee</p>
+                  <button type="button" onClick={() => setShowFee(false)}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                    Remove
+                  </button>
+                </div>
+                <AmountInput label="" name="fee" defaultValue={0} />
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  A separate "Bank fee" expense transaction will be created automatically — keeping your wallet balance in sync with the bank.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
