@@ -42,13 +42,23 @@ const nav = [
   },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <aside className="w-60 shrink-0 flex flex-col bg-white border-r border-gray-200 dark:bg-gray-900 dark:border-gray-800 h-screen">
-      <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
+    <aside className="w-60 shrink-0 flex flex-col bg-white border-r border-gray-200 dark:bg-gray-900 dark:border-gray-800 h-full">
+      <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
         <span className="text-base font-semibold text-gray-900 dark:text-gray-100">Finance</span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {nav.map(item => {

@@ -217,10 +217,10 @@ export default function TransactionsClient({
   return (
     <>
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div>
+      <div className="flex items-start justify-between mb-4 gap-3">
+        <div className="min-w-0">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Transactions</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Track your income and expenses</p>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400 hidden sm:block">Track your income and expenses</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <ViewSelector view={view} />
@@ -228,14 +228,14 @@ export default function TransactionsClient({
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Add
+            <span className="hidden sm:inline">Add</span>
           </Button>
         </div>
       </div>
 
       {view === 'month' ? (
         /* ── Month: two-column layout ── */
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
           {/* Left: Calendar */}
           <TransactionCalendar
             transactions={transactions}
