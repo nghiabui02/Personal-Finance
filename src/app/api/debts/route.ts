@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { type, person_name, person_contact, amount, due_date, note, wallet_id } = body
+  const { type, person_name, person_contact, amount, due_date, note, wallet_id, date } = body
+  const transactionDate = date || new Date().toISOString().slice(0, 10)
 
   if (!type || !person_name?.trim() || !amount) {
     return NextResponse.json({ error: 'Type, name and amount are required.' }, { status: 400 })
@@ -76,7 +77,6 @@ export async function POST(request: NextRequest) {
   if (wallet_id) {
     const txType = type === 'lend' ? 'expense' : 'income'
     const txNote = type === 'lend' ? `Lent to ${person_name.trim()}` : `Borrowed from ${person_name.trim()}`
-    const today = new Date().toISOString().slice(0, 10)
 
     await Promise.all([
       supabase.from('transactions').insert({
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         type: txType,
         amount: Number(amount),
         wallet_id,
-        transaction_date: today,
+        transaction_date: transactionDate,
         note: txNote,
       }),
       adjustBalance(supabase, wallet_id, txType === 'income' ? Number(amount) : -Number(amount), user.id),

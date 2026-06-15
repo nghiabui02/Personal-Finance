@@ -1,6 +1,7 @@
 'use client'
 
 import { formatVND } from '@/lib/utils/currency'
+import { useTheme } from 'next-themes'
 import { Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 type CategorySpend = {
@@ -17,9 +18,18 @@ const FALLBACK_COLORS = [
 ]
 
 export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; totalExpense: number }) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+  const tooltipStyle = {
+    borderRadius: '10px',
+    border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
+    color: isDark ? '#f3f4f6' : '#111827',
+    fontSize: '12px',
+  }
   if (data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col flex-1">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Spending by Category</h2>
         <div className="py-10 text-center text-sm text-gray-400">No expense data this month</div>
       </div>
@@ -32,7 +42,7 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
   }))
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col flex-1">
       <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Spending by Category</h2>
 
       <div className="relative">
@@ -51,11 +61,7 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
 
             <Tooltip
               formatter={(value) => formatVND(Number(value))}
-              contentStyle={{
-                borderRadius: '10px',
-                border: '1px solid #e5e7eb',
-                fontSize: '12px',
-              }}
+              contentStyle={tooltipStyle}
             />
           </PieChart>
         </ResponsiveContainer>

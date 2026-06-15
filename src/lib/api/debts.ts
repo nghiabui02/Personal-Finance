@@ -34,6 +34,7 @@ export const debtsApi = {
     person_contact?: string
     amount: number
     wallet_id?: string
+    date?: string      // date of the debt — defaults to today on server
     due_date?: string
     note?: string
   }): Promise<Debt> {

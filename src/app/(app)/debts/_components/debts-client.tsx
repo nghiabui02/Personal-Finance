@@ -28,6 +28,7 @@ function DebtModal({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [type, setType] = useState<'lend' | 'borrow'>(editing?.type ?? 'lend')
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [dueDate, setDueDate] = useState(editing?.due_date ?? '')
   const [walletId, setWalletId] = useState(
     editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? ''
@@ -65,6 +66,7 @@ function DebtModal({
             person_contact: get('person_contact') || undefined,
             amount,
             wallet_id: walletId || undefined,
+            date,
             due_date: dueDate || undefined,
             note: get('note') || undefined,
           })
@@ -99,17 +101,20 @@ function DebtModal({
         <Input label="Contact (optional)" name="person_contact" defaultValue={editing?.person_contact ?? ''} placeholder="Phone / email" />
 
         {!editing && (
-          <div className="grid grid-cols-2 gap-3">
-            <AmountInput label="Amount" name="amount" required />
-            <CustomSelect
-              label="Wallet"
-              name="wallet_id"
-              options={walletOptions}
-              value={walletId}
-              onChange={setWalletId}
-              placeholder="None"
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <AmountInput label="Amount" name="amount" required />
+              <CustomSelect
+                label="Wallet"
+                name="wallet_id"
+                options={walletOptions}
+                value={walletId}
+                onChange={setWalletId}
+                placeholder="None"
+              />
+            </div>
+            <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
+          </>
         )}
 
         <DatePicker label="Due date (optional)" name="due_date" value={dueDate} onChange={setDueDate} />

@@ -7,7 +7,7 @@ import { type Category } from '@/lib/api/categories'
 import { type Transaction, transactionsApi } from '@/lib/api/transactions'
 import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { TransactionModal } from './transaction-modal'
 import { PeriodNavigator, ViewSelector, type ViewMode } from './period-navigator'
 import { TransactionCalendar } from './transaction-calendar'
@@ -43,6 +43,8 @@ interface TransactionsClientProps {
 
 // ── Transaction list (reused in both layouts) ────────────────────────────────
 
+const PAGE_SIZE = 10
+
 function TransactionList({
   transactions,
   filter,
@@ -58,8 +60,30 @@ function TransactionList({
   onDelete: (id: string) => void
   onAdd: () => void
 }) {
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
   const filtered = filter === 'all' ? transactions : transactions.filter(tx => tx.type === filter)
-  const groups = groupByDate(filtered)
+  const visible  = filtered.slice(0, displayCount)
+  const hasMore  = displayCount < filtered.length
+  const groups   = groupByDate(visible)
+
+  // Load more when sentinel scrolls into view
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          setDisplayCount(prev => prev + PAGE_SIZE)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore])
 
   const income = transactions.filter(tx => tx.type === 'income').reduce((s, tx) => s + Number(tx.amount), 0)
   const expense = transactions.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0)
@@ -173,6 +197,20 @@ function TransactionList({
               </div>
             </div>
           ))}
+
+          {/* Sentinel: triggers load-more when scrolled into view */}
+          {hasMore && (
+            <div ref={sentinelRef} className="py-3 text-center text-xs text-gray-400">
+              Loading more...
+            </div>
+          )}
+
+          {/* End of list */}
+          {!hasMore && filtered.length > PAGE_SIZE && (
+            <p className="py-3 text-center text-xs text-gray-400">
+              All {filtered.length} transactions shown
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -257,6 +295,7 @@ export default function TransactionsClient({
           {/* Right: Transaction list */}
           <div key={selectedDate ?? '__all__'} className="animate-fade-slide-in">
             <TransactionList
+              key={filter}
               transactions={displayedTransactions}
               filter={filter}
               onFilter={setFilter}
@@ -273,6 +312,7 @@ export default function TransactionsClient({
             <PeriodNavigator view={view} period={period} />
           </div>
           <TransactionList
+            key={filter}
             transactions={transactions}
             filter={filter}
             onFilter={setFilter}

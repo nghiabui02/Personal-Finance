@@ -16,7 +16,7 @@ function formatDate(dateStr: string) {
 
 export function RecentTransactions({ transactions }: { transactions: Transaction[] }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col flex-1">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recent Transactions</h2>
         <Link href="/transactions" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">

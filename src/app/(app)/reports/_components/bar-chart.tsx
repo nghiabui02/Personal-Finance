@@ -1,6 +1,7 @@
 'use client'
 
 import { formatVND, formatCompactVND } from '@/lib/utils/currency'
+import { useTheme } from 'next-themes'
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { ChartPoint } from './types'
 import type { PeriodType } from './reports-client'
@@ -12,10 +13,18 @@ interface BarChartProps {
 }
 
 export function BarChart({ data, title, period }: BarChartProps) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const hasData = data.some(d => d.income > 0 || d.expense > 0)
 
-  // For month view (many bars), only show every 5th label
   const tickInterval = period === 'month' ? 4 : 0
+  const tooltipStyle = {
+    borderRadius: '10px',
+    border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
+    color: isDark ? '#f3f4f6' : '#111827',
+    fontSize: '12px',
+  }
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
@@ -44,11 +53,12 @@ export function BarChart({ data, title, period }: BarChartProps) {
               width={72}
             />
             <Tooltip
+              cursor={false}
               formatter={((value: unknown, name: unknown) => [
                 formatVND(typeof value === 'number' ? value : 0),
                 String(name ?? ''),
               ]) as never}
-              contentStyle={{ borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '12px' }}
+              contentStyle={tooltipStyle}
             />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
             <Bar dataKey="income"  name="income"  fill="#22c55e" radius={[3, 3, 0, 0]} />

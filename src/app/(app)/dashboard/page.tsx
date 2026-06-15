@@ -78,11 +78,11 @@ export default async function DashboardPage({
         balance={totalIncome - totalExpense}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-stretch">
+        <div className="lg:col-span-2 flex flex-col">
           <SpendingChart data={expenseByCategory} totalExpense={totalExpense} />
         </div>
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 flex flex-col">
           <RecentTransactions transactions={(recentRows ?? []) as unknown as Parameters<typeof RecentTransactions>[0]['transactions']} />
         </div>
       </div>
