@@ -84,18 +84,12 @@ function DebtModal({
     <Modal title={editing ? 'Edit debt' : 'New debt'} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {!editing && (
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-            {(['lend', 'borrow'] as const).map(t => (
-              <button key={t} type="button" onClick={() => setType(t)}
-                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                  type === t
-                    ? t === 'lend' ? 'bg-blue-500 text-white shadow-sm' : 'bg-orange-500 text-white shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}>
-                {t === 'lend' ? '↑ I lent' : '↓ I borrowed'}
-              </button>
-            ))}
-          </div>
+          <TabGroup
+            tabs={[{ key: 'lend', label: '↑ I lent' }, { key: 'borrow', label: '↓ I borrowed' }]}
+            value={type}
+            onChange={setType}
+            activeColors={{ lend: '#3b82f6', borrow: '#f97316' }}
+          />
         )}
 
         {/* Row 1: Person name + Contact */}

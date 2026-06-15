@@ -3,6 +3,7 @@
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
+import { TabGroup } from '@/components/ui/tab-group'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
@@ -107,18 +108,12 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
       <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* Type toggle */}
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-          {(['expense', 'income'] as const).map(t => (
-            <button key={t} type="button" onClick={() => handleTypeChange(t)}
-              className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                txType === t
-                  ? t === 'expense' ? 'bg-red-500 text-white shadow-sm' : 'bg-green-500 text-white shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}>
-              {t === 'expense' ? '− Expense' : '+ Income'}
-            </button>
-          ))}
-        </div>
+        <TabGroup
+          tabs={[{ key: 'expense', label: '− Expense' }, { key: 'income', label: '+ Income' }]}
+          value={txType}
+          onChange={handleTypeChange}
+          activeColors={{ expense: '#ef4444', income: '#22c55e' }}
+        />
 
         {/* Amount + Date */}
         <div className="grid grid-cols-2 gap-3">
@@ -162,7 +157,7 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
                 </div>
                 <AmountInput label="" name="fee" defaultValue={0} />
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  A separate "Bank fee" expense transaction will be created automatically — keeping your wallet balance in sync with the bank.
+                  A separate &quot;Bank fee&quot; expense transaction will be created automatically — keeping your wallet balance in sync with the bank.
                 </p>
               </div>
             )}

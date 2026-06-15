@@ -12,6 +12,8 @@ interface TabGroupProps<T extends string> {
   value: T
   onChange: (key: T) => void
   className?: string
+  /** Hex color per tab key for the active pill, e.g. { expense: '#ef4444', income: '#22c55e' } */
+  activeColors?: Partial<Record<T, string>>
 }
 
 export function TabGroup<T extends string>({
@@ -19,11 +21,11 @@ export function TabGroup<T extends string>({
   value,
   onChange,
   className = '',
+  activeColors,
 }: TabGroupProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [pill, setPill] = useState({ left: 0, width: 0 })
 
-  // Measure the active tab's position and size after paint
   const updatePill = () => {
     const container = containerRef.current
     if (!container) return
@@ -34,21 +36,28 @@ export function TabGroup<T extends string>({
 
   useLayoutEffect(updatePill, [value])
 
-  // Also update on window resize
   useEffect(() => {
     window.addEventListener('resize', updatePill)
     return () => window.removeEventListener('resize', updatePill)
   })
+
+  const pillColor = activeColors?.[value]
 
   return (
     <div
       ref={containerRef}
       className={`relative flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg ${className}`}
     >
-      {/* Sliding pill */}
+      {/* Sliding pill — position + color both transition smoothly */}
       <div
-        className="absolute top-1 bottom-1 bg-white dark:bg-gray-700 rounded-md shadow-sm transition-all duration-200 ease-out pointer-events-none"
-        style={{ left: pill.left, width: pill.width }}
+        className={`absolute top-1 bottom-1 rounded-md shadow-sm transition-all duration-200 ease-out pointer-events-none ${
+          pillColor ? '' : 'bg-white dark:bg-gray-700'
+        }`}
+        style={{
+          left: pill.left,
+          width: pill.width,
+          ...(pillColor ? { backgroundColor: pillColor } : {}),
+        }}
       />
 
       {tabs.map(tab => (
@@ -59,7 +68,7 @@ export function TabGroup<T extends string>({
           onClick={() => onChange(tab.key)}
           className={`relative z-10 flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 whitespace-nowrap ${
             value === tab.key
-              ? 'text-gray-900 dark:text-gray-100'
+              ? activeColors ? 'text-white' : 'text-gray-900 dark:text-gray-100'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >

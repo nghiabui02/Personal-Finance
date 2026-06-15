@@ -3,6 +3,7 @@
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
+import { TabGroup } from '@/components/ui/tab-group'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
@@ -90,18 +91,12 @@ function RecurringModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Type */}
         {!editing && (
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-            {(['expense', 'income'] as const).map(t => (
-              <button key={t} type="button" onClick={() => { setTxType(t); setCategoryId('') }}
-                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                  txType === t
-                    ? t === 'expense' ? 'bg-red-500 text-white shadow-sm' : 'bg-green-500 text-white shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}>
-                {t === 'expense' ? '− Expense' : '+ Income'}
-              </button>
-            ))}
-          </div>
+          <TabGroup
+            tabs={[{ key: 'expense', label: '− Expense' }, { key: 'income', label: '+ Income' }]}
+            value={txType}
+            onChange={t => { setTxType(t); setCategoryId('') }}
+            activeColors={{ expense: '#ef4444', income: '#22c55e' }}
+          />
         )}
 
         {/* Amount + Frequency */}
