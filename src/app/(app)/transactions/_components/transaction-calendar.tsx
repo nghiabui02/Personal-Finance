@@ -62,7 +62,7 @@ export function TransactionCalendar({
   })
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 sm:p-4 lg:sticky lg:top-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 sm:p-4 lg:sticky">
       {/* Month header */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -109,7 +109,7 @@ export function TransactionCalendar({
               key={i}
               onClick={() => onSelectDate(isSelected ? null : dateStr)}
               className={`
-                flex flex-col items-center justify-start pt-1.5 pb-1 px-0.5 rounded-lg min-h-[44px] sm:min-h-[46px]
+                flex flex-col items-center justify-start pt-1.5 pb-1 px-0.5 rounded-lg min-h-11 sm:min-h-11.5
                 transition-all duration-150 ease-out active:scale-95
                 ${isSelected
                   ? 'bg-blue-600 dark:bg-blue-500 scale-[1.08] shadow-md shadow-blue-500/30'

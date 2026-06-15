@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
+import { TabGroup } from '@/components/ui/tab-group'
 import { type Category, categoriesApi } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -62,18 +63,12 @@ export default function CategoriesClient({
         </Button>
       </div>
 
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit mb-6">
-        {(['expense', 'income'] as const).map(t => (
-          <button key={t} onClick={() => switchTab(t)}
-            className={`px-5 py-1.5 text-sm font-medium rounded-md transition-colors capitalize ${
-              tab === t
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}>
-            {t}
-          </button>
-        ))}
-      </div>
+      <TabGroup
+        tabs={[{ key: 'expense', label: 'Expense' }, { key: 'income', label: 'Income' }]}
+        value={tab}
+        onChange={switchTab}
+        className="w-fit mb-6"
+      />
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">

@@ -57,7 +57,7 @@ export function TabGroup<T extends string>({
           data-key={tab.key}
           type="button"
           onClick={() => onChange(tab.key)}
-          className={`relative z-10 flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 ${
+          className={`relative z-10 flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 whitespace-nowrap ${
             value === tab.key
               ? 'text-gray-900 dark:text-gray-100'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'

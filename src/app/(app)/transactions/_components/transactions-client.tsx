@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
+import { TabGroup } from '@/components/ui/tab-group'
 import { formatVND } from '@/lib/utils/currency'
 import { type Category } from '@/lib/api/categories'
 import { type Transaction, transactionsApi } from '@/lib/api/transactions'
@@ -53,9 +54,11 @@ function TransactionList({
   onDelete,
   onAdd,
   scrollableBody = false,
+  hideSummary = false,
 }: {
   transactions: Transaction[]
   filter: Filter
+  hideSummary?: boolean
   scrollableBody?: boolean
   onFilter: (f: Filter) => void
   onEdit: (tx: Transaction) => void
@@ -92,8 +95,8 @@ function TransactionList({
 
   return (
     <div className={scrollableBody ? 'flex flex-col min-h-0 flex-1' : ''}>
-      {/* Summary */}
-      <div className={`grid grid-cols-3 gap-2 mb-4 ${scrollableBody ? 'shrink-0' : ''}`}>
+      {/* Summary — hidden in month view (shown above the grid) */}
+      {!hideSummary && <div className={`grid grid-cols-3 gap-2 mb-4 ${scrollableBody ? 'shrink-0' : ''}`}>
         {[
           { label: 'Income', value: income, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/30' },
           { label: 'Expense', value: expense, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/30' },
@@ -104,24 +107,19 @@ function TransactionList({
             <p className={`text-xs font-semibold tabular-nums ${item.color}`}>{formatVND(item.value)}</p>
           </div>
         ))}
-      </div>
+      </div>}
 
       {/* Filter tabs */}
-      <div className={`flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit mb-4 ${scrollableBody ? 'shrink-0' : ''}`}>
-        {(['all', 'expense', 'income'] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => onFilter(f)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize ${
-              filter === f
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
+      <TabGroup
+        tabs={[
+          { key: 'all', label: 'All' },
+          { key: 'expense', label: 'Expense' },
+          { key: 'income', label: 'Income' },
+        ]}
+        value={filter}
+        onChange={onFilter}
+        className={`w-fit mb-4 ${scrollableBody ? 'shrink-0' : ''}`}
+      />
 
       {/* List — scrollable when in scrollableBody mode */}
       <div className={scrollableBody ? 'flex-1 overflow-y-auto min-h-0' : ''}>
@@ -291,9 +289,9 @@ export default function TransactionsClient({
       {/* Content — flex-1 fills remaining height, no overflow on this level */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {view === 'month' ? (
-          /* ── Month: two-column layout, both columns fill height ── */
+          /* ── Month: two-column layout ── */
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 h-full">
-            {/* Left: calendar — scrolls if taller than container */}
+            {/* Left: calendar */}
             <div className="overflow-y-auto">
               <TransactionCalendar
                 transactions={transactions}
@@ -303,7 +301,7 @@ export default function TransactionsClient({
               />
             </div>
 
-            {/* Right: flex column — only list scrolls */}
+            {/* Right: summary + filter + scrollable list */}
             <div
               key={selectedDate ?? '__all__'}
               className="animate-fade-slide-in flex flex-col overflow-hidden"

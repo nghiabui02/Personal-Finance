@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { TabGroup } from '@/components/ui/tab-group'
 
 export type ViewMode = 'month' | 'week' | 'day'
 
@@ -106,20 +107,14 @@ export function ViewSelector({ view }: ViewSelectorProps) {
   }
 
   return (
-    <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-      {(['month', 'week', 'day'] as const).map(v => (
-        <button
-          key={v}
-          onClick={() => switchView(v)}
-          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize ${
-            view === v
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          }`}
-        >
-          {v}
-        </button>
-      ))}
-    </div>
+    <TabGroup
+      tabs={[
+        { key: 'month', label: 'Month' },
+        { key: 'week', label: 'Week' },
+        { key: 'day', label: 'Day' },
+      ]}
+      value={view}
+      onChange={switchView}
+    />
   )
 }

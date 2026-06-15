@@ -7,6 +7,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import { TabGroup } from '@/components/ui/tab-group'
 import { formatVND } from '@/lib/utils/currency'
 import { type SavingGoal, savingGoalsApi } from '@/lib/api/saving-goals'
 import { useRouter } from 'next/navigation'
@@ -260,16 +261,15 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
         </div>
       )}
 
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit mb-5">
-        {(['active', 'completed'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors capitalize ${
-              tab === t ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400'
-            }`}>
-            {t} ({t === 'active' ? active.length : completed.length})
-          </button>
-        ))}
-      </div>
+      <TabGroup
+        tabs={[
+          { key: 'active', label: `Active (${active.length})` },
+          { key: 'completed', label: `Completed (${completed.length})` },
+        ]}
+        value={tab}
+        onChange={setTab}
+        className="w-fit mb-5"
+      />
 
       {displayed.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">

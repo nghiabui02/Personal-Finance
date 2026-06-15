@@ -2,6 +2,7 @@
 
 import { formatVND } from '@/lib/utils/currency'
 import { useRouter } from 'next/navigation'
+import { TabGroup } from '@/components/ui/tab-group'
 import { CategoryChart } from './category-chart'
 import { BarChart } from './bar-chart'
 import type { ChartPoint, CategoryData } from './types'
@@ -121,18 +122,11 @@ export default function ReportsClient({
       {/* Period selector + navigator */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-          {PERIODS.map(p => (
-            <button key={p.key} onClick={() => switchPeriod(p.key)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                period === p.key
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}>
-              {p.label}
-            </button>
-          ))}
-        </div>
+        <TabGroup
+          tabs={PERIODS.map(p => ({ key: p.key, label: p.label }))}
+          value={period}
+          onChange={v => switchPeriod(v as PeriodType)}
+        />
 
         {/* Navigator */}
         <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
