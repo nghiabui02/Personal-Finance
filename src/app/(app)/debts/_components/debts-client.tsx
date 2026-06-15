@@ -80,7 +80,7 @@ function DebtModal({
   }
 
   return (
-    <Modal title={editing ? 'Edit debt' : 'New debt'} onClose={onClose}>
+    <Modal title={editing ? 'Edit debt' : 'New debt'} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {!editing && (
           <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
@@ -97,11 +97,15 @@ function DebtModal({
           </div>
         )}
 
-        <Input label="Person name" name="person_name" defaultValue={editing?.person_name ?? ''} required placeholder="e.g. Nguyen Van A" />
-        <Input label="Contact (optional)" name="person_contact" defaultValue={editing?.person_contact ?? ''} placeholder="Phone / email" />
+        {/* Row 1: Person name + Contact */}
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Person name" name="person_name" defaultValue={editing?.person_name ?? ''} required placeholder="e.g. Nguyen Van A" />
+          <Input label="Contact (optional)" name="person_contact" defaultValue={editing?.person_contact ?? ''} placeholder="Phone / email" />
+        </div>
 
         {!editing && (
           <>
+            {/* Row 2: Amount + Wallet */}
             <div className="grid grid-cols-2 gap-3">
               <AmountInput label="Amount" name="amount" required />
               <CustomSelect
@@ -113,11 +117,18 @@ function DebtModal({
                 placeholder="None"
               />
             </div>
-            <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
+            {/* Row 3: Date + Due date */}
+            <div className="grid grid-cols-2 gap-3">
+              <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
+              <DatePicker label="Due date (optional)" name="due_date" value={dueDate} onChange={setDueDate} />
+            </div>
           </>
         )}
 
-        <DatePicker label="Due date (optional)" name="due_date" value={dueDate} onChange={setDueDate} />
+        {editing && (
+          <DatePicker label="Due date (optional)" name="due_date" value={dueDate} onChange={setDueDate} />
+        )}
+
         <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="Purpose..." />
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

@@ -52,9 +52,11 @@ function TransactionList({
   onEdit,
   onDelete,
   onAdd,
+  scrollableBody = false,
 }: {
   transactions: Transaction[]
   filter: Filter
+  scrollableBody?: boolean
   onFilter: (f: Filter) => void
   onEdit: (tx: Transaction) => void
   onDelete: (id: string) => void
@@ -89,9 +91,9 @@ function TransactionList({
   const expense = transactions.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0)
 
   return (
-    <div>
+    <div className={scrollableBody ? 'flex flex-col min-h-0 flex-1' : ''}>
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
+      <div className={`grid grid-cols-3 gap-2 mb-4 ${scrollableBody ? 'shrink-0' : ''}`}>
         {[
           { label: 'Income', value: income, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/30' },
           { label: 'Expense', value: expense, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/30' },
@@ -105,7 +107,7 @@ function TransactionList({
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit mb-4">
+      <div className={`flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit mb-4 ${scrollableBody ? 'shrink-0' : ''}`}>
         {(['all', 'expense', 'income'] as const).map(f => (
           <button
             key={f}
@@ -121,7 +123,8 @@ function TransactionList({
         ))}
       </div>
 
-      {/* List */}
+      {/* List — scrollable when in scrollableBody mode */}
+      <div className={scrollableBody ? 'flex-1 overflow-y-auto min-h-0' : ''}>
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-gray-400 text-sm">
@@ -213,6 +216,7 @@ function TransactionList({
           )}
         </div>
       )}
+      </div> {/* end scrollable wrapper */}
     </div>
   )
 }
@@ -263,65 +267,80 @@ export default function TransactionsClient({
   }
 
   return (
-    <>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4 gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Transactions</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400 hidden sm:block">Track your income and expenses</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <ViewSelector view={view} />
-          <Button onClick={() => openModal()}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span className="hidden sm:inline">Add</span>
-          </Button>
+    // h-full fills the main element — no page scroll, only internal scroll
+    <div className="flex flex-col h-full">
+      {/* Header — shrink-0 so it never shrinks */}
+      <div className="shrink-0 pb-3 mb-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Transactions</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">Track your income and expenses</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <ViewSelector view={view} />
+            <Button onClick={() => openModal()}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span className="hidden sm:inline">Add</span>
+            </Button>
+          </div>
         </div>
       </div>
 
-      {view === 'month' ? (
-        /* ── Month: two-column layout ── */
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-          {/* Left: Calendar */}
-          <TransactionCalendar
-            transactions={transactions}
-            period={period}
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-          />
+      {/* Content — flex-1 fills remaining height, no overflow on this level */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {view === 'month' ? (
+          /* ── Month: two-column layout, both columns fill height ── */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 h-full">
+            {/* Left: calendar — scrolls if taller than container */}
+            <div className="overflow-y-auto">
+              <TransactionCalendar
+                transactions={transactions}
+                period={period}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+              />
+            </div>
 
-          {/* Right: Transaction list */}
-          <div key={selectedDate ?? '__all__'} className="animate-fade-slide-in">
-            <TransactionList
-              key={filter}
-              transactions={displayedTransactions}
-              filter={filter}
-              onFilter={setFilter}
-              onEdit={openModal}
-              onDelete={setConfirmId}
-              onAdd={() => openModal()}
-            />
+            {/* Right: flex column — only list scrolls */}
+            <div
+              key={selectedDate ?? '__all__'}
+              className="animate-fade-slide-in flex flex-col overflow-hidden"
+            >
+              <TransactionList
+                key={filter}
+                transactions={displayedTransactions}
+                filter={filter}
+                onFilter={setFilter}
+                onEdit={openModal}
+                onDelete={setConfirmId}
+                onAdd={() => openModal()}
+                scrollableBody
+              />
+            </div>
           </div>
-        </div>
-      ) : (
-        /* ── Week / Day: single-column layout ── */
-        <div>
-          <div className="flex justify-end mb-5">
-            <PeriodNavigator view={view} period={period} />
+        ) : (
+          /* ── Week / Day: single column, list scrolls ── */
+          <div className="flex flex-col h-full">
+            <div className="shrink-0 flex justify-end mb-4">
+              <PeriodNavigator view={view} period={period} />
+            </div>
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              <TransactionList
+                key={filter}
+                transactions={transactions}
+                filter={filter}
+                onFilter={setFilter}
+                onEdit={openModal}
+                onDelete={setConfirmId}
+                onAdd={() => openModal()}
+                scrollableBody
+              />
+            </div>
           </div>
-          <TransactionList
-            key={filter}
-            transactions={transactions}
-            filter={filter}
-            onFilter={setFilter}
-            onEdit={openModal}
-            onDelete={setConfirmId}
-            onAdd={() => openModal()}
-          />
-        </div>
-      )}
+        )}
+      </div>
 
       {modalOpen && (
         <TransactionModal
@@ -344,6 +363,6 @@ export default function TransactionsClient({
           onClose={() => setConfirmId(null)}
         />
       )}
-    </>
+    </div>
   )
 }

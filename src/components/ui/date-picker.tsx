@@ -140,21 +140,23 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
             : <span className="text-gray-400">DD-MM-YYYY</span>
           }
         </span>
-        {value && !required && (
+        {/* Right icon: × when has value and clearable, else chevron */}
+        {value && !required ? (
           <span
             role="button"
             onClick={e => { e.stopPropagation(); onChange(''); setOpen(false) }}
             className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-0.5"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
           </span>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+            className={`shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
         )}
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-          className={`shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-        </svg>
       </button>
 
       {/* Calendar panel */}
