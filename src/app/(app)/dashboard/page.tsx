@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { processRecurring } from '@/lib/server/process-recurring'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 import { BudgetProgress } from './_components/budget-progress'
@@ -26,6 +27,9 @@ export default async function DashboardPage({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
+
+  // Silently process any due recurring transactions on dashboard load
+  await processRecurring(supabase, user.id)
 
   const [
     { data: incomeRows },
