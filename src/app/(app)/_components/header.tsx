@@ -4,17 +4,22 @@ import { authApi } from '@/lib/api/auth'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import ThemeToggle from './theme-toggle'
 
 export default function Header({
   user,
   onMenuToggle,
 }: {
   user: User
-  onMenuToggle?: () => void
+    onMenuToggle?: () => void
 }) {
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
+
+  const meta = user.user_metadata ?? {}
+  const avatarUrl = meta.avatar_url as string | undefined
+  const displayName = (meta.full_name as string) || user.email || ''
+  const initials = displayName[0]?.toUpperCase() ?? 'U'
+  const [avatarErr, setAvatarErr] = useState(false)
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -45,15 +50,29 @@ export default function Header({
       {/* Spacer — desktop */}
       <div className="hidden md:block flex-1" />
 
-      <ThemeToggle />
-      <span className="hidden sm:inline text-sm text-gray-400 dark:text-gray-500 select-none">·</span>
-      <span className="hidden sm:inline text-sm text-gray-500 dark:text-gray-400 max-w-[160px] truncate">
-        {user.email}
-      </span>
+      {/* Avatar + name/email */}
+      <div className="hidden sm:flex items-center gap-2">
+        {avatarUrl && !avatarErr ? (
+          <img
+            src={avatarUrl}
+            alt="Avatar"
+            className="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 shrink-0"
+            onError={() => setAvatarErr(true)}
+          />
+        ) : (
+          <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+            {initials}
+          </div>
+        )}
+        <span className="text-sm text-gray-500 dark:text-gray-400 max-w-35 truncate">
+          {displayName}
+        </span>
+      </div>
+
       <button
         onClick={handleSignOut}
         disabled={signingOut}
-        className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
+        className="text-sm font-medium text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-50 whitespace-nowrap"
       >
         {signingOut ? 'Signing out...' : 'Sign out'}
       </button>

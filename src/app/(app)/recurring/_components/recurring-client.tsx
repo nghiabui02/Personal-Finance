@@ -8,7 +8,6 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { Select } from '@/components/ui/select'
 import { formatVND } from '@/lib/utils/currency'
 import { type Category } from '@/lib/api/categories'
 import { type Wallet } from '@/lib/api/wallets'
@@ -35,6 +34,7 @@ function RecurringModal({
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
   const [walletId, setWalletId] = useState(editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
+  const [frequency, setFrequency] = useState<RecurringTransaction['frequency']>(editing?.frequency ?? 'monthly')
   const [startDate, setStartDate] = useState(editing?.start_date ?? new Date().toISOString().slice(0, 10))
   const [endDate, setEndDate] = useState(editing?.end_date ?? '')
 
@@ -52,7 +52,7 @@ function RecurringModal({
     const form = e.currentTarget
     const getValue = (n: string) => (form.elements.namedItem(n) as HTMLInputElement)?.value ?? ''
     const amount = Number(getValue('amount'))
-    const frequency = getValue('frequency') as RecurringTransaction['frequency']
+    // frequency comes from state, not form input
     const note = getValue('note')
 
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
@@ -102,11 +102,13 @@ function RecurringModal({
         {/* Amount + Frequency */}
         <div className="grid grid-cols-2 gap-3">
           <AmountInput label="Amount" name="amount" defaultValue={editing?.amount} required />
-          <Select label="Repeat" name="frequency" defaultValue={editing?.frequency ?? 'monthly'}>
-            {Object.entries(FREQUENCY_LABELS).map(([v, l]) => (
-              <option key={v} value={v}>{l}</option>
-            ))}
-          </Select>
+          <CustomSelect
+            label="Repeat"
+            name="frequency"
+            options={Object.entries(FREQUENCY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+            value={frequency}
+            onChange={v => setFrequency(v as RecurringTransaction['frequency'])}
+          />
         </div>
 
         {/* Category + Wallet */}

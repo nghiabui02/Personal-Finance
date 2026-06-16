@@ -265,8 +265,8 @@ export default function TransactionsClient({
   }
 
   return (
-    // h-full fills the main element — no page scroll, only internal scroll
-    <div className="flex flex-col h-full">
+    // Desktop: h-full → fixed height, list scrolls. Mobile: normal page scroll.
+    <div className="flex flex-col lg:h-full">
       {/* Header — shrink-0 so it never shrinks */}
       <div className="shrink-0 pb-3 mb-1">
         <div className="flex items-start justify-between gap-3">
@@ -286,13 +286,13 @@ export default function TransactionsClient({
         </div>
       </div>
 
-      {/* Content — flex-1 fills remaining height, no overflow on this level */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      {/* Content — desktop: flex-1 fixed height; mobile: natural height (page scrolls) */}
+      <div className="lg:flex-1 lg:min-h-0 lg:overflow-hidden">
         {view === 'month' ? (
           /* ── Month: two-column layout ── */
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:h-full">
             {/* Left: calendar */}
-            <div className="overflow-y-auto">
+            <div className="lg:overflow-y-auto">
               <TransactionCalendar
                 transactions={transactions}
                 period={period}
@@ -301,10 +301,10 @@ export default function TransactionsClient({
               />
             </div>
 
-            {/* Right: summary + filter + scrollable list */}
+            {/* Right: summary + filter + list */}
             <div
               key={selectedDate ?? '__all__'}
-              className="animate-fade-slide-in flex flex-col overflow-hidden"
+              className="animate-fade-slide-in flex flex-col lg:overflow-hidden"
             >
               <TransactionList
                 key={filter}
@@ -319,12 +319,12 @@ export default function TransactionsClient({
             </div>
           </div>
         ) : (
-          /* ── Week / Day: single column, list scrolls ── */
-          <div className="flex flex-col h-full">
-            <div className="shrink-0 flex justify-end mb-4">
+          /* ── Week / Day: single column ── */
+          <div className="lg:flex lg:flex-col lg:h-full">
+            <div className="flex justify-end mb-4">
               <PeriodNavigator view={view} period={period} />
             </div>
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col lg:overflow-hidden">
               <TransactionList
                 key={filter}
                 transactions={transactions}
