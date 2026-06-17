@@ -29,7 +29,7 @@ export default function Header({
   }
 
   return (
-    <header className="shrink-0 bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800 pt-safe">
+    <header className="shrink-0 pt-safe bg-gray-50 md:bg-white md:border-b md:border-gray-200 dark:bg-gray-950 md:dark:bg-gray-900 md:dark:border-gray-800">
       <div className="h-14 flex items-center gap-2 px-4 md:px-6">
       {/* Hamburger — mobile only */}
       <button
