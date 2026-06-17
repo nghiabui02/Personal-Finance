@@ -153,6 +153,33 @@ export default function SettingsClient({
     }
   }
 
+  // Password state
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [savingPassword, setSavingPassword] = useState(false)
+
+  async function handleUpdatePassword() {
+    setSavingPassword(true)
+    setPasswordMsg(null)
+    try {
+      const res = await fetch('/api/settings/password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword, confirmPassword }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      setPasswordMsg({ type: 'success', text: json.message })
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      setPasswordMsg({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
+    } finally {
+      setSavingPassword(false)
+    }
+  }
+
   const { theme, setTheme } = useTheme()
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
   const initials = (name || currentEmail)[0]?.toUpperCase() ?? 'U'
@@ -278,6 +305,46 @@ export default function SettingsClient({
           {savingEmail ? 'Sending...' : 'Update email'}
         </Button>
         <p className="mt-2 text-xs text-gray-400">A confirmation link will be sent to the new email.</p>
+      </div>
+
+      {/* ── Password ── */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-5">Password</h2>
+
+        <div className="space-y-4">
+          <Input
+            label="New password"
+            name="new-password"
+            type="password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            placeholder="At least 6 characters"
+            clearable={false}
+          />
+          <Input
+            label="Confirm new password"
+            name="confirm-password"
+            type="password"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter new password"
+            clearable={false}
+          />
+        </div>
+
+        {passwordMsg && (
+          <p className={`mt-3 text-sm ${passwordMsg.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            {passwordMsg.text}
+          </p>
+        )}
+
+        <Button
+          onClick={handleUpdatePassword}
+          disabled={savingPassword || !newPassword || !confirmPassword}
+          className="mt-4"
+        >
+          {savingPassword ? 'Updating...' : 'Update password'}
+        </Button>
       </div>
 
       {/* ── Appearance ── */}
