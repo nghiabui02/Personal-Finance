@@ -18,7 +18,14 @@
   --color-foreground: var(--foreground);
 }
 
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 body {
+  overflow: hidden;
+  overscroll-behavior: none;
   background: var(--background);
   color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;

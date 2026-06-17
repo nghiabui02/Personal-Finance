@@ -6,6 +6,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  interactiveWidget: 'resizes-visual',
 }
 
 export const metadata: Metadata = {
@@ -24,10 +25,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="h-full bg-gray-50 dark:bg-gray-950 antialiased"
+      className="h-full overflow-hidden overscroll-none bg-gray-50 dark:bg-gray-950 antialiased"
       suppressHydrationWarning
     >
-      <body className="h-full bg-gray-50 dark:bg-gray-950">
+      <body className="h-full overflow-hidden overscroll-none bg-gray-50 dark:bg-gray-950">
         <Providers>{children}</Providers>
       </body>
     </html>

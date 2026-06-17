@@ -71,7 +71,7 @@ export default function AppShell({
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header user={user} onMenuToggle={sidebarOpen ? handleCloseSidebar : handleOpenSidebar} />
-        <main className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 pb-safe">{children}</main>
+        <main className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 pb-safe" style={{ WebkitOverflowScrolling: 'touch' }}>{children}</main>
       </div>
     </div>
   )
