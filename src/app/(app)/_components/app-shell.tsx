@@ -40,7 +40,9 @@ export default function AppShell({
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden overscroll-none bg-gray-50 dark:bg-gray-950">
+    // Mobile: no fixed height → whole page scrolls (header included, URL bar can hide)
+    // Desktop md+: fixed h-dvh layout → only inner main scrolls
+    <div className="bg-gray-50 dark:bg-gray-950 md:flex md:h-dvh md:overflow-hidden">
       {/* Desktop sidebar */}
       <div className="hidden md:flex">
         <Sidebar />
@@ -49,7 +51,6 @@ export default function AppShell({
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
             style={{
@@ -57,7 +58,6 @@ export default function AppShell({
             }}
             onClick={handleCloseSidebar}
           />
-          {/* Sidebar panel */}
           <div
             className="relative z-10 w-64"
             style={{
@@ -69,9 +69,11 @@ export default function AppShell({
         </div>
       )}
 
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex flex-col md:flex-1 md:min-w-0 md:overflow-hidden">
         <Header user={user} onMenuToggle={sidebarOpen ? handleCloseSidebar : handleOpenSidebar} />
-        <main className="flex-1 overflow-y-auto overscroll-contain pt-4 px-4 md:pt-6 md:px-6 pb-safe-or-4">{children}</main>
+        <main className="pt-4 px-4 pb-safe-or-4 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pt-6 md:px-6">
+          {children}
+        </main>
       </div>
     </div>
   )
