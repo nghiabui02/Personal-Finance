@@ -4,7 +4,7 @@
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
+  --background: #f9fafb; /* gray-50 — matches app shell bg */
   --foreground: #171717;
 }
 
