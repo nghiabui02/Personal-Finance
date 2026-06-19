@@ -2,10 +2,10 @@
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { Select } from '@/components/ui/select'
 import { type Wallet, WALLET_TYPE_LABELS, walletsApi } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -14,6 +14,18 @@ const PRESET_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4',
   '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#14b8a6',
 ]
+
+const TYPE_ICONS: Record<Wallet['type'], string> = {
+  cash: '💵',
+  bank: '🏦',
+  e_wallet: '📱',
+  investment: '📈',
+  other: '💼',
+}
+
+const TYPE_OPTIONS = (Object.entries(WALLET_TYPE_LABELS) as [Wallet['type'], string][]).map(
+  ([value, label]) => ({ value, label, icon: TYPE_ICONS[value] })
+)
 
 interface WalletModalProps {
   editing: Wallet | null
@@ -25,12 +37,12 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState(editing?.color ?? PRESET_COLORS[2])
+  const [type, setType] = useState<Wallet['type']>(editing?.type ?? 'cash')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
     const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
-    const type = (form.elements.namedItem('type') as HTMLSelectElement).value as Wallet['type']
     const balance = Number((form.elements.namedItem('balance') as HTMLInputElement).value)
     const icon = (form.elements.namedItem('icon') as HTMLInputElement).value.trim()
     const is_default = (form.elements.namedItem('is_default') as HTMLInputElement).checked
@@ -63,11 +75,13 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
           placeholder="e.g. Vietcombank"
         />
 
-        <Select label="Type" name="type" defaultValue={editing?.type ?? 'cash'}>
-          {Object.entries(WALLET_TYPE_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </Select>
+        <CustomSelect
+          label="Type"
+          name="type"
+          options={TYPE_OPTIONS}
+          value={type}
+          onChange={v => setType(v as Wallet['type'])}
+        />
 
         <AmountInput
           label="Balance"

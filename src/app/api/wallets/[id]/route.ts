@@ -47,12 +47,41 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { error } = await supabase
-    .from('wallets')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id)
+  // Fetch the wallet being deleted
+  const { data: wallet } = await supabase
+    .from('wallets').select('balance, is_default').eq('id', id).eq('user_id', user.id).single()
 
+  if (!wallet) return NextResponse.json({ error: 'Wallet not found.' }, { status: 404 })
+
+  const balance = Number(wallet.balance)
+
+  // If it has remaining balance, transfer to the default wallet
+  if (balance > 0) {
+    const { data: defaultWallet } = await supabase
+      .from('wallets').select('id, balance')
+      .eq('user_id', user.id).eq('is_default', true).neq('id', id).single()
+
+    if (!defaultWallet) {
+      return NextResponse.json(
+        { error: 'Cannot delete: wallet has balance but no default wallet found to receive it.' },
+        { status: 400 }
+      )
+    }
+
+    // Move balance to default wallet and record a transfer transaction pair
+    const pairId = crypto.randomUUID()
+    const today = new Date().toISOString().slice(0, 10)
+    await Promise.all([
+      supabase.from('wallets').update({ balance: Number(defaultWallet.balance) + balance }).eq('id', defaultWallet.id),
+      supabase.from('transactions').insert({
+        user_id: user.id, wallet_id: defaultWallet.id, type: 'income',
+        amount: balance, note: 'Balance transferred from deleted wallet',
+        transaction_date: today, transfer_pair_id: pairId,
+      }),
+    ])
+  }
+
+  const { error } = await supabase.from('wallets').delete().eq('id', id).eq('user_id', user.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return new NextResponse(null, { status: 204 })
 }

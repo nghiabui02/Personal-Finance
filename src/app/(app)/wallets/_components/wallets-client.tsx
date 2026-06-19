@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { WalletCard } from './wallet-card'
 import { WalletModal } from './wallet-modal'
+import { TransferModal } from './transfer-modal'
 
 export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const router = useRouter()
@@ -15,6 +16,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [transferOpen, setTransferOpen] = useState(false)
 
   const totalBalance = wallets.reduce((sum, w) => sum + Number(w.balance), 0)
   const confirmWallet = wallets.find(w => w.id === confirmId)
@@ -45,12 +47,22 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Wallets</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Manage your accounts and balances</p>
         </div>
-        <Button onClick={() => openModal()} className="shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-          </svg>
-          New wallet
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          {wallets.length >= 2 && (
+            <Button variant="secondary" onClick={() => setTransferOpen(true)}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+              Transfer
+            </Button>
+          )}
+          <Button onClick={() => openModal()}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            New wallet
+          </Button>
+        </div>
       </div>
 
       {wallets.length > 0 && (
@@ -90,10 +102,21 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
         />
       )}
 
-      {confirmId && (
+      {transferOpen && wallets.length >= 2 && (
+        <TransferModal
+          wallets={wallets}
+          onClose={() => setTransferOpen(false)}
+        />
+      )}
+
+      {confirmId && confirmWallet && (
         <ConfirmModal
-          title={`Delete "${confirmWallet?.name}"?`}
-          description="This wallet will be permanently deleted. Existing transactions linked to it will not be deleted."
+          title={`Delete "${confirmWallet.name}"?`}
+          description={
+            Number(confirmWallet.balance) > 0
+              ? `This wallet has a remaining balance of ${formatVND(Number(confirmWallet.balance))}. It will be automatically transferred to your default wallet before deletion.`
+              : 'This wallet will be permanently deleted. Existing transactions linked to it will not be deleted.'
+          }
           confirmLabel="Delete wallet"
           isPending={isPending}
           onConfirm={handleDeleteConfirmed}
