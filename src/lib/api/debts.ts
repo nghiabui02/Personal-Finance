@@ -54,7 +54,7 @@ export const debtsApi = {
     return apiFetch(`/api/debts/${id}`, { method: 'DELETE' })
   },
 
-  addPayment(id: string, payload: { amount: number; note?: string; wallet_id?: string }): Promise<{ remaining_amount: number; settled: boolean }> {
+  addPayment(id: string, payload: { amount: number; note?: string; wallet_id?: string; date?: string }): Promise<{ remaining_amount: number; settled: boolean }> {
     return apiFetch(`/api/debts/${id}/payments`, { method: 'POST', body: JSON.stringify(payload) })
   },
 }

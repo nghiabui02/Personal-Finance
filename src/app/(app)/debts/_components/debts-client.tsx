@@ -154,6 +154,7 @@ function PaymentModal({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
 
   const walletOptions = [
     { value: '', label: 'No wallet' },
@@ -172,7 +173,7 @@ function PaymentModal({
     setError(null)
     startTransition(async () => {
       try {
-        await debtsApi.addPayment(debt.id, { amount, note: note || undefined, wallet_id: walletId || undefined })
+        await debtsApi.addPayment(debt.id, { amount, note: note || undefined, wallet_id: walletId || undefined, date })
         router.refresh()
         onClose()
       } catch (err) {
@@ -199,6 +200,7 @@ function PaymentModal({
             placeholder="None"
           />
         </div>
+        <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
         <Input label="Note (optional)" name="note" placeholder="e.g. Bank transfer" />
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         <div className="flex gap-2 pt-1">

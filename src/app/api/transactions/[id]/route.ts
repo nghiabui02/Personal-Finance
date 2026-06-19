@@ -92,10 +92,10 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Fetch transaction to reverse balance
+  // Fetch transaction to reverse balance and check for linked debt payment
   const { data: tx } = await supabase
     .from('transactions')
-    .select('type, amount, wallet_id')
+    .select('type, amount, wallet_id, debt_payment_id')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
@@ -108,10 +108,38 @@ export async function DELETE(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Reverse balance effect after successful delete
+  // Reverse wallet balance
   if (tx?.wallet_id) {
     const delta = tx.type === 'income' ? -Number(tx.amount) : Number(tx.amount)
     await adjustBalance(supabase, tx.wallet_id, delta, user.id)
+  }
+
+  // Reverse debt if this transaction was created from a debt payment
+  if (tx?.debt_payment_id) {
+    const { data: payment } = await supabase
+      .from('debt_payments')
+      .select('debt_id, amount')
+      .eq('id', tx.debt_payment_id)
+      .single()
+
+    if (payment) {
+      const { data: debt } = await supabase
+        .from('debts')
+        .select('remaining_amount, amount, status')
+        .eq('id', payment.debt_id)
+        .single()
+
+      if (debt) {
+        const restored = Math.min(Number(debt.remaining_amount) + Number(payment.amount), Number(debt.amount))
+        await Promise.all([
+          supabase.from('debts').update({
+            remaining_amount: restored,
+            ...(debt.status === 'completed' ? { status: 'active' } : {}),
+          }).eq('id', payment.debt_id),
+          supabase.from('debt_payments').delete().eq('id', tx.debt_payment_id),
+        ])
+      }
+    }
   }
 
   return new NextResponse(null, { status: 204 })
