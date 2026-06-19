@@ -8,6 +8,16 @@ import Sidebar from './sidebar'
 
 const ANIM = 220 // ms
 
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/transactions': 'Transactions',
+  '/wallets': 'Wallets',
+  '/budgets': 'Budgets',
+  '/reports': 'Reports',
+  '/debts': 'Debts',
+  '/settings': 'Settings',
+}
+
 export default function AppShell({
   children,
   user,
@@ -70,7 +80,7 @@ export default function AppShell({
       )}
 
       <div className="flex flex-col md:flex-1 md:min-w-0 md:overflow-hidden">
-        <Header user={user} onMenuToggle={sidebarOpen ? handleCloseSidebar : handleOpenSidebar} />
+        <Header user={user} title={PAGE_TITLES[pathname] ?? 'Finance'} onMenuToggle={sidebarOpen ? handleCloseSidebar : handleOpenSidebar} />
         <main className="pt-4 px-4 pb-safe-or-4 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pt-6 md:px-6">
           {children}
         </main>

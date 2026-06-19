@@ -17,7 +17,6 @@ const FALLBACK_COLORS = [
   '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#14b8a6',
 ]
 
-// Slightly expanded active slice
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
@@ -79,7 +78,6 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
           </PieChart>
         </ResponsiveContainer>
 
-        {/* Center label — changes on hover */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center px-2">
             {active ? (
@@ -105,7 +103,6 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
         </div>
       </div>
 
-      {/* Legend */}
       <ul className="mt-3 space-y-2">
         {chartData.slice(0, 5).map((d, i) => {
           const p = totalExpense > 0 ? ((d.amount / totalExpense) * 100).toFixed(0) : '0'

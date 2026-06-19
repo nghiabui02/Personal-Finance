@@ -4,6 +4,7 @@ import { processRecurring } from '@/lib/server/process-recurring'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 import { BudgetProgress } from './_components/budget-progress'
+import { DebtSummary } from './_components/debt-summary'
 import { MonthSelector } from './_components/month-selector'
 import { RecentTransactions } from './_components/recent-transactions'
 import { SpendingChart } from './_components/spending-chart'
@@ -37,12 +38,14 @@ export default async function DashboardPage({
     { data: recentRows },
     { data: expenseCatRows },
     { data: budgetRows },
+    { data: debtRows },
   ] = await Promise.all([
     supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate),
     supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
-    supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(7),
+    supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
     supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
     supabase.from('budgets').select('id, amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('month', startDate),
+    supabase.from('debts').select('type, remaining_amount, status').eq('user_id', user.id),
   ])
 
   const totalIncome = (incomeRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
@@ -63,14 +66,8 @@ export default async function DashboardPage({
   })
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Dashboard</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Overview of your finances</p>
-        </div>
-        <MonthSelector month={month} />
-      </div>
+    <div className="space-y-4">
+      <MonthSelector month={month} />
 
       <StatCards
         totalIncome={totalIncome}
@@ -87,7 +84,10 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <BudgetProgress budgets={budgets} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <BudgetProgress budgets={budgets} />
+        <DebtSummary debts={(debtRows ?? []) as { type: 'lend' | 'borrow'; remaining_amount: number; status: string }[]} />
+      </div>
     </div>
   )
 }

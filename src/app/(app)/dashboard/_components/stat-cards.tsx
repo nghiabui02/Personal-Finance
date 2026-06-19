@@ -6,42 +6,28 @@ interface StatCardsProps {
   balance: number
 }
 
-export function StatCards({ totalIncome, totalExpense, balance }: StatCardsProps) {
+export function StatCards({ totalIncome, totalExpense }: StatCardsProps) {
   const net = totalIncome - totalExpense
-  const cards = [
-    {
-      label: 'Income',
-      value: totalIncome,
-      bg: 'bg-green-50 dark:bg-green-950/30',
-      color: 'text-green-600 dark:text-green-400',
-    },
-    {
-      label: 'Expense',
-      value: totalExpense,
-      bg: 'bg-red-50 dark:bg-red-950/30',
-      color: 'text-red-600 dark:text-red-400',
-    },
-    {
-      label: 'Balance',
-      value: net,
-      bg: 'bg-white dark:bg-gray-900',
-      color: net >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400',
-    },
-  ]
-
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {cards.map(card => (
-        <div
-          key={card.label}
-          className={`${card.bg} rounded-xl border border-gray-200 dark:border-gray-800 px-3 py-2.5`}
-        >
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{card.label}</p>
-          <p className={`text-xs font-semibold tabular-nums truncate ${card.color}`}>
-            {formatVND(card.value)}
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm dark:border dark:border-gray-800 px-5 py-4">
+      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Net Balance</p>
+      <p className={`text-2xl font-bold tabular-nums ${net >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-rose-600 dark:text-rose-400'}`}>
+        {net >= 0 ? '+' : ''}{formatVND(net)}
+      </p>
+      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex gap-6">
+        <div>
+          <p className="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Income</p>
+          <p className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+            +{formatVND(totalIncome)}
           </p>
         </div>
-      ))}
+        <div>
+          <p className="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Expense</p>
+          <p className="text-sm font-semibold tabular-nums text-rose-500 dark:text-rose-400">
+            {formatVND(totalExpense)}
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

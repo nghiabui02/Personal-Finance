@@ -7,10 +7,12 @@ import { useState } from 'react'
 
 export default function Header({
   user,
+  title,
   onMenuToggle,
 }: {
   user: User
-    onMenuToggle?: () => void
+  title?: string
+  onMenuToggle?: () => void
 }) {
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
@@ -42,13 +44,10 @@ export default function Header({
         </svg>
       </button>
 
-      {/* App name — mobile only */}
-      <span className="md:hidden text-sm font-semibold text-gray-900 dark:text-gray-100 flex-1">
-        Finance
+      {/* Page title */}
+      <span className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
+        {title ?? 'Finance'}
       </span>
-
-      {/* Spacer — desktop */}
-      <div className="hidden md:block flex-1" />
 
       {/* Avatar + name/email */}
       <div className="hidden sm:flex items-center gap-2">
