@@ -31,43 +31,36 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Create account</h1>
-        <p className="mt-1 text-sm text-gray-500">Start managing your finances today</p>
+    <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm">
+      {/* Brand header */}
+      <div className="bg-slate-900 px-6 py-5">
+        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
+          <span className="text-white font-bold text-base leading-none">₫</span>
+        </div>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Personal Finance</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          placeholder="you@example.com"
-        />
-        <Input
-          label="Password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          placeholder="At least 6 characters"
-        />
+      {/* Form */}
+      <div className="bg-white dark:bg-gray-900 px-6 py-6">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1">Create account</h1>
+        <p className="text-sm text-gray-400 mb-6">Start managing your finances today</p>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input label="Email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" />
+          <Input label="Password" name="password" type="password" autoComplete="new-password" required placeholder="At least 6 characters" />
+          {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+          <Button type="submit" disabled={isPending} fullWidth>
+            {isPending ? 'Creating account...' : 'Create account'}
+          </Button>
+        </form>
 
-        <Button type="submit" disabled={isPending} fullWidth>
-          {isPending ? 'Creating account...' : 'Create account'}
-        </Button>
-      </form>
-
-      <p className="mt-6 text-center text-sm text-gray-500">
-        Already have an account?{' '}
-        <Link href="/login" className="font-medium text-blue-600 hover:underline">
-          Sign in
-        </Link>
-      </p>
+        <p className="mt-5 text-center text-sm text-gray-400">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-indigo-500 hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

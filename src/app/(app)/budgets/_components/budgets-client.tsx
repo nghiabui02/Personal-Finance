@@ -2,6 +2,9 @@
 
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
+import { PeriodNav } from '@/components/ui/period-nav'
 import { formatVND } from '@/lib/utils/currency'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
 import { type Category } from '@/lib/api/categories'
@@ -14,6 +17,17 @@ interface BudgetsClientProps {
   expenseCategories: Category[]
   month: string
 }
+
+const PENCIL = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+  </svg>
+)
+const TRASH = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+  </svg>
+)
 
 function BudgetCard({
   budget,
@@ -28,18 +42,23 @@ function BudgetCard({
   const isOver = budget.spent > budget.amount
   const isWarning = !isOver && pct >= 80
 
-  const barColor = isOver ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-blue-500'
-  const statusColor = isOver
-    ? 'text-red-600 dark:text-red-400'
+  const barColor = isOver
+    ? '#f43f5e'
     : isWarning
-    ? 'text-yellow-600 dark:text-yellow-400'
-    : 'text-gray-500 dark:text-gray-400'
+    ? '#f59e0b'
+    : (budget.categories?.color ?? '#6366f1')
+
+  const statusColor = isOver
+    ? 'text-rose-600 dark:text-rose-400'
+    : isWarning
+    ? 'text-amber-600 dark:text-amber-400'
+    : 'text-gray-400 dark:text-gray-500'
 
   const cat = budget.categories
   const remaining = budget.amount - budget.spent
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <div
@@ -61,30 +80,15 @@ function BudgetCard({
         </div>
 
         <div className="flex gap-0.5 shrink-0">
-          <button
-            onClick={onEdit}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
-            </svg>
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-            </svg>
-          </button>
+          <button onClick={onEdit} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{PENCIL}</button>
+          <button onClick={onDelete} className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">{TRASH}</button>
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-2">
+      <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-2">
         <div
-          className={`h-full rounded-full transition-all ${barColor}`}
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct}%`, backgroundColor: barColor }}
         />
       </div>
 
@@ -107,6 +111,7 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
   const totalSpent = budgets.reduce((s, b) => s + Number(b.spent), 0)
   const overCount = budgets.filter(b => b.spent > b.amount).length
   const existingCategoryIds = budgets.map(b => b.category_id).filter(Boolean) as string[]
+  const spentPct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0
 
   const [y, m] = month.split('-').map(Number)
   const monthLabel = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -128,63 +133,69 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
 
   return (
     <>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Budgets</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Set spending limits by category</p>
-        </div>
-        <Button onClick={() => { setEditingBudget(null); setModalOpen(true) }} className="shrink-0">
+      <PageHeader title="Budgets" subtitle="Set spending limits by category">
+        <Button onClick={() => { setEditingBudget(null); setModalOpen(true) }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
           New budget
         </Button>
-      </div>
+      </PageHeader>
 
-      {/* Month navigator */}
-      <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit mb-5">
-        <button onClick={() => navigate(-1)} className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-        </button>
-        <span className="px-2 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-36 text-center">{monthLabel}</span>
-        <button onClick={() => navigate(1)} className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-          </svg>
-        </button>
-      </div>
+      <PeriodNav
+        label={monthLabel}
+        onPrev={() => navigate(-1)}
+        onNext={() => navigate(1)}
+        className="mb-5"
+      />
 
-      {/* Summary */}
+      {/* Hero panel */}
       {budgets.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          {[
-            { label: 'Budgeted', value: totalBudget, color: 'text-gray-900 dark:text-gray-100' },
-            { label: 'Spent', value: totalSpent, color: totalSpent > totalBudget ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400' },
-            {
-              label: overCount > 0 ? `${overCount} over budget` : 'Remaining',
-              value: Math.abs(totalBudget - totalSpent),
-              color: totalSpent > totalBudget ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400',
-            },
-          ].map(item => (
-            <div key={item.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{item.label}</p>
-              <p className={`text-sm font-semibold tabular-nums ${item.color}`}>{formatVND(item.value)}</p>
+        <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 mb-5">
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              Budget Overview
+            </p>
+            {overCount > 0 && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400">
+                {overCount} over budget
+              </span>
+            )}
+          </div>
+
+          <p className={`text-[2.5rem] font-bold tabular-nums tracking-tight leading-none ${
+            totalSpent > totalBudget ? 'text-rose-400' : 'text-white'
+          }`}>
+            {formatVND(totalSpent)}
+          </p>
+          <p className="text-sm text-slate-500 mt-1">of {formatVND(totalBudget)} budgeted</p>
+
+          {totalBudget > 0 && (
+            <div className="mt-4">
+              <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${totalSpent > totalBudget ? 'bg-rose-500' : 'bg-emerald-400'}`}
+                  style={{ width: `${spentPct}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <p className="text-[10px] text-slate-600">{Math.round(spentPct)}% spent</p>
+                <p className="text-[10px] text-slate-600">
+                  {totalSpent > totalBudget
+                    ? `${formatVND(totalSpent - totalBudget)} over`
+                    : `${formatVND(totalBudget - totalSpent)} left`}
+                </p>
+              </div>
             </div>
-          ))}
+          )}
         </div>
       )}
 
-      {/* Budget list */}
       {budgets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-gray-400 text-sm">No budgets for this month.</p>
-          <button onClick={() => { setEditingBudget(null); setModalOpen(true) }} className="mt-2 text-sm text-blue-600 hover:underline">
-            Create your first budget
-          </button>
-        </div>
+        <EmptyState
+          message="No budgets for this month."
+          action={{ label: 'Create your first budget', onClick: () => { setEditingBudget(null); setModalOpen(true) } }}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {budgets.map(b => (

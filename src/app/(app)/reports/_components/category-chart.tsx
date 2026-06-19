@@ -1,120 +1,70 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { formatVND } from '@/lib/utils/currency'
-import { useState } from 'react'
 import type { CategoryData } from './types'
-import { Pie, PieChart, ResponsiveContainer, Sector } from 'recharts'
 
 const FALLBACK_COLORS = [
   '#ef4444','#f97316','#eab308','#22c55e',
   '#06b6d4','#3b82f6','#8b5cf6','#ec4899',
 ]
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const renderActiveShape = (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
-  return (
-    <Sector
-      cx={cx} cy={cy}
-      innerRadius={innerRadius}
-      outerRadius={outerRadius + 5}
-      startAngle={startAngle}
-      endAngle={endAngle}
-      fill={fill}
-    />
-  )
-}
-
 export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; totalExpense: number }) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [ready, setReady] = useState(false)
 
-  const chartData = data.map((d, i) => ({
-    ...d,
-    fill: d.color ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length],
-  }))
-
-  const active = activeIndex !== null ? chartData[activeIndex] : null
-  const pct = active && totalExpense > 0
-    ? ((active.amount / totalExpense) * 100).toFixed(1)
-    : null
+  useEffect(() => {
+    setReady(false)
+    const id = setTimeout(() => setReady(true), 50)
+    return () => clearTimeout(id)
+  }, [data])
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        Expense by Category
-      </h2>
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-5">
+        Spending Breakdown
+      </p>
 
       {data.length === 0 ? (
-        <div className="h-48 flex items-center justify-center text-sm text-gray-400">
-          No expense data
+        <div className="h-32 flex items-center justify-center text-sm text-gray-400">
+          No expense data for this period
         </div>
       ) : (
-        <>
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%" cy="50%"
-                  innerRadius={60} outerRadius={90}
-                  paddingAngle={2} dataKey="amount"
-                  strokeWidth={0}
-                  activeIndex={activeIndex ?? undefined}
-                  activeShape={renderActiveShape}
-                  onMouseEnter={(_, index) => setActiveIndex(index)}
-                  onMouseLeave={() => setActiveIndex(null)}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-
-            {/* Center label — updates on hover */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center px-2">
-                {active ? (
-                  <>
-                    <p className="text-base leading-tight">{active.icon ?? ''}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[80px]">
-                      {active.name}
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
-                      {formatVND(active.amount)}
-                    </p>
-                    <p className="text-xs text-gray-400">{pct}%</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-xs text-gray-400 mb-0.5">Total</p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {formatVND(totalExpense)}
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <ul className="mt-3 space-y-2">
-            {chartData.map((d, i) => {
-              const p = totalExpense > 0 ? ((d.amount / totalExpense) * 100).toFixed(1) : '0'
-              const isActive = activeIndex === i
-              return (
-                <li
-                  key={d.id}
-                  className={`flex items-center gap-2 transition-opacity ${activeIndex !== null && !isActive ? 'opacity-40' : ''}`}
-                >
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.fill }} />
-                  <span className="text-xs text-gray-500 dark:text-gray-400 flex-1 truncate">
-                    {d.icon} {d.name}
+        <ul className="space-y-4">
+          {data.map((item, i) => {
+            const color = item.color ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]
+            const pct = totalExpense > 0 ? (item.amount / totalExpense) * 100 : 0
+            return (
+              <li key={item.id}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-sm leading-none w-5 text-center shrink-0">
+                    {item.icon ?? '·'}
                   </span>
-                  <span className="text-xs text-gray-400 tabular-nums">{p}%</span>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 tabular-nums">
-                    {formatVND(d.amount)}
+                  <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate min-w-0">
+                    {item.name}
                   </span>
-                </li>
-              )
-            })}
-          </ul>
-        </>
+                  <span className="text-xs text-gray-400 tabular-nums shrink-0 w-9 text-right">
+                    {pct.toFixed(0)}%
+                  </span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 tabular-nums shrink-0">
+                    {formatVND(item.amount)}
+                  </span>
+                </div>
+                <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: ready ? `${pct}%` : '0%',
+                      backgroundColor: color,
+                      transition: ready
+                        ? `width 600ms cubic-bezier(0.4, 0, 0.2, 1) ${i * 55}ms`
+                        : 'none',
+                    }}
+                  />
+                </div>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </div>
   )

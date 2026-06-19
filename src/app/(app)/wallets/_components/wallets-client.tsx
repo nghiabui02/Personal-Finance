@@ -2,6 +2,8 @@
 
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { formatVND } from '@/lib/utils/currency'
 import { type Wallet, walletsApi } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
@@ -29,57 +31,50 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   function handleDeleteConfirmed() {
     if (!confirmId) return
     startTransition(async () => {
-      try {
-        await walletsApi.delete(confirmId)
-        router.refresh()
-      } catch {
-        // add toast later
-      } finally {
-        setConfirmId(null)
-      }
+      try { await walletsApi.delete(confirmId); router.refresh() }
+      catch { /* toast later */ }
+      finally { setConfirmId(null) }
     })
   }
 
   return (
     <>
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Wallets</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Manage your accounts and balances</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {wallets.length >= 2 && (
-            <Button variant="secondary" onClick={() => setTransferOpen(true)}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-              </svg>
-              Transfer
-            </Button>
-          )}
-          <Button onClick={() => openModal()}>
+      <PageHeader title="Wallets" subtitle="Manage your accounts and balances">
+        {wallets.length >= 2 && (
+          <Button variant="secondary" onClick={() => setTransferOpen(true)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
             </svg>
-            New wallet
+            Transfer
           </Button>
-        </div>
-      </div>
+        )}
+        <Button onClick={() => openModal()}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+          </svg>
+          New wallet
+        </Button>
+      </PageHeader>
 
       {wallets.length > 0 && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-6 mb-6 text-white">
-          <p className="text-sm font-medium opacity-80 mb-1">Total Balance</p>
-          <p className="text-3xl font-bold tracking-tight">{formatVND(totalBalance)}</p>
-          <p className="text-xs opacity-60 mt-1">{wallets.length} wallet{wallets.length > 1 ? 's' : ''}</p>
+        <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 mb-5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
+            Total Balance
+          </p>
+          <p className="text-[2.5rem] font-bold tracking-tight text-white tabular-nums leading-none">
+            {formatVND(totalBalance)}
+          </p>
+          <p className="text-sm text-slate-500 mt-1.5">
+            across {wallets.length} wallet{wallets.length !== 1 ? 's' : ''}
+          </p>
         </div>
       )}
 
       {wallets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-gray-400 text-sm">No wallets yet.</p>
-          <button onClick={() => openModal()} className="mt-2 text-sm text-blue-600 hover:underline">
-            Add your first wallet
-          </button>
-        </div>
+        <EmptyState
+          message="No wallets yet."
+          action={{ label: 'Add your first wallet', onClick: () => openModal() }}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {wallets.map(wallet => (

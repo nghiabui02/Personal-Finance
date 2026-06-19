@@ -2,7 +2,7 @@
 
 import { formatVND, formatCompactVND } from '@/lib/utils/currency'
 import { useTheme } from 'next-themes'
-import { Bar, BarChart as RechartsBarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart as RechartsBarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { ChartPoint } from './types'
 import type { PeriodType } from './reports-client'
 
@@ -19,35 +19,48 @@ export function BarChart({ data, title, period }: BarChartProps) {
 
   const tickInterval = period === 'month' ? 4 : 0
   const tooltipStyle = {
-    borderRadius: '10px',
-    border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-    backgroundColor: isDark ? '#1f2937' : '#ffffff',
-    color: isDark ? '#f3f4f6' : '#111827',
+    borderRadius: '12px',
+    border: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}`,
+    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+    color: isDark ? '#f1f5f9' : '#0f172a',
     fontSize: '12px',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h2>
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{title}</p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-[10px] text-gray-400">Income</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-rose-500" />
+            <span className="text-[10px] text-gray-400">Expense</span>
+          </div>
+        </div>
+      </div>
 
       {!hasData ? (
         <div className="h-48 flex items-center justify-center text-sm text-gray-400">
           No data for this period
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={240}>
           <RechartsBarChart data={data} barGap={2} barCategoryGap={period === 'month' ? '15%' : '30%'}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#f1f5f9'} vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 11, fill: '#9ca3af' }}
+              tick={{ fontSize: 11, fill: '#94a3b8' }}
               axisLine={false}
               tickLine={false}
               interval={tickInterval}
             />
             <YAxis
               tickFormatter={v => formatCompactVND(v)}
-              tick={{ fontSize: 11, fill: '#9ca3af' }}
+              tick={{ fontSize: 11, fill: '#94a3b8' }}
               axisLine={false}
               tickLine={false}
               width={72}
@@ -60,9 +73,8 @@ export function BarChart({ data, title, period }: BarChartProps) {
               ]) as never}
               contentStyle={tooltipStyle}
             />
-            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-            <Bar dataKey="income"  name="income"  fill="#22c55e" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="expense" name="expense" fill="#ef4444" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="income"  name="income"  fill="#10b981" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="expense" name="expense" fill="#f43f5e" radius={[3, 3, 0, 0]} />
           </RechartsBarChart>
         </ResponsiveContainer>
       )}
