@@ -99,7 +99,7 @@ export default function SettingsClient({
         }
         const ext = avatarFile.name.split('.').pop()?.toLowerCase() ?? 'jpg'
         const path = `${userId}/avatar.${ext}`
-        const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, avatarFile)
+        const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, avatarFile, { upsert: true })
         if (uploadError) throw new Error(uploadError.message)
         const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
         finalAvatarUrl = `${data.publicUrl}?t=${Date.now()}`
