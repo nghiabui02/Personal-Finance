@@ -66,15 +66,10 @@ function TransactionRow({
   onEdit: (tx: Transaction) => void
   onDelete: (id: string) => void
 }) {
-  const [hovered, setHovered] = useState(false)
   const cat = tx.categories
 
   return (
-    <div
-      className="flex items-center gap-3 px-4 py-3"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className="flex items-center gap-3 px-4 py-3">
       <div
         className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base"
         style={{ backgroundColor: cat?.color ? `${cat.color}22` : '#f3f4f6' }}
@@ -97,10 +92,7 @@ function TransactionRow({
         {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
       </span>
 
-      <div
-        className="flex gap-0.5 transition-opacity duration-150"
-        style={{ opacity: hovered ? 1 : 0, pointerEvents: hovered ? 'auto' : 'none' }}
-      >
+      <div className="flex gap-0.5">
         <button
           onClick={() => onEdit(tx)}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
