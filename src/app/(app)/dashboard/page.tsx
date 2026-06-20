@@ -34,14 +34,12 @@ export default async function DashboardPage({
 
   const [
     { data: incomeRows },
-    { data: expenseRows },
     { data: recentRows },
     { data: expenseCatRows },
     { data: budgetRows },
     { data: debtRows },
   ] = await Promise.all([
     supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate),
-    supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
     supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
     supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
     supabase.from('budgets').select('id, amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('month', startDate),
@@ -49,14 +47,16 @@ export default async function DashboardPage({
   ])
 
   const totalIncome = (incomeRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
-  const totalExpense = (expenseRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
 
+  let totalExpense = 0
   const catMap = new Map<string, { id: string; name: string; icon: string | null; color: string | null; amount: number }>()
   for (const row of expenseCatRows ?? []) {
+    const rowAmount = Number(row.amount)
+    totalExpense += rowAmount
     const cat = row.categories as unknown as { id: string; name: string; icon: string | null; color: string | null } | null
     if (!cat) continue
     const prev = catMap.get(cat.id)
-    catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + Number(row.amount) })
+    catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + rowAmount })
   }
   const expenseByCategory = [...catMap.values()].sort((a, b) => b.amount - a.amount)
 

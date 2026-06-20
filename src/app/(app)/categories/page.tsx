@@ -15,9 +15,13 @@ export default async function CategoriesPage({
   const initialTab = type === 'income' ? 'income' : 'expense'
 
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
   const { data: categories } = await supabase
     .from('categories')
     .select('*')
+    .or(`user_id.eq.${user.id},is_default.eq.true`)
     .order('is_default', { ascending: false })
     .order('name')
 

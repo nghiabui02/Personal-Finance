@@ -107,32 +107,26 @@ export default async function ReportsPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const [{ data: txs }, { data: expenseRows }] = await Promise.all([
-    supabase
-      .from('transactions')
-      .select('type, amount, transaction_date')
-      .eq('user_id', user.id)
-      .gte('transaction_date', startDate)
-      .lt('transaction_date', endDate),
-    supabase
-      .from('transactions')
-      .select('amount, categories(id, name, icon, color)')
-      .eq('user_id', user.id)
-      .eq('type', 'expense')
-      .gte('transaction_date', startDate)
-      .lt('transaction_date', endDate),
-  ])
+  const { data: rows } = await supabase
+    .from('transactions')
+    .select('type, amount, transaction_date, categories(id, name, icon, color)')
+    .eq('user_id', user.id)
+    .gte('transaction_date', startDate)
+    .lt('transaction_date', endDate)
 
-  const transactions = (txs ?? []) as RawTx[]
-  const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
-
+  const transactions = (rows ?? []) as RawTx[]
+  let totalIncome = 0
+  let totalExpense = 0
   const catMap = new Map<string, CategoryData>()
-  for (const row of expenseRows ?? []) {
+
+  for (const row of rows ?? []) {
+    const amt = Number(row.amount)
+    if (row.type === 'income') { totalIncome += amt; continue }
+    totalExpense += amt
     const cat = row.categories as unknown as { id: string; name: string; icon: string | null; color: string | null } | null
     if (!cat) continue
     const prev = catMap.get(cat.id)
-    catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + Number(row.amount) })
+    catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + amt })
   }
 
   return (

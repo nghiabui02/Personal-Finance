@@ -8,9 +8,13 @@ export const dynamic = 'force-dynamic'
 
 export default async function WalletsPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
   const { data: wallets } = await supabase
     .from('wallets')
     .select('*')
+    .eq('user_id', user.id)
     .order('is_default', { ascending: false })
     .order('created_at')
 
