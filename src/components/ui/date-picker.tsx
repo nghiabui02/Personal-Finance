@@ -90,7 +90,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
       // Decide if calendar should open upward
       if (triggerRef.current) {
         const rect = triggerRef.current.getBoundingClientRect()
-        setOpenUpward(window.innerHeight - rect.bottom < 320)
+        setOpenUpward(window.innerHeight - rect.bottom < 380)
       }
     }
     setOpen(v => !v)

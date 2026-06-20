@@ -2,7 +2,7 @@
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
-import { CustomSelect } from '@/components/ui/custom-select'
+import { CategorySelect } from '@/components/ui/category-select'
 import { Modal } from '@/components/ui/modal'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
 import { type Category } from '@/lib/api/categories'
@@ -55,15 +55,8 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
   )
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
 
-  // Filter out already-budgeted categories (except the one being edited)
-  const availableCategories = expenseCategories.filter(
-    c => !existingCategoryIds.includes(c.id) || c.id === editing?.category_id
-  )
-
-  const categoryOptions = [
-    { value: '', label: 'No category' },
-    ...availableCategories.map(c => ({ value: c.id, label: c.name, icon: c.icon, color: c.color })),
-  ]
+  const editingCategoryId = editing?.category_id
+  const excludedIds = existingCategoryIds.filter(id => id !== editingCategoryId)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -96,13 +89,11 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
         {!editing && <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />}
 
         {!editing && (
-          <CustomSelect
-            label="Category"
-            name="category_id"
-            options={categoryOptions}
+          <CategorySelect
+            categories={expenseCategories}
+            excludeIds={excludedIds}
             value={categoryId}
             onChange={setCategoryId}
-            placeholder="No category"
           />
         )}
 

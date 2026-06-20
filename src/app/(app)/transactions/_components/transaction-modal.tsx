@@ -2,6 +2,7 @@
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
+import { CategorySelect } from '@/components/ui/category-select'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { TabGroup } from '@/components/ui/tab-group'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -34,13 +35,6 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
     editing?.transaction_date ?? defaultDate ?? new Date().toISOString().slice(0, 10)
   )
   const [showFee, setShowFee] = useState(false)
-
-  const categoryOptions = [
-    { value: '', label: 'No category' },
-    ...categories
-      .filter(c => c.type === txType)
-      .map(c => ({ value: c.id, label: c.name, icon: c.icon, color: c.color })),
-  ]
 
   const walletOptions = [
     { value: '', label: 'No wallet' },
@@ -123,8 +117,9 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
 
         {/* Category + Wallet */}
         <div className="grid grid-cols-2 gap-3">
-          <CustomSelect label="Category" name="category_id" options={categoryOptions}
-            value={categoryId} onChange={setCategoryId} placeholder="None" searchable />
+          <CategorySelect
+            categories={categories} filterType={txType}
+            value={categoryId} onChange={setCategoryId} searchable />
           {wallets.length > 0
             ? <CustomSelect label="Wallet" name="wallet_id" options={walletOptions}
                 value={walletId} onChange={setWalletId} placeholder="None" />

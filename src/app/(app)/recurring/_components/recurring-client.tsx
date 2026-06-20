@@ -2,6 +2,7 @@
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
+import { CategorySelect } from '@/components/ui/category-select'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -38,10 +39,6 @@ function RecurringModal({
   const [startDate, setStartDate] = useState(editing?.start_date ?? new Date().toISOString().slice(0, 10))
   const [endDate, setEndDate] = useState(editing?.end_date ?? '')
 
-  const categoryOptions = [
-    { value: '', label: 'No category' },
-    ...categories.filter(c => c.type === txType).map(c => ({ value: c.id, label: c.name, icon: c.icon, color: c.color })),
-  ]
   const walletOptions = [
     { value: '', label: 'No wallet' },
     ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
@@ -113,8 +110,9 @@ function RecurringModal({
 
         {/* Category + Wallet */}
         <div className="grid grid-cols-2 gap-3">
-          <CustomSelect label="Category" name="category_id" options={categoryOptions}
-            value={categoryId} onChange={setCategoryId} placeholder="None" />
+          <CategorySelect
+            categories={categories} filterType={txType}
+            value={categoryId} onChange={setCategoryId} />
           {wallets.length > 0
             ? <CustomSelect label="Wallet" name="wallet_id" options={walletOptions}
                 value={walletId} onChange={setWalletId} placeholder="None" />

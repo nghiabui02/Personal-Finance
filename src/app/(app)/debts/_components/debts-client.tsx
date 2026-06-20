@@ -58,12 +58,12 @@ function DebtModal({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const get = (name: string) => (form.elements.namedItem(name) as HTMLInputElement).value
+    const get = (name: string) => (form.elements.namedItem(name) as HTMLInputElement | null)?.value ?? ''
     const amount = Number(get('amount'))
     const person_name = get('person_name').trim()
 
     if (!person_name) { setError('Name is required.'); return }
-    if (!amount || amount <= 0) { setError('Amount is required.'); return }
+    if (!editing && (!amount || amount <= 0)) { setError('Amount is required.'); return }
 
     setError(null)
     startTransition(async () => {
