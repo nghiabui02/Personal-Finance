@@ -5,6 +5,7 @@ interface WalletCardProps {
   wallet: Wallet
   onEdit: () => void
   onDelete: () => void
+  onTransfer: () => void
   isDeleting: boolean
 }
 
@@ -16,7 +17,7 @@ const WALLET_ICONS: Record<Wallet['type'], string> = {
   other: '💼',
 }
 
-export function WalletCard({ wallet, onEdit, onDelete, isDeleting }: WalletCardProps) {
+export function WalletCard({ wallet, onEdit, onDelete, onTransfer, isDeleting }: WalletCardProps) {
   const defaultIcon = WALLET_ICONS[wallet.type]
   const bg = wallet.color ?? '#3b82f6'
 
@@ -48,6 +49,15 @@ export function WalletCard({ wallet, onEdit, onDelete, isDeleting }: WalletCardP
 
       {/* Actions */}
       <div className="flex gap-1.5 mt-1">
+        <button
+          onClick={onTransfer}
+          className="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-lg transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/>
+          </svg>
+          Transfer
+        </button>
         <button
           onClick={onEdit}
           className="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-lg transition-colors"

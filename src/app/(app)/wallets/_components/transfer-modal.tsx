@@ -21,13 +21,16 @@ function formatWithDots(v: string) {
 
 interface TransferModalProps {
   wallets: Wallet[]
+  defaultFromId?: string
   onClose: () => void
 }
 
-export function TransferModal({ wallets, onClose }: TransferModalProps) {
+export function TransferModal({ wallets, defaultFromId, onClose }: TransferModalProps) {
   const router = useRouter()
-  const [fromId, setFromId] = useState(wallets[0]?.id ?? '')
-  const [toId, setToId] = useState(wallets[1]?.id ?? wallets[0]?.id ?? '')
+  const [fromId, setFromId] = useState(defaultFromId ?? wallets[0]?.id ?? '')
+  const [toId, setToId] = useState(
+    wallets.find(w => w.id !== (defaultFromId ?? wallets[0]?.id))?.id ?? ''
+  )
   const [amountDisplay, setAmountDisplay] = useState('')
   const [date, setDate] = useState(todayYMD())
   const [note, setNote] = useState('')

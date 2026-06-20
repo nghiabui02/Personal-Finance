@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatVND } from '@/lib/utils/currency'
@@ -18,6 +17,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [transferOpen, setTransferOpen] = useState(false)
+  const [transferFromId, setTransferFromId] = useState<string | undefined>(undefined)
 
   const totalBalance = wallets.reduce((sum, w) => sum + Number(w.balance), 0)
   const confirmWallet = wallets.find(w => w.id === confirmId)
@@ -38,22 +38,15 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
 
   return (
     <>
-      <div className="flex items-center justify-end gap-2 mb-5">
-        {wallets.length >= 2 && (
-          <Button variant="secondary" onClick={() => setTransferOpen(true)}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-            </svg>
-            Transfer
-          </Button>
-        )}
-        <Button onClick={() => openModal()}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-          </svg>
-          New wallet
-        </Button>
-      </div>
+      <button
+        onClick={() => openModal()}
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors flex items-center justify-center"
+        aria-label="New wallet"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+      </button>
 
       {wallets.length > 0 && (
         <div className="bg-slate-900 dark:bg-slate-800 rounded-2xl p-5 mb-5">
@@ -82,6 +75,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
               wallet={wallet}
               onEdit={() => openModal(wallet)}
               onDelete={() => setConfirmId(wallet.id)}
+              onTransfer={() => { setTransferFromId(wallet.id); setTransferOpen(true) }}
               isDeleting={isPending && confirmId === wallet.id}
             />
           ))}
@@ -99,7 +93,8 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
       {transferOpen && wallets.length >= 2 && (
         <TransferModal
           wallets={wallets}
-          onClose={() => setTransferOpen(false)}
+          defaultFromId={transferFromId}
+          onClose={() => { setTransferOpen(false); setTransferFromId(undefined) }}
         />
       )}
 
