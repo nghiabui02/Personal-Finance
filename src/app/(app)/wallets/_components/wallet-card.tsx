@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { formatVND } from '@/lib/utils/currency'
 import { type Wallet, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
 
@@ -33,19 +34,22 @@ export function WalletCard({ wallet, onEdit, onDelete, onTransfer, isDeleting }:
         </span>
       )}
 
-      {/* Icon + type */}
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">{wallet.icon || defaultIcon}</span>
-        <span className="text-xs font-medium opacity-80 bg-white/20 px-2 py-0.5 rounded-full">
-          {WALLET_TYPE_LABELS[wallet.type]}
-        </span>
-      </div>
+      {/* Clickable area → detail page */}
+      <Link href={`/wallets/${wallet.id}`} className="flex flex-col gap-3 group">
+        {/* Icon + type */}
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{wallet.icon || defaultIcon}</span>
+          <span className="text-xs font-medium opacity-80 bg-white/20 px-2 py-0.5 rounded-full">
+            {WALLET_TYPE_LABELS[wallet.type]}
+          </span>
+        </div>
 
-      {/* Name */}
-      <p className="font-semibold text-base leading-tight">{wallet.name}</p>
+        {/* Name */}
+        <p className="font-semibold text-base leading-tight group-hover:underline underline-offset-2">{wallet.name}</p>
 
-      {/* Balance */}
-      <p className="text-2xl font-bold tracking-tight">{formatVND(wallet.balance)}</p>
+        {/* Balance */}
+        <p className="text-2xl font-bold tracking-tight">{formatVND(wallet.balance)}</p>
+      </Link>
 
       {/* Actions */}
       <div className="flex gap-1.5 mt-1">

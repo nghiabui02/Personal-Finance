@@ -83,7 +83,7 @@ export default function AppShell({
       )}
 
       <div className="flex flex-col md:flex-1 md:min-w-0 md:overflow-hidden">
-        <Header user={user} title={PAGE_TITLES[pathname] ?? 'Finance'} onMenuToggle={sidebarOpen ? handleCloseSidebar : handleOpenSidebar} />
+        <Header user={user} title={PAGE_TITLES[pathname] ?? Object.entries(PAGE_TITLES).find(([k]) => pathname.startsWith(k + '/'))?.at(1) ?? 'Finance'} onMenuToggle={sidebarOpen ? handleCloseSidebar : handleOpenSidebar} />
         <main className="pt-4 px-4 pb-safe-or-4 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pt-6 md:px-6">
           {children}
         </main>
