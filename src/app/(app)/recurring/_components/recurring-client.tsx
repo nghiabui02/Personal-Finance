@@ -112,7 +112,7 @@ function RecurringModal({
         <div className="grid grid-cols-2 gap-3">
           <CategorySelect
             categories={categories} filterType={txType}
-            value={categoryId} onChange={setCategoryId} />
+            value={categoryId} onChange={setCategoryId} searchable />
           {wallets.length > 0
             ? <CustomSelect label="Wallet" name="wallet_id" options={walletOptions}
                 value={walletId} onChange={setWalletId} placeholder="None" />

@@ -61,10 +61,14 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
   return (
     <Modal title={editing ? 'Edit goal' : 'New saving goal'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <EmojiPickerInput label="Icon" name="icon" defaultValue={editing?.icon ?? ''} />
-        <Input label="Goal name" name="name" defaultValue={editing?.name ?? ''} required placeholder="e.g. Buy a motorbike" />
-        <AmountInput label="Target amount" name="target_amount" defaultValue={editing?.target_amount} required />
-        <DatePicker label="Deadline (optional)" name="deadline" value={deadline} onChange={setDeadline} />
+        <div className="grid grid-cols-2 gap-3">
+          <EmojiPickerInput label="Icon" name="icon" defaultValue={editing?.icon ?? ''} />
+          <Input label="Goal name" name="name" defaultValue={editing?.name ?? ''} required placeholder="e.g. Buy a motorbike" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <AmountInput label="Target amount" name="target_amount" defaultValue={editing?.target_amount} required />
+          <DatePicker label="Deadline (optional)" name="deadline" value={deadline} onChange={setDeadline} />
+        </div>
         <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="Why this goal?" />
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex gap-2 pt-1">

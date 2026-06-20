@@ -131,13 +131,13 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
             : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
         }`}
       >
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-2 min-w-0 overflow-hidden">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-gray-400 shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
           </svg>
           {value
-            ? <span className="text-gray-900 dark:text-gray-100">{toDisplay(value)}</span>
-            : <span className="text-gray-400">DD-MM-YYYY</span>
+            ? <span className="text-gray-900 dark:text-gray-100 whitespace-nowrap truncate">{toDisplay(value)}</span>
+            : <span className="text-gray-400 whitespace-nowrap">DD-MM-YYYY</span>
           }
         </span>
         {/* Right icon: × when has value and clearable, else chevron */}

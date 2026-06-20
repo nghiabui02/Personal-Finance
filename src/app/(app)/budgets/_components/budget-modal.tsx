@@ -94,6 +94,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
             excludeIds={excludedIds}
             value={categoryId}
             onChange={setCategoryId}
+            searchable
           />
         )}
 
