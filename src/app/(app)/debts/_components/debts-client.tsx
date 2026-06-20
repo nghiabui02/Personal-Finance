@@ -31,17 +31,19 @@ const TRASH = (
 
 function DebtModal({
   editing,
+  defaultType = 'lend',
   wallets,
   onClose,
 }: {
   editing: Debt | null
+  defaultType?: 'lend' | 'borrow'
   wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
   onClose: () => void
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [type, setType] = useState<'lend' | 'borrow'>(editing?.type ?? 'lend')
+  const [type, setType] = useState<'lend' | 'borrow'>(editing?.type ?? defaultType)
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [dueDate, setDueDate] = useState(editing?.due_date ?? '')
   const [walletId, setWalletId] = useState(
@@ -298,6 +300,60 @@ function DebtCard({
   )
 }
 
+// ── Debt Section ──────────────────────────────────────────────────────────────
+
+function DebtSection({
+  title,
+  color,
+  debts,
+  totalActive,
+  onEdit,
+  onDelete,
+  onPay,
+  onAdd,
+}: {
+  title: string
+  color: 'indigo' | 'orange'
+  debts: Debt[]
+  totalActive: number
+  onEdit: (d: Debt) => void
+  onDelete: (id: string) => void
+  onPay: (d: Debt) => void
+  onAdd: () => void
+}) {
+  const colorCls = color === 'indigo'
+    ? { amount: 'text-indigo-600 dark:text-indigo-400', badge: 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400', toggle: 'text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300' }
+    : { amount: 'text-orange-600 dark:text-orange-400', badge: 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400', toggle: 'text-orange-500 hover:text-orange-700 dark:hover:text-orange-300' }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+          {debts.length > 0 && (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${colorCls.badge}`}>{debts.length}</span>
+          )}
+        </div>
+        <span className={`text-sm font-semibold tabular-nums ${colorCls.amount}`}>{formatVND(totalActive)}</span>
+      </div>
+
+      {debts.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 py-8 flex flex-col items-center gap-2">
+          <p className="text-sm text-gray-400">No debts yet</p>
+          <button onClick={onAdd} className={`text-xs font-medium ${colorCls.toggle} transition-colors`}>+ Add</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {debts.map(d => (
+            <DebtCard key={d.id} debt={d}
+              onEdit={() => onEdit(d)} onDelete={() => onDelete(d.id)} onPay={() => onPay(d)} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function DebtsClient({
@@ -311,16 +367,26 @@ export default function DebtsClient({
   const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null)
+  const [defaultType, setDefaultType] = useState<'lend' | 'borrow'>('lend')
   const [payingDebt, setPayingDebt] = useState<Debt | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
+
   const [tab, setTab] = useState<'active' | 'completed'>('active')
 
-  const active = debts.filter(d => d.status !== 'completed')
-  const completed = debts.filter(d => d.status === 'completed')
-  const displayed = tab === 'active' ? active : completed
+  const lendDebts = debts.filter(d => d.type === 'lend' && (tab === 'active' ? d.status !== 'completed' : d.status === 'completed'))
+  const borrowDebts = debts.filter(d => d.type === 'borrow' && (tab === 'active' ? d.status !== 'completed' : d.status === 'completed'))
 
-  const totalLent = active.filter(d => d.type === 'lend').reduce((s, d) => s + d.remaining_amount, 0)
-  const totalBorrowed = active.filter(d => d.type === 'borrow').reduce((s, d) => s + d.remaining_amount, 0)
+  const activeCount = debts.filter(d => d.status !== 'completed').length
+  const completedCount = debts.filter(d => d.status === 'completed').length
+
+  const totalLent = debts.filter(d => d.type === 'lend' && d.status !== 'completed').reduce((s, d) => s + d.remaining_amount, 0)
+  const totalBorrowed = debts.filter(d => d.type === 'borrow' && d.status !== 'completed').reduce((s, d) => s + d.remaining_amount, 0)
+
+  function openNew(type: 'lend' | 'borrow') {
+    setDefaultType(type)
+    setEditingDebt(null)
+    setModalOpen(true)
+  }
 
   function handleDeleteConfirmed() {
     if (!confirmId) return
@@ -334,7 +400,7 @@ export default function DebtsClient({
   return (
     <>
       <button
-        onClick={() => { setEditingDebt(null); setModalOpen(true) }}
+        onClick={() => openNew('lend')}
         className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors flex items-center justify-center"
         aria-label="New debt"
       >
@@ -343,50 +409,47 @@ export default function DebtsClient({
         </svg>
       </button>
 
-      {active.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">People owe me</p>
-            <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">{formatVND(totalLent)}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">I owe others</p>
-            <p className="text-sm font-semibold text-orange-600 dark:text-orange-400 tabular-nums">{formatVND(totalBorrowed)}</p>
-          </div>
-        </div>
-      )}
-
       <TabGroup
         tabs={[
-          { key: 'active', label: `Active (${active.length})` },
-          { key: 'completed', label: `Completed (${completed.length})` },
+          { key: 'active', label: `Active (${activeCount})` },
+          { key: 'completed', label: `Completed (${completedCount})` },
         ]}
         value={tab}
         onChange={setTab}
         className="w-fit mb-5"
       />
 
-      {displayed.length === 0 ? (
-        <EmptyState
-          message={tab === 'active' ? 'No active debts.' : 'No completed debts yet.'}
-          action={tab === 'active' ? { label: 'Add one', onClick: () => { setEditingDebt(null); setModalOpen(true) } } : undefined}
+      <div className="space-y-8">
+        <DebtSection
+          title="Lent"
+          color="indigo"
+          debts={lendDebts}
+          totalActive={totalLent}
+          onEdit={d => { setEditingDebt(d); setModalOpen(true) }}
+          onDelete={id => setConfirmId(id)}
+          onPay={d => setPayingDebt(d)}
+          onAdd={() => openNew('lend')}
         />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {displayed.map(d => (
-            <DebtCard
-              key={d.id}
-              debt={d}
-              onEdit={() => { setEditingDebt(d); setModalOpen(true) }}
-              onDelete={() => setConfirmId(d.id)}
-              onPay={() => setPayingDebt(d)}
-            />
-          ))}
-        </div>
-      )}
+        <DebtSection
+          title="Borrowed"
+          color="orange"
+          debts={borrowDebts}
+          totalActive={totalBorrowed}
+          onEdit={d => { setEditingDebt(d); setModalOpen(true) }}
+          onDelete={id => setConfirmId(id)}
+          onPay={d => setPayingDebt(d)}
+          onAdd={() => openNew('borrow')}
+        />
+      </div>
 
       {modalOpen && (
-        <DebtModal key={editingDebt?.id ?? 'new'} editing={editingDebt} wallets={wallets} onClose={() => { setModalOpen(false); setEditingDebt(null) }} />
+        <DebtModal
+          key={editingDebt?.id ?? 'new'}
+          editing={editingDebt}
+          defaultType={defaultType}
+          wallets={wallets}
+          onClose={() => { setModalOpen(false); setEditingDebt(null) }}
+        />
       )}
       {payingDebt && (
         <PaymentModal debt={payingDebt} wallets={wallets} onClose={() => setPayingDebt(null)} />
