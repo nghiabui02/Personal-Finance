@@ -124,7 +124,7 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
         {/* Category + Wallet */}
         <div className="grid grid-cols-2 gap-3">
           <CustomSelect label="Category" name="category_id" options={categoryOptions}
-            value={categoryId} onChange={setCategoryId} placeholder="None" />
+            value={categoryId} onChange={setCategoryId} placeholder="None" searchable />
           {wallets.length > 0
             ? <CustomSelect label="Wallet" name="wallet_id" options={walletOptions}
                 value={walletId} onChange={setWalletId} placeholder="None" />
