@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
-import { PageHeader } from '@/components/ui/page-header'
 import { formatVND } from '@/lib/utils/currency'
 import { type Wallet, walletsApi } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
@@ -39,7 +38,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
 
   return (
     <>
-      <PageHeader title="Wallets" subtitle="Manage your accounts and balances">
+      <div className="flex items-center justify-end gap-2 mb-5">
         {wallets.length >= 2 && (
           <Button variant="secondary" onClick={() => setTransferOpen(true)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -54,17 +53,17 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
           </svg>
           New wallet
         </Button>
-      </PageHeader>
+      </div>
 
       {wallets.length > 0 && (
-        <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 mb-5">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
+        <div className="bg-slate-900 dark:bg-slate-800 rounded-2xl p-5 mb-5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">
             Total Balance
           </p>
           <p className="text-[2.5rem] font-bold tracking-tight text-white tabular-nums leading-none">
             {formatVND(totalBalance)}
           </p>
-          <p className="text-sm text-slate-500 mt-1.5">
+          <p className="text-sm text-slate-400 mt-1.5">
             across {wallets.length} wallet{wallets.length !== 1 ? 's' : ''}
           </p>
         </div>

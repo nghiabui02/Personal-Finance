@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { PageHeader } from '@/components/ui/page-header'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
@@ -205,8 +204,6 @@ export default function SettingsClient({
 
   return (
     <div className="max-w-lg mx-auto space-y-4">
-      <PageHeader title="Settings" />
-
       {/* Profile */}
       <Section title="Profile">
         <div className="flex items-center gap-4 mb-5">

@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
-import { PageHeader } from '@/components/ui/page-header'
 import { TabGroup } from '@/components/ui/tab-group'
 import { formatVND } from '@/lib/utils/currency'
 import { type Category } from '@/lib/api/categories'
@@ -250,6 +249,10 @@ export default function TransactionsClient({
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
+  const totalIncome  = transactions.filter(tx => tx.type === 'income').reduce((s, tx) => s + Number(tx.amount), 0)
+  const totalExpense = transactions.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0)
+  const totalNet = totalIncome - totalExpense
+
   const displayedTransactions = selectedDate
     ? transactions.filter(tx => tx.transaction_date === selectedDate)
     : transactions
@@ -277,7 +280,19 @@ export default function TransactionsClient({
   return (
     <div className="flex flex-col lg:h-full">
       <div className="shrink-0 pb-3 mb-1">
-        <PageHeader title="Transactions">
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {[
+            { label: 'Income',  value: totalIncome,  cls: 'text-emerald-600 dark:text-emerald-400' },
+            { label: 'Expense', value: totalExpense, cls: 'text-rose-600 dark:text-rose-400' },
+            { label: 'Net',     value: totalNet,     cls: totalNet >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400' },
+          ].map(item => (
+            <div key={item.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 px-3 py-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-0.5">{item.label}</p>
+              <p className={`text-xs font-semibold tabular-nums ${item.cls}`}>{formatVND(item.value)}</p>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-between mb-5">
           <ViewSelector view={view} />
           <Button onClick={() => openModal()}>
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -285,7 +300,7 @@ export default function TransactionsClient({
             </svg>
             <span className="hidden sm:inline">Add</span>
           </Button>
-        </PageHeader>
+        </div>
       </div>
 
       <div className="lg:flex-1 lg:min-h-0 lg:overflow-hidden">
@@ -312,6 +327,7 @@ export default function TransactionsClient({
                 onDelete={setConfirmId}
                 onAdd={() => openModal()}
                 scrollableBody
+                hideSummary
               />
             </div>
           </div>
@@ -330,6 +346,7 @@ export default function TransactionsClient({
                 onDelete={setConfirmId}
                 onAdd={() => openModal()}
                 scrollableBody
+                hideSummary
               />
             </div>
           </div>

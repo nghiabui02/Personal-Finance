@@ -235,18 +235,15 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
 
   return (
     <>
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Saving Goals</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Save towards what matters</p>
-        </div>
-        <Button onClick={() => { setEditingGoal(null); setModalOpen(true) }} className="shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          New goal
-        </Button>
-      </div>
+      <button
+        onClick={() => { setEditingGoal(null); setModalOpen(true) }}
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors flex items-center justify-center"
+        aria-label="New saving goal"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </button>
 
       {active.length > 0 && (
         <div className="grid grid-cols-2 gap-3 mb-5">

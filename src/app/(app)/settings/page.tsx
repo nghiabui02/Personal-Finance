@@ -14,10 +14,6 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Settings</h1>
-        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Manage your account</p>
-      </div>
       <SettingsClient
         userId={user.id}
         currentEmail={user.email ?? ''}

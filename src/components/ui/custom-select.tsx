@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 
 export type SelectOption = {
   value: string
-  label: string
+  label: string | null
   icon?: string | null
   color?: string | null
 }
 
 interface CustomSelectProps {
-  label: string
+  label: string | null
   name: string
   options: SelectOption[]
   value: string

@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
-import { PageHeader } from '@/components/ui/page-header'
 import { PeriodNav } from '@/components/ui/period-nav'
 import { formatVND } from '@/lib/utils/currency'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
@@ -133,21 +132,19 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
 
   return (
     <>
-      <PageHeader title="Budgets" subtitle="Set spending limits by category">
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <PeriodNav
+          label={monthLabel}
+          onPrev={() => navigate(-1)}
+          onNext={() => navigate(1)}
+        />
         <Button onClick={() => { setEditingBudget(null); setModalOpen(true) }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
           New budget
         </Button>
-      </PageHeader>
-
-      <PeriodNav
-        label={monthLabel}
-        onPrev={() => navigate(-1)}
-        onNext={() => navigate(1)}
-        className="mb-5"
-      />
+      </div>
 
       {/* Hero panel */}
       {budgets.length > 0 && (

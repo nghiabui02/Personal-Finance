@@ -50,11 +50,13 @@ export default function CategoriesClient({
 
   return (
     <>
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Categories</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Manage your income and expense categories</p>
-        </div>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <TabGroup
+          tabs={[{ key: 'expense', label: 'Expense' }, { key: 'income', label: 'Income' }]}
+          value={tab}
+          onChange={switchTab}
+          className="w-fit"
+        />
         <Button onClick={() => openModal()} className="shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
@@ -62,13 +64,6 @@ export default function CategoriesClient({
           New category
         </Button>
       </div>
-
-      <TabGroup
-        tabs={[{ key: 'expense', label: 'Expense' }, { key: 'income', label: 'Income' }]}
-        value={tab}
-        onChange={switchTab}
-        className="w-fit mb-6"
-      />
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">

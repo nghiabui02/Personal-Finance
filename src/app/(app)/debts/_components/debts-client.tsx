@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
-import { PageHeader } from '@/components/ui/page-header'
 import { TabGroup } from '@/components/ui/tab-group'
 import { AmountInput } from '@/components/ui/amount-input'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -333,14 +332,15 @@ export default function DebtsClient({
 
   return (
     <>
-      <PageHeader title="Debts" subtitle="Track money lent and borrowed">
-        <Button onClick={() => { setEditingDebt(null); setModalOpen(true) }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          New
-        </Button>
-      </PageHeader>
+      <button
+        onClick={() => { setEditingDebt(null); setModalOpen(true) }}
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors flex items-center justify-center"
+        aria-label="New debt"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </button>
 
       {active.length > 0 && (
         <div className="grid grid-cols-2 gap-3 mb-5">
