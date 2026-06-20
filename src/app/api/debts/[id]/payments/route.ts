@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { ensureDebtCategory } from '@/lib/server/debt-categories'
 
 async function adjustBalance(
   supabase: SupabaseClient,
@@ -75,6 +76,7 @@ export async function POST(
       ? `Repayment from ${debt.person_name}`
       : `Repayment to ${debt.person_name}`)
     const txDate = date ?? new Date().toISOString().slice(0, 10)
+    const categoryId = await ensureDebtCategory(supabase, user.id, debt.type === 'lend' ? 'collect_debt' : 'repay_debt')
 
     await Promise.all([
       supabase.from('transactions').insert({
@@ -85,6 +87,7 @@ export async function POST(
         transaction_date: txDate,
         note: txNote,
         debt_payment_id: payment.id,
+        category_id: categoryId,
       }),
       adjustBalance(supabase, effectiveWalletId, txType === 'income' ? Number(amount) : -Number(amount), user.id),
     ])

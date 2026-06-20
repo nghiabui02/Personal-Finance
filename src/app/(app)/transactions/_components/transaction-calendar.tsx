@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { type Transaction } from '@/lib/api/transactions'
+import { localYMD } from '@/lib/utils/date'
 
 interface TransactionCalendarProps {
   transactions: Transaction[]
@@ -29,7 +30,7 @@ export function TransactionCalendar({
 }: TransactionCalendarProps) {
   const router = useRouter()
   const [year, month] = period.split('-').map(Number)
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localYMD()
 
   // Build daily net map
   const dailyNet = new Map<string, number>()

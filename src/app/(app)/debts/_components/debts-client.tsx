@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -235,7 +236,7 @@ function DebtCard({
   return (
     <div className={`bg-white dark:bg-gray-900 rounded-2xl border p-4 ${isCompleted ? 'border-gray-100 dark:border-gray-800 opacity-70' : 'border-gray-100 dark:border-gray-800'}`}>
       <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <Link href={`/debts/${debt.id}`} className="flex items-center gap-2.5 min-w-0 group">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
             isLend
               ? 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
@@ -245,7 +246,7 @@ function DebtCard({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{debt.person_name}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:underline underline-offset-2">{debt.person_name}</p>
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${
                 isLend
                   ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
@@ -269,7 +270,7 @@ function DebtCard({
               )}
             </div>
           </div>
-        </div>
+        </Link>
 
         <div className="flex gap-0.5 shrink-0">
           {!isCompleted && (

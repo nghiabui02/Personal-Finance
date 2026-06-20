@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import TransactionsClient from './_components/transactions-client'
 import type { ViewMode } from './_components/period-navigator'
+import { localYMD, localYM } from '@/lib/utils/date'
 
 export const metadata: Metadata = { title: 'Transactions' }
 export const dynamic = 'force-dynamic'
@@ -11,7 +12,7 @@ function getMondayOfWeek(date: Date): string {
   const day = d.getDay()
   const diff = d.getDate() - day + (day === 0 ? -6 : 1)
   d.setDate(diff)
-  return d.toISOString().slice(0, 10)
+  return localYMD(d)
 }
 
 function getDateRange(
@@ -23,22 +24,22 @@ function getDateRange(
     const period = params.week ?? getMondayOfWeek(now)
     const end = new Date(period + 'T00:00:00')
     end.setDate(end.getDate() + 7)
-    return { startDate: period, endDate: end.toISOString().slice(0, 10), period }
+    return { startDate: period, endDate: localYMD(end), period }
   }
 
   if (view === 'day') {
-    const period = params.date ?? now.toISOString().slice(0, 10)
+    const period = params.date ?? localYMD(now)
     const end = new Date(period + 'T00:00:00')
     end.setDate(end.getDate() + 1)
-    return { startDate: period, endDate: end.toISOString().slice(0, 10), period }
+    return { startDate: period, endDate: localYMD(end), period }
   }
 
   // month (default)
-  const period = params.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const period = params.month ?? localYM(now)
   const [y, m] = period.split('-').map(Number)
   return {
     startDate: `${period}-01`,
-    endDate: new Date(y, m, 1).toISOString().slice(0, 10),
+    endDate: localYMD(new Date(y, m, 1)),
     period,
   }
 }

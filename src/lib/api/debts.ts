@@ -5,6 +5,7 @@ export type DebtPayment = {
   amount: number
   note: string | null
   paid_at: string
+  type: 'payment' | 'addition'
 }
 
 export type Debt = {
@@ -56,5 +57,9 @@ export const debtsApi = {
 
   addPayment(id: string, payload: { amount: number; note?: string; wallet_id?: string; date?: string }): Promise<{ remaining_amount: number; settled: boolean }> {
     return apiFetch(`/api/debts/${id}/payments`, { method: 'POST', body: JSON.stringify(payload) })
+  },
+
+  addDebt(id: string, payload: { amount: number; note?: string; date?: string; wallet_id?: string }): Promise<{ amount: number; remaining_amount: number }> {
+    return apiFetch(`/api/debts/${id}/additions`, { method: 'POST', body: JSON.stringify(payload) })
   },
 }
