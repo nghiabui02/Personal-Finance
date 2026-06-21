@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
-import { Modal } from '@/components/ui/modal'
+import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Wallet, WALLET_TYPE_LABELS, walletsApi } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -34,6 +34,7 @@ interface WalletModalProps {
 
 export function WalletModal({ editing, onClose }: WalletModalProps) {
   const router = useRouter()
+  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState(editing?.color ?? PRESET_COLORS[2])
@@ -126,7 +127,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>
             {isPending ? 'Saving...' : 'Save'}
           </Button>

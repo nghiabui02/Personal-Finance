@@ -8,7 +8,7 @@ import { TabGroup } from '@/components/ui/tab-group'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
-import { Modal } from '@/components/ui/modal'
+import { Modal, useModalClose } from '@/components/ui/modal'
 import { formatVND } from '@/lib/utils/currency'
 import { type Category } from '@/lib/api/categories'
 import { type Wallet } from '@/lib/api/wallets'
@@ -30,6 +30,7 @@ function RecurringModal({
   onClose: () => void
 }) {
   const router = useRouter()
+  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
@@ -133,7 +134,7 @@ function RecurringModal({
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Save'}</Button>
         </div>
       </form>

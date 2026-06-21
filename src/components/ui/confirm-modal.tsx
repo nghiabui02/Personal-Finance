@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from './button'
-import { Modal } from './modal'
+import { Modal, useModalClose } from './modal'
 
 interface ConfirmModalProps {
   title: string
@@ -20,6 +20,7 @@ export function ConfirmModal({
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
+  const close = useModalClose()
   return (
     <Modal onClose={onClose}>
       <div className="flex flex-col items-center text-center gap-4">
@@ -38,7 +39,7 @@ export function ConfirmModal({
         </div>
 
         <div className="flex gap-2 w-full pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="secondary" fullWidth onClick={close} disabled={isPending}>
             Cancel
           </Button>
           <Button

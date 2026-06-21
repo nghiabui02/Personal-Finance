@@ -1,6 +1,6 @@
 'use client'
 
-import { Modal } from '@/components/ui/modal'
+import { Modal, useModalClose } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
@@ -27,6 +27,7 @@ interface TransferModalProps {
 
 export function TransferModal({ wallets, defaultFromId, onClose }: TransferModalProps) {
   const router = useRouter()
+  const close = useModalClose()
   const [fromId, setFromId] = useState(defaultFromId ?? wallets[0]?.id ?? '')
   const [toId, setToId] = useState(
     wallets.find(w => w.id !== (defaultFromId ?? wallets[0]?.id))?.id ?? ''
@@ -168,7 +169,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
+          <Button type="button" variant="secondary" onClick={close} className="flex-1">Cancel</Button>
           <Button type="submit" disabled={saving || !amount || fromId === toId || !!insufficient} className="flex-1">
             {saving ? 'Transferring…' : 'Transfer'}
           </Button>

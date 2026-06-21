@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
-import { Modal } from '@/components/ui/modal'
+import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Category, categoriesApi } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -21,6 +21,7 @@ interface CategoryModalProps {
 
 export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProps) {
   const router = useRouter()
+  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState(editing?.color ?? PRESET_COLORS[0])
@@ -68,7 +69,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>
             {isPending ? 'Saving...' : 'Save'}
           </Button>

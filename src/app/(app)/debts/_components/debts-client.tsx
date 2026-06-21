@@ -9,7 +9,7 @@ import { AmountInput } from '@/components/ui/amount-input'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
-import { Modal } from '@/components/ui/modal'
+import { Modal, useModalClose } from '@/components/ui/modal'
 import { formatVND } from '@/lib/utils/currency'
 import { type Debt, debtsApi } from '@/lib/api/debts'
 import { type Wallet } from '@/lib/api/wallets'
@@ -41,6 +41,7 @@ function DebtModal({
   onClose: () => void
 }) {
   const router = useRouter()
+  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [type, setType] = useState<'lend' | 'borrow'>(editing?.type ?? defaultType)
@@ -133,7 +134,7 @@ function DebtModal({
 
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Save'}</Button>
         </div>
       </form>
@@ -153,6 +154,7 @@ function PaymentModal({
   onClose: () => void
 }) {
   const router = useRouter()
+  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
@@ -206,7 +208,7 @@ function PaymentModal({
         <Input label="Note (optional)" name="note" placeholder="e.g. Bank transfer" />
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Record'}</Button>
         </div>
       </form>

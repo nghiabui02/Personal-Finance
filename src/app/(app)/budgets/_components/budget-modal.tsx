@@ -3,7 +3,7 @@
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
 import { CategorySelect } from '@/components/ui/category-select'
-import { Modal } from '@/components/ui/modal'
+import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
 import { type Category } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
@@ -48,6 +48,7 @@ function MonthPicker({ value, onChange }: { value: string; onChange: (v: string)
 
 export function BudgetModal({ editing, month, expenseCategories, existingCategoryIds, onClose }: BudgetModalProps) {
   const router = useRouter()
+  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(
@@ -112,7 +113,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>
             {isPending ? 'Saving...' : 'Save'}
           </Button>
