@@ -14,22 +14,27 @@ function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
 function getPeriodLabel(period: PeriodType, start: string): string {
   if (period === 'week') {
     const s = new Date(start + 'T00:00:00')
     const e = new Date(s); e.setDate(e.getDate() + 6)
-    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const fmt = (d: Date) => `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`
     return `${fmt(s)} – ${fmt(e)}, ${s.getFullYear()}`
   }
   if (period === 'month') {
     const [y, m] = start.split('-').map(Number)
-    return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    const lastDay = new Date(y, m, 0).getDate()
+    return `${MONTHS_SHORT[m - 1]} 1 – ${lastDay}, ${y}`
   }
   if (period === 'quarter') {
     const [y, m] = start.split('-').map(Number)
-    return `Q${Math.ceil(m / 3)} ${y}`
+    const q = Math.ceil(m / 3)
+    const endMonth = m + 2
+    return `Q${q} ${y} · ${MONTHS_SHORT[m - 1]}–${MONTHS_SHORT[endMonth - 1]}`
   }
-  return start.slice(0, 4)
+  return `${start.slice(0, 4)} · Jan–Dec`
 }
 
 function navigatePeriod(period: PeriodType, start: string, dir: -1 | 1): string {
@@ -77,14 +82,19 @@ export default function ReportsClient({
   ]
 
   function switchPeriod(p: PeriodType) {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth()
-    const day = now.getDay()
-    const thisMonday = new Date(now)
-    thisMonday.setDate(now.getDate() - (day === 0 ? 6 : day - 1))
+    // Use Intl to get today's date in the app timezone
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(new Date())
+    const get = (t: string) => parseInt(parts.find(x => x.type === t)?.value ?? '0')
+    const year = get('year'), month = get('month') - 1, day = get('day')
+    const now = new Date(year, month, day)
+    const dow = now.getDay()
+    const monday = new Date(now)
+    monday.setDate(day - (dow === 0 ? 6 : dow - 1))
     const defaults: Record<PeriodType, string> = {
-      week:    toYMD(thisMonday),
+      week:    toYMD(monday),
       month:   toYMD(new Date(year, month, 1)),
       quarter: toYMD(new Date(year, Math.floor(month / 3) * 3, 1)),
       year:    `${year}-01-01`,

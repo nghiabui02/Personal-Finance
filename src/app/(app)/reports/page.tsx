@@ -10,15 +10,21 @@ function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+// Use app timezone so server-side defaults match user's local date
+const TZ = process.env.NEXT_PUBLIC_TIMEZONE ?? 'Asia/Ho_Chi_Minh'
+function getLocalNow(): Date {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: TZ }))
+}
+
 function getMondayOfWeek(d: Date): string {
-  const day = d.getDay()
+  const day = d.getDay() // 0=Sun, 1=Mon ... 6=Sat
   const monday = new Date(d)
   monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1))
   return toYMD(monday)
 }
 
 function getDefaultStart(period: PeriodType): string {
-  const now = new Date()
+  const now = getLocalNow()
   if (period === 'week')    return getMondayOfWeek(now)
   if (period === 'month')   return toYMD(new Date(now.getFullYear(), now.getMonth(), 1))
   if (period === 'quarter') return toYMD(new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1))
