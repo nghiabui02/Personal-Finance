@@ -33,8 +33,8 @@ interface WalletModalProps {
 }
 
 export function WalletModal({ editing, onClose }: WalletModalProps) {
-  const router = useRouter()
   const close = useModalClose()
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState(editing?.color ?? PRESET_COLORS[2])

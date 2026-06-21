@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 // Track last pointer-down position for origin animation
 let _originX = 0
@@ -15,9 +15,21 @@ if (typeof document !== 'undefined') {
 
 const sizes = { sm: 'max-w-sm', md: 'max-w-md' }
 
-// Context so child Cancel buttons can trigger the animated close
-const ModalCloseCtx = createContext<() => void>(() => {})
-export const useModalClose = () => useContext(ModalCloseCtx)
+// Module-level stack — works regardless of where useModalClose() is called in the component tree
+const _closeStack: (() => void)[] = []
+
+// Returns a stable function that reads from the stack at call time (not render time)
+// so it always gets the correct handleClose even when called from a parent component
+export function useModalClose(): () => void {
+  return useCallback(() => {
+    _closeStack[_closeStack.length - 1]?.()
+  }, [])
+}
+
+export function ModalClose({ children }: { children: React.ReactElement<{ onClick?: () => void }> }) {
+  const close = useModalClose()
+  return React.cloneElement(children, { onClick: close })
+}
 
 interface ModalProps {
   title?: string
@@ -28,11 +40,21 @@ interface ModalProps {
 
 export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
   const [stage, setStage] = useState<'enter' | 'open' | 'closing'>('enter')
-  // Capture origin at mount time (sync, before first render)
   const ox = useRef(_originX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 400))
   const oy = useRef(_originY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 300))
 
-  // enter → open (two rAFs to guarantee browser painted the initial state first)
+  function handleClose() {
+    setStage('closing')
+    setTimeout(onClose, 420)
+  }
+
+  // Push handleClose onto the stack when modal opens, pop when it unmounts
+  useEffect(() => {
+    _closeStack.push(handleClose)
+    return () => { _closeStack.pop() }
+  }, [])
+
+  // enter → open
   useEffect(() => {
     let raf1: number
     const raf0 = requestAnimationFrame(() => {
@@ -40,11 +62,6 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
     })
     return () => { cancelAnimationFrame(raf0); cancelAnimationFrame(raf1) }
   }, [])
-
-  function handleClose() {
-    setStage('closing')
-    setTimeout(onClose, 420)
-  }
 
   const vw = typeof window !== 'undefined' ? window.innerWidth : 800
   const vh = typeof window !== 'undefined' ? window.innerHeight : 600
@@ -73,14 +90,12 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
         }
 
   return (
-    <ModalCloseCtx.Provider value={handleClose}>
-      {/* Backdrop — separate layer so its opacity doesn't affect card */}
+    <>
       <div
         className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
         style={backdropStyle}
         onClick={handleClose}
       />
-      {/* Card layer */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
           className={`bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full ${sizes[size]} p-6 pointer-events-auto`}
@@ -93,6 +108,6 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
           {children}
         </div>
       </div>
-    </ModalCloseCtx.Provider>
+    </>
   )
 }

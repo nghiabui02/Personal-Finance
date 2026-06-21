@@ -47,8 +47,8 @@ function MonthPicker({ value, onChange }: { value: string; onChange: (v: string)
 }
 
 export function BudgetModal({ editing, month, expenseCategories, existingCategoryIds, onClose }: BudgetModalProps) {
-  const router = useRouter()
   const close = useModalClose()
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(
