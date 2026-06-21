@@ -124,7 +124,7 @@ export function CustomSelect({
 
         {/* Dropdown with search */}
         {open && (
-          <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
+          <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden animate-dropdown-in">
             {/* Search box */}
             <div className="px-2 pt-2 pb-1">
               <div className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 py-1.5">
@@ -234,7 +234,7 @@ export function CustomSelect({
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden animate-dropdown-in">
           <ul className="max-h-52 overflow-y-auto py-1">
             {options.map(opt => {
               const isSelected = opt.value === value

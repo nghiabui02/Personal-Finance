@@ -238,7 +238,7 @@ function DebtCard({
   const barColor = isCompleted ? '#10b981' : isLend ? '#6366f1' : '#f97316'
 
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-2xl border p-4 ${isCompleted ? 'border-gray-100 dark:border-gray-800 opacity-70' : 'border-gray-100 dark:border-gray-800'}`}>
+    <div className={`bg-white dark:bg-gray-900 rounded-2xl border p-4 transition-shadow hover:shadow-md ${isCompleted ? 'border-gray-100 dark:border-gray-800 opacity-70' : 'border-gray-100 dark:border-gray-800'}`}>
       <div className="flex items-start justify-between gap-2 mb-3">
         <Link href={`/debts/${debt.id}`} className="flex items-center gap-2.5 min-w-0 group">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
@@ -295,7 +295,7 @@ function DebtCard({
         <span className="font-medium text-gray-700 dark:text-gray-300">{formatVND(debt.remaining_amount)} left</span>
       </div>
       <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+        <div className="h-full rounded-full animate-bar-fill" style={{ width: `${pct}%`, backgroundColor: barColor }} />
       </div>
       <p className="text-xs text-gray-400 mt-1 text-right tabular-nums">of {formatVND(debt.amount)}</p>
     </div>
@@ -346,9 +346,11 @@ function DebtSection({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {debts.map(d => (
-            <DebtCard key={d.id} debt={d}
-              onEdit={() => onEdit(d)} onDelete={() => onDelete(d.id)} onPay={() => onPay(d)} />
+          {debts.map((d, idx) => (
+            <div key={d.id} className="animate-fade-up" style={{ animationDelay: `${idx * 50}ms` }}>
+              <DebtCard debt={d}
+                onEdit={() => onEdit(d)} onDelete={() => onDelete(d.id)} onPay={() => onPay(d)} />
+            </div>
           ))}
         </div>
       )}
@@ -403,7 +405,7 @@ export default function DebtsClient({
     <>
       <button
         onClick={() => openNew('lend')}
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors flex items-center justify-center"
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-[colors,transform] hover:scale-110 active:scale-95 flex items-center justify-center"
         aria-label="New debt"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

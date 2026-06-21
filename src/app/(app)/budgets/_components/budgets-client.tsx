@@ -86,7 +86,7 @@ function BudgetCard({
 
       <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-2">
         <div
-          className="h-full rounded-full transition-all"
+          className="h-full rounded-full animate-bar-fill"
           style={{ width: `${pct}%`, backgroundColor: barColor }}
         />
       </div>
@@ -171,7 +171,7 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
             <div className="mt-4">
               <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${totalSpent > totalBudget ? 'bg-rose-500' : 'bg-emerald-400'}`}
+                  className={`h-full rounded-full animate-bar-fill ${totalSpent > totalBudget ? 'bg-rose-500' : 'bg-emerald-400'}`}
                   style={{ width: `${spentPct}%` }}
                 />
               </div>
@@ -195,13 +195,14 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {budgets.map(b => (
-            <BudgetCard
-              key={b.id}
-              budget={b}
-              onEdit={() => { setEditingBudget(b); setModalOpen(true) }}
-              onDelete={() => setConfirmId(b.id)}
-            />
+          {budgets.map((b, idx) => (
+            <div key={b.id} className="animate-fade-up" style={{ animationDelay: `${idx * 60}ms` }}>
+              <BudgetCard
+                budget={b}
+                onEdit={() => { setEditingBudget(b); setModalOpen(true) }}
+                onDelete={() => setConfirmId(b.id)}
+              />
+            </div>
           ))}
         </div>
       )}

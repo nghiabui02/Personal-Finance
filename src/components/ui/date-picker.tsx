@@ -161,7 +161,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
       {/* Calendar panel */}
       {open && (
-        <div className={`absolute z-50 left-0 min-w-[268px] w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-3 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+        <div className={`absolute z-50 left-0 min-w-[268px] w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-3 animate-dropdown-in ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
 
           {/* Month header */}
           <div className="flex items-center justify-between mb-3">

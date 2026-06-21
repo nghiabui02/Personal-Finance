@@ -34,7 +34,7 @@ export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; to
             const color = item.color ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]
             const pct = totalExpense > 0 ? (item.amount / totalExpense) * 100 : 0
             return (
-              <li key={item.id}>
+              <li key={item.id} className="animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-sm leading-none w-5 text-center shrink-0">
                     {item.icon ?? '·'}

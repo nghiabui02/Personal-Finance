@@ -33,10 +33,10 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
         </div>
       ) : (
         <ul className="space-y-3">
-          {transactions.map(tx => {
+          {transactions.map((tx, idx) => {
             const cat = tx.categories
             return (
-              <li key={tx.id} className="flex items-center gap-3">
+              <li key={tx.id} className="flex items-center gap-3 animate-fade-up" style={{ animationDelay: `${idx * 50}ms` }}>
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-base shrink-0"
                   style={{ backgroundColor: cat?.color ? `${cat.color}22` : '#f3f4f6' }}

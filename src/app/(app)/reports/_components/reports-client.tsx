@@ -139,7 +139,7 @@ export default function ReportsClient({
       </div>
 
       {/* Hero panel */}
-      <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5">
+      <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 animate-fade-up">
         <div className="flex items-start justify-between mb-2">
           <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Net Cash Flow</p>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
@@ -172,8 +172,8 @@ export default function ReportsClient({
         {totalIncome > 0 && (
           <div className="mt-5">
             <div className="flex h-1 rounded-full overflow-hidden bg-slate-800">
-              <div className="bg-emerald-400" style={{ width: `${savingsPct}%` }} />
-              <div className="bg-rose-500" style={{ width: `${expensePct}%` }} />
+              <div className="bg-emerald-400 animate-bar-fill" style={{ width: `${savingsPct}%` }} />
+              <div className="bg-rose-500 animate-bar-fill" style={{ width: `${expensePct}%`, animationDelay: '100ms' }} />
             </div>
             <div className="flex justify-between mt-1.5">
               <p className="text-[10px] text-slate-600">← savings</p>

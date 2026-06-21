@@ -27,7 +27,7 @@ export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
         </div>
       ) : (
         <ul className="space-y-3.5">
-          {budgets.map(b => {
+          {budgets.map((b, idx) => {
             const pct = b.amount > 0 ? Math.min((b.spent / b.amount) * 100, 100) : 0
             const isOver = b.spent > b.amount
             const barColor = isOver
@@ -37,7 +37,7 @@ export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
               : 'bg-blue-500'
 
             return (
-              <li key={b.id}>
+              <li key={b.id} className="animate-fade-up" style={{ animationDelay: `${idx * 60}ms` }}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="text-sm">{b.category?.icon ?? '📦'}</span>
@@ -51,8 +51,8 @@ export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
                 </div>
                 <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${barColor}`}
-                    style={{ width: `${pct}%` }}
+                    className={`h-full rounded-full animate-bar-fill ${barColor}`}
+                    style={{ width: `${pct}%`, animationDelay: `${idx * 60 + 80}ms` }}
                   />
                 </div>
               </li>

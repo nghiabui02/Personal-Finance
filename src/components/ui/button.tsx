@@ -26,7 +26,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`
           inline-flex items-center justify-center gap-1.5
           rounded-lg px-4 py-2 text-sm font-medium
-          transition-colors disabled:cursor-not-allowed
+          transition-[colors,transform] active:scale-[0.97] disabled:cursor-not-allowed disabled:active:scale-100
           ${variants[variant]}
           ${fullWidth ? 'w-full' : ''}
           ${className}

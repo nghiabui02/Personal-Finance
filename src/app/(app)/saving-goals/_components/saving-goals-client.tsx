@@ -197,7 +197,7 @@ function GoalCard({
       </div>
       <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${isCompleted ? 'bg-green-500' : pct >= 80 ? 'bg-blue-500' : 'bg-blue-400'}`}
+          className={`h-full rounded-full animate-bar-fill ${isCompleted ? 'bg-green-500' : pct >= 80 ? 'bg-blue-500' : 'bg-blue-400'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -243,7 +243,7 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
     <>
       <button
         onClick={() => { setEditingGoal(null); setModalOpen(true) }}
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors flex items-center justify-center"
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-[colors,transform] hover:scale-110 active:scale-95 flex items-center justify-center"
         aria-label="New saving goal"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -285,15 +285,16 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {displayed.map(g => (
-            <GoalCard
-              key={g.id}
-              goal={g}
-              nowMs={nowMs}
-              onEdit={() => { setEditingGoal(g); setModalOpen(true) }}
-              onDelete={() => setConfirmId(g.id)}
-              onContribute={() => setContributingGoal(g)}
-            />
+          {displayed.map((g, idx) => (
+            <div key={g.id} className="animate-fade-up" style={{ animationDelay: `${idx * 60}ms` }}>
+              <GoalCard
+                goal={g}
+                nowMs={nowMs}
+                onEdit={() => { setEditingGoal(g); setModalOpen(true) }}
+                onDelete={() => setConfirmId(g.id)}
+                onContribute={() => setContributingGoal(g)}
+              />
+            </div>
           ))}
         </div>
       )}

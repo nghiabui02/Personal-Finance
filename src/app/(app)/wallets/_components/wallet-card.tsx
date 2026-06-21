@@ -24,7 +24,7 @@ export function WalletCard({ wallet, onEdit, onDelete, onTransfer, isDeleting }:
 
   return (
     <div
-      className="relative rounded-2xl p-5 text-white flex flex-col gap-3 overflow-hidden"
+      className="relative rounded-2xl p-5 text-white flex flex-col gap-3 overflow-hidden animate-fade-up"
       style={{ background: `linear-gradient(135deg, ${bg}ee, ${bg}99)` }}
     >
       {/* Default badge */}

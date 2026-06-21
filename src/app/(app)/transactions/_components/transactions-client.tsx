@@ -187,8 +187,8 @@ function TransactionList({
           />
         ) : (
           <div className="space-y-4">
-            {groups.map(([date, txs]) => (
-              <div key={date}>
+            {groups.map(([date, txs], groupIdx) => (
+              <div key={date} className="animate-fade-up" style={{ animationDelay: `${groupIdx * 40}ms` }}>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                     {formatDateHeader(date)}

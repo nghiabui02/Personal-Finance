@@ -9,7 +9,7 @@ interface StatCardsProps {
 export function StatCards({ totalIncome, totalExpense }: StatCardsProps) {
   const net = totalIncome - totalExpense
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm dark:border dark:border-gray-800 px-5 py-4">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm dark:border dark:border-gray-800 px-5 py-4 animate-fade-up">
       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Net Balance</p>
       <p className={`text-2xl font-bold tabular-nums ${net >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-rose-600 dark:text-rose-400'}`}>
         {net >= 0 ? '+' : ''}{formatVND(net)}
