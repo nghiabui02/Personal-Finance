@@ -7,7 +7,7 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { TabGroup } from '@/components/ui/tab-group'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
-import { Modal, useModalClose } from '@/components/ui/modal'
+import { Modal } from '@/components/ui/modal'
 import { type Category } from '@/lib/api/categories'
 import { type Transaction, transactionsApi } from '@/lib/api/transactions'
 import { type Wallet } from '@/lib/api/wallets'
@@ -24,7 +24,6 @@ interface TransactionModalProps {
 
 export function TransactionModal({ editing, categories, wallets, defaultDate, onClose }: TransactionModalProps) {
   const router = useRouter()
-  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
@@ -163,7 +162,7 @@ export function TransactionModal({ editing, categories, wallets, defaultDate, on
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>
             {isPending ? 'Saving...' : 'Save'}
           </Button>

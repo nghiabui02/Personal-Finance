@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Modal, useModalClose } from '@/components/ui/modal'
+import { Modal } from '@/components/ui/modal'
 import { AmountInput } from '@/components/ui/amount-input'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
@@ -30,7 +30,6 @@ function PaymentModal({
   onClose: () => void
 }) {
   const router = useRouter()
-  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
@@ -75,7 +74,7 @@ function PaymentModal({
         <Input label="Note (optional)" name="note" placeholder="e.g. Bank transfer" />
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Record'}</Button>
         </div>
       </form>
@@ -95,7 +94,6 @@ function AdditionModal({
   onClose: () => void
 }) {
   const router = useRouter()
-  const close = useModalClose()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
@@ -141,7 +139,7 @@ function AdditionModal({
         <Input label="Note (optional)" name="note" placeholder="e.g. Dinner at Pizza Hut" />
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Add'}</Button>
         </div>
       </form>

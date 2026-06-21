@@ -43,7 +43,7 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
 
   function handleClose() {
     setStage('closing')
-    setTimeout(onClose, 240)
+    setTimeout(onClose, 420)
   }
 
   const vw = typeof window !== 'undefined' ? window.innerWidth : 800
@@ -53,7 +53,7 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
 
   const backdropStyle = {
     opacity: stage === 'open' ? 1 : 0,
-    transition: 'opacity 0.22s ease',
+    transition: 'opacity 0.35s ease',
   }
 
   const cardStyle: React.CSSProperties =
@@ -61,14 +61,14 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
       ? {
           transform: 'translate(0,0) scale(1)',
           opacity: 1,
-          transition: 'transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.16s ease',
+          transition: 'transform 0.55s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease',
         }
       : {
           transform: `translate(${dx}px, ${dy}px) scale(0.05)`,
           opacity: 0,
           transition:
             stage === 'closing'
-              ? 'transform 0.24s cubic-bezier(0.4,0,0.6,1), opacity 0.18s ease'
+              ? 'transform 0.4s cubic-bezier(0.4,0,0.6,1), opacity 0.3s ease'
               : 'none',
         }
 
