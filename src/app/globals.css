@@ -110,23 +110,7 @@ body {
   animation: dropdownIn 0.14s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* ── Modal animations ── */
-@keyframes modal-backdrop-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes modal-backdrop-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-@keyframes modal-content-in {
-  from { opacity: 0; transform: scale(0.95) translateY(10px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes modal-content-out {
-  from { opacity: 1; transform: scale(1) translateY(0); }
-  to   { opacity: 0; transform: scale(0.95) translateY(10px); }
-}
+/* ── Modal animations (unused keyframes kept for reference) ── */
 
 /* ── Mobile sidebar animations ── */
 @keyframes sidebar-in {
