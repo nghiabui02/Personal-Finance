@@ -3,6 +3,7 @@
 import { formatVND } from '@/lib/utils/currency'
 import { useRouter } from 'next/navigation'
 import { TabGroup } from '@/components/ui/tab-group'
+import { AIInsights } from '@/app/(app)/dashboard/_components/ai-insights'
 import { CategoryChart } from './category-chart'
 import { BarChart } from './bar-chart'
 import type { ChartPoint, CategoryData } from './types'
@@ -188,6 +189,13 @@ export default function ReportsClient({
 
       {/* Spending breakdown leaderboard */}
       <CategoryChart data={byCategory} totalExpense={totalExpense} />
+
+      <AIInsights
+        periodLabel={getPeriodLabel(period, start)}
+        totalIncome={totalIncome}
+        totalExpense={totalExpense}
+        categories={byCategory.map(c => ({ name: c.name, icon: c.icon, amount: c.amount }))}
+      />
     </div>
   )
 }

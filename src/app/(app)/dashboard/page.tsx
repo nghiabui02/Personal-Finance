@@ -88,6 +88,7 @@ export default async function DashboardPage({
         <BudgetProgress budgets={budgets} />
         <DebtSummary debts={(debtRows ?? []) as { type: 'lend' | 'borrow'; remaining_amount: number; status: string }[]} />
       </div>
+
     </div>
   )
 }
