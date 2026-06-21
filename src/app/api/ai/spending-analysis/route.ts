@@ -12,10 +12,11 @@ export async function POST(req: Request) {
   const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'Groq not configured' }, { status: 500 })
 
-  const { periodLabel, totalIncome, totalExpense, categories, budgets, force } = await req.json()
+  const { periodLabel, period, totalIncome, totalExpense, categories, budgets, force } = await req.json()
+  const periodType: 'week' | 'month' | 'quarter' | 'year' = period ?? 'month'
 
   // Check DB cache (skip if force-refresh)
-  const cacheKey = `${periodLabel}::${totalIncome}::${totalExpense}`
+  const cacheKey = `${periodType}::${periodLabel}::${totalIncome}::${totalExpense}`
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_insights_cache')
@@ -53,8 +54,16 @@ export async function POST(req: Request) {
 
   const savingsRate = totalIncome > 0 ? (((totalIncome - totalExpense) / totalIncome) * 100).toFixed(1) : '0'
 
+  const periodContext: Record<typeof periodType, string> = {
+    week:    'Đây là phân tích TUẦN. Tập trung vào: ngày nào chi nhiều nhất, thói quen chi tiêu trong tuần, so sánh với mức chi hợp lý trong 7 ngày.',
+    month:   'Đây là phân tích THÁNG. Tập trung vào: danh mục vượt ngân sách, tỷ lệ tiết kiệm tháng, xu hướng chi tiêu.',
+    quarter: 'Đây là phân tích QUÝ (3 tháng). Tập trung vào: tổng kết 3 tháng, danh mục tốn kém nhất trong quý, tỷ lệ tiết kiệm trung bình, mục tiêu cho quý tới.',
+    year:    'Đây là phân tích NĂM. Tập trung vào: tổng kết tài chính cả năm, tỷ lệ tiết kiệm, danh mục chiếm tỷ trọng lớn nhất, đánh giá sức khỏe tài chính tổng thể và mục tiêu năm sau.',
+  }
+
   const prompt = [
     'Bạn là cố vấn tài chính cá nhân thông minh. Phân tích dữ liệu và đưa ra nhận xét THỰC TẾ, CỤ THỂ bằng tiếng Việt.',
+    periodContext[periodType],
     '',
     `=== DỮ LIỆU KỲ: ${periodLabel} ===`,
     `Thu nhập: ${fmt(totalIncome)}đ`,

@@ -104,6 +104,12 @@ export default function ReportsClient({
     year:    'Monthly income vs expense',
   }
 
+  function exportCSV() {
+    const a = document.createElement('a')
+    a.href = `/api/reports/export-csv?period=${period}&start=${start}`
+    a.click()
+  }
+
   return (
     <div className="space-y-4">
       {/* Period selector + navigator */}
@@ -114,7 +120,17 @@ export default function ReportsClient({
           onChange={v => switchPeriod(v as PeriodType)}
           className="w-full sm:w-auto"
         />
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <button
+          onClick={exportCSV}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors shrink-0"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          Export CSV
+        </button>
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex-1 sm:flex-none sm:w-auto">
           <button
             onClick={() => navigate(-1)}
             className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors shrink-0"
@@ -136,6 +152,7 @@ export default function ReportsClient({
               <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
             </svg>
           </button>
+        </div>
         </div>
       </div>
 
@@ -192,6 +209,7 @@ export default function ReportsClient({
 
       <AIInsights
         periodLabel={getPeriodLabel(period, start)}
+        period={period}
         totalIncome={totalIncome}
         totalExpense={totalExpense}
         categories={byCategory.map(c => ({ name: c.name, icon: c.icon, amount: c.amount }))}

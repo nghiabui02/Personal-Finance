@@ -17,6 +17,7 @@ interface Analysis {
 
 interface AIInsightsProps {
   periodLabel: string
+  period?: 'week' | 'month' | 'quarter' | 'year'
   totalIncome: number
   totalExpense: number
   categories: { name: string; icon: string | null; amount: number }[]
@@ -29,7 +30,7 @@ const insightColors: Record<Insight['type'], string> = {
   good:    'bg-emerald-500/10 text-emerald-300',
 }
 
-export function AIInsights({ periodLabel, totalIncome, totalExpense, categories, budgets }: AIInsightsProps) {
+export function AIInsights({ periodLabel, period = 'month', totalIncome, totalExpense, categories, budgets }: AIInsightsProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error' | 'rate_limit'>('idle')
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [retryIn, setRetryIn] = useState(0)
@@ -67,7 +68,7 @@ export function AIInsights({ periodLabel, totalIncome, totalExpense, categories,
       method: 'POST',
       signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ periodLabel, totalIncome, totalExpense, categories, budgets, force }),
+      body: JSON.stringify({ periodLabel, period, totalIncome, totalExpense, categories, budgets, force }),
     })
       .then(r => r.json().then(data => ({ status: r.status, data })))
       .then(({ status, data }) => {
@@ -183,7 +184,7 @@ export function AIInsights({ periodLabel, totalIncome, totalExpense, categories,
       {state === 'error' && (
         <div className="text-center py-3">
           <p className="text-sm text-slate-500 mb-2">Không thể tải phân tích.</p>
-          <button onClick={analyze} className="text-xs text-slate-400 hover:text-slate-200 transition-colors underline">
+          <button onClick={() => analyze()} className="text-xs text-slate-400 hover:text-slate-200 transition-colors underline">
             Thử lại
           </button>
         </div>
