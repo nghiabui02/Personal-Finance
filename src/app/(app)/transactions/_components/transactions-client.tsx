@@ -10,6 +10,7 @@ import { type Transaction, transactionsApi } from '@/lib/api/transactions'
 import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 import { TransactionModal } from './transaction-modal'
 import { PeriodNavigator, ViewSelector, type ViewMode } from './period-navigator'
 import { TransactionCalendar } from './transaction-calendar'
@@ -17,12 +18,12 @@ import { TransactionCalendar } from './transaction-calendar'
 type Filter = 'all' | 'income' | 'expense'
 
 function formatDateHeader(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00')
-  const today = new Date().toISOString().slice(0, 10)
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const today = localYMD()
+  const yesterday = shiftLocalDate(today, -1)
   if (dateStr === today) return 'Today'
   if (dateStr === yesterday) return 'Yesterday'
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
 function groupByDate(transactions: Transaction[]): [string, Transaction[]][] {

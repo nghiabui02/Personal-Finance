@@ -2,16 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 import { TabGroup } from '@/components/ui/tab-group'
+import { localYMD, localYM, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
 
 export type ViewMode = 'month' | 'week' | 'day'
-
-function getMondayOfWeek(date: Date): string {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
-  return d.toISOString().slice(0, 10)
-}
 
 function getPeriodLabel(view: ViewMode, period: string): string {
   if (view === 'month') {
@@ -38,9 +31,7 @@ function shiftPeriod(view: ViewMode, period: string, dir: -1 | 1): string {
     const d = new Date(y, m - 1 + dir, 1)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
   }
-  const date = new Date(period + 'T00:00:00')
-  date.setDate(date.getDate() + dir * (view === 'week' ? 7 : 1))
-  return date.toISOString().slice(0, 10)
+  return shiftLocalDate(period, dir * (view === 'week' ? 7 : 1))
 }
 
 function buildUrl(view: ViewMode, period: string): string {
@@ -94,9 +85,9 @@ export function ViewSelector({ view }: ViewSelectorProps) {
   const now = new Date()
 
   function switchView(v: ViewMode) {
-    const today = now.toISOString().slice(0, 10)
-    const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const thisWeek = getMondayOfWeek(now)
+    const today = localYMD()
+    const thisMonth = localYM()
+    const thisWeek = getMondayOfLocalWeek(today)
 
     const urls: Record<ViewMode, string> = {
       month: `/transactions?view=month&month=${thisMonth}`,
