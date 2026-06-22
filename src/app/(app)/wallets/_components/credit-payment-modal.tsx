@@ -97,11 +97,15 @@ export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPay
           <Input label="Note (optional)" name="note" placeholder="Credit card payment" />
         </div>
 
+        {amountOwed <= 0 && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">No outstanding balance — credit is fully available.</p>
+        )}
+
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
-          <Button type="submit" disabled={isPending} fullWidth>
+          <Button type="submit" disabled={isPending || amountOwed <= 0} fullWidth>
             {isPending ? 'Processing...' : 'Pay'}
           </Button>
         </div>
