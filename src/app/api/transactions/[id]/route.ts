@@ -1,28 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { SupabaseClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-
-async function adjustBalance(
-  supabase: SupabaseClient,
-  walletId: string,
-  delta: number,
-  userId: string,
-) {
-  const { data: wallet } = await supabase
-    .from('wallets')
-    .select('balance')
-    .eq('id', walletId)
-    .eq('user_id', userId)
-    .single()
-
-  if (!wallet) return
-
-  await supabase
-    .from('wallets')
-    .update({ balance: Number(wallet.balance) + delta })
-    .eq('id', walletId)
-    .eq('user_id', userId)
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -50,10 +27,15 @@ export async function PATCH(
 
   if (!original) return NextResponse.json({ error: 'Transaction not found.' }, { status: 404 })
 
-  // Reverse old effect
+  // Reverse old balance effect
   if (original.wallet_id) {
     const oldDelta = original.type === 'income' ? -Number(original.amount) : Number(original.amount)
-    await adjustBalance(supabase, original.wallet_id, oldDelta, user.id)
+    const { error: balErr } = await supabase.rpc('adjust_wallet_balance', {
+      p_wallet_id: original.wallet_id,
+      p_delta: oldDelta,
+      p_user_id: user.id,
+    })
+    if (balErr) return NextResponse.json({ error: balErr.message }, { status: 500 })
   }
 
   // Update transaction
@@ -74,10 +56,15 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Apply new effect
+  // Apply new balance effect
   if (wallet_id) {
     const newDelta = type === 'income' ? Number(amount) : -Number(amount)
-    await adjustBalance(supabase, wallet_id, newDelta, user.id)
+    const { error: balErr } = await supabase.rpc('adjust_wallet_balance', {
+      p_wallet_id: wallet_id,
+      p_delta: newDelta,
+      p_user_id: user.id,
+    })
+    if (balErr) return NextResponse.json({ error: balErr.message }, { status: 500 })
   }
 
   return NextResponse.json(data)
@@ -111,7 +98,11 @@ export async function DELETE(
   // Reverse wallet balance
   if (tx?.wallet_id) {
     const delta = tx.type === 'income' ? -Number(tx.amount) : Number(tx.amount)
-    await adjustBalance(supabase, tx.wallet_id, delta, user.id)
+    await supabase.rpc('adjust_wallet_balance', {
+      p_wallet_id: tx.wallet_id,
+      p_delta: delta,
+      p_user_id: user.id,
+    })
   }
 
   // Reverse debt if this transaction was created from a debt payment

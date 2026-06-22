@@ -36,10 +36,13 @@ function groupByDate(transactions: Transaction[]): [string, Transaction[]][] {
   return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]))
 }
 
+type DebtOption = { id: string; type: 'lend' | 'borrow'; person_name: string; remaining_amount: number }
+
 interface TransactionsClientProps {
   transactions: Transaction[]
   categories: Category[]
   wallets: Wallet[]
+  debts: DebtOption[]
   view: ViewMode
   period: string
 }
@@ -239,6 +242,7 @@ export default function TransactionsClient({
   transactions,
   categories,
   wallets,
+  debts,
   view,
   period,
 }: TransactionsClientProps) {
@@ -360,6 +364,7 @@ export default function TransactionsClient({
           editing={editingTx}
           categories={categories}
           wallets={wallets}
+          debts={debts}
           defaultDate={editingTx ? undefined : getDefaultDate()}
           onClose={() => { setModalOpen(false); setEditingTx(null) }}
         />

@@ -9,6 +9,7 @@ import { useState, useTransition } from 'react'
 import { WalletCard } from './wallet-card'
 import { WalletModal } from './wallet-modal'
 import { TransferModal } from './transfer-modal'
+import { CreditPaymentModal } from './credit-payment-modal'
 
 export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const router = useRouter()
@@ -18,8 +19,11 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [transferOpen, setTransferOpen] = useState(false)
   const [transferFromId, setTransferFromId] = useState<string | undefined>(undefined)
+  const [payingCreditId, setPayingCreditId] = useState<string | null>(null)
 
-  const totalBalance = wallets.reduce((sum, w) => sum + Number(w.balance), 0)
+  const totalAssets = wallets.reduce((sum, w) => w.type === 'credit' ? sum : sum + Number(w.balance), 0)
+  const totalCreditDebt = wallets.reduce((sum, w) => w.type === 'credit' ? sum + Math.max(0, Number(w.credit_limit ?? 0) - Number(w.balance)) : sum, 0)
+  const netWorth = totalAssets - totalCreditDebt
   const confirmWallet = wallets.find(w => w.id === confirmId)
 
   function openModal(wallet: Wallet | null = null) {
@@ -51,14 +55,21 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
       {wallets.length > 0 && (
         <div className="bg-slate-900 dark:bg-slate-800 rounded-2xl p-5 mb-5">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">
-            Total Balance
+            Net Worth
           </p>
           <p className="text-[2.5rem] font-bold tracking-tight text-white tabular-nums leading-none">
-            {formatVND(totalBalance)}
+            {formatVND(netWorth)}
           </p>
-          <p className="text-sm text-slate-400 mt-1.5">
-            across {wallets.length} wallet{wallets.length !== 1 ? 's' : ''}
-          </p>
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-sm text-slate-400">
+              Assets <span className="text-emerald-400 font-medium">{formatVND(totalAssets)}</span>
+            </p>
+            {totalCreditDebt > 0 && (
+              <p className="text-sm text-slate-400">
+                Credit debt <span className="text-rose-400 font-medium">−{formatVND(totalCreditDebt)}</span>
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -76,6 +87,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
               onEdit={() => openModal(wallet)}
               onDelete={() => setConfirmId(wallet.id)}
               onTransfer={() => { setTransferFromId(wallet.id); setTransferOpen(true) }}
+              onPay={() => setPayingCreditId(wallet.id)}
               isDeleting={isPending && confirmId === wallet.id}
             />
           ))}
@@ -97,6 +109,17 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
           onClose={() => { setTransferOpen(false); setTransferFromId(undefined) }}
         />
       )}
+
+      {payingCreditId && (() => {
+        const cw = wallets.find(w => w.id === payingCreditId)
+        return cw ? (
+          <CreditPaymentModal
+            creditWallet={cw}
+            wallets={wallets}
+            onClose={() => setPayingCreditId(null)}
+          />
+        ) : null
+      })()}
 
       {confirmId && confirmWallet && (
         <ConfirmModal

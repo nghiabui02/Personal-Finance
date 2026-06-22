@@ -21,6 +21,7 @@ const WALLET_ICONS: Record<Wallet['type'], string> = {
   e_wallet: '📱',
   investment: '📈',
   other: '💼',
+  credit: '💳',
 }
 
 function formatDateHeader(dateStr: string): string {

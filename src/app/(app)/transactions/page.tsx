@@ -51,6 +51,7 @@ export default async function TransactionsPage({
     { data: transactions },
     { data: categories },
     { data: wallets },
+    { data: debts },
   ] = await Promise.all([
     supabase
       .from('transactions')
@@ -71,6 +72,13 @@ export default async function TransactionsPage({
       .eq('user_id', user.id)
       .order('is_default', { ascending: false })
       .order('name'),
+    supabase
+      .from('debts')
+      .select('id, type, person_name, remaining_amount')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .gt('remaining_amount', 0)
+      .order('person_name'),
   ])
 
   return (
@@ -78,6 +86,7 @@ export default async function TransactionsPage({
       transactions={(transactions ?? []) as unknown as Parameters<typeof TransactionsClient>[0]['transactions']}
       categories={categories ?? []}
       wallets={(wallets ?? []) as unknown as Parameters<typeof TransactionsClient>[0]['wallets']}
+      debts={(debts ?? []) as { id: string; type: 'lend' | 'borrow'; person_name: string; remaining_amount: number }[]}
       view={view}
       period={period}
     />

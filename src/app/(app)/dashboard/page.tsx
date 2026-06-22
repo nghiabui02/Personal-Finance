@@ -38,13 +38,27 @@ export default async function DashboardPage({
     { data: expenseCatRows },
     { data: budgetRows },
     { data: debtRows },
+    { data: walletRows },
   ] = await Promise.all([
     supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate),
     supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
     supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
     supabase.from('budgets').select('id, amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('month', startDate),
     supabase.from('debts').select('type, remaining_amount, status').eq('user_id', user.id),
+    supabase.from('wallets').select('type, balance, credit_limit').eq('user_id', user.id),
   ])
+
+  // Net worth: assets (non-credit balances) minus credit card debt used
+  let totalAssets = 0
+  let totalCreditDebt = 0
+  for (const w of walletRows ?? []) {
+    if (w.type === 'credit') {
+      totalCreditDebt += Math.max(0, Number(w.credit_limit ?? 0) - Number(w.balance))
+    } else {
+      totalAssets += Number(w.balance)
+    }
+  }
+  const netWorth = totalAssets - totalCreditDebt
 
   const totalIncome = (incomeRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
 
@@ -73,6 +87,9 @@ export default async function DashboardPage({
         totalIncome={totalIncome}
         totalExpense={totalExpense}
         balance={totalIncome - totalExpense}
+        netWorth={netWorth}
+        totalAssets={totalAssets}
+        totalCreditDebt={totalCreditDebt}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-stretch">

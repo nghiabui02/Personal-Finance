@@ -23,10 +23,10 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { name, type, balance, icon, color, is_default } = body
+  const { name, type, balance, icon, color, is_default, credit_limit, statement_day, payment_due_day } = body
 
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required.' }, { status: 400 })
-  if (!['cash', 'bank', 'e_wallet', 'investment', 'other'].includes(type)) {
+  if (!['cash', 'bank', 'e_wallet', 'investment', 'other', 'credit'].includes(type)) {
     return NextResponse.json({ error: 'Invalid wallet type.' }, { status: 400 })
   }
 
@@ -34,16 +34,22 @@ export async function POST(request: NextRequest) {
     await supabase.from('wallets').update({ is_default: false }).eq('user_id', user.id)
   }
 
+  const isCredit = type === 'credit'
+  const creditLimit = isCredit ? Number(credit_limit) || 0 : null
+
   const { data, error } = await supabase
     .from('wallets')
     .insert({
       user_id: user.id,
       name: name.trim(),
       type,
-      balance: Number(balance) || 0,
+      balance: isCredit ? creditLimit : (Number(balance) || 0),
       icon: icon?.trim() || null,
       color: color || null,
       is_default: is_default ?? false,
+      credit_limit: creditLimit,
+      statement_day: isCredit ? (Number(statement_day) || null) : null,
+      payment_due_day: isCredit ? (Number(payment_due_day) || null) : null,
     })
     .select()
     .single()

@@ -4,11 +4,14 @@ export type Wallet = {
   id: string
   user_id: string
   name: string
-  type: 'cash' | 'bank' | 'e_wallet' | 'investment' | 'other'
+  type: 'cash' | 'bank' | 'e_wallet' | 'investment' | 'other' | 'credit'
   balance: number
   color: string | null
   icon: string | null
   is_default: boolean
+  credit_limit: number | null
+  statement_day: number | null
+  payment_due_day: number | null
 }
 
 export const WALLET_TYPE_LABELS: Record<Wallet['type'], string> = {
@@ -17,6 +20,7 @@ export const WALLET_TYPE_LABELS: Record<Wallet['type'], string> = {
   e_wallet: 'E-Wallet',
   investment: 'Investment',
   other: 'Other',
+  credit: 'Credit Card',
 }
 
 type WalletPayload = {
@@ -26,6 +30,9 @@ type WalletPayload = {
   icon?: string
   color?: string
   is_default?: boolean
+  credit_limit?: number
+  statement_day?: number
+  payment_due_day?: number
 }
 
 export const walletsApi = {

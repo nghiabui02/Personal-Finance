@@ -1,28 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { SupabaseClient } from '@supabase/supabase-js'
-
-async function adjustBalance(
-  supabase: SupabaseClient,
-  walletId: string,
-  delta: number,
-  userId: string,
-) {
-  const { data: wallet } = await supabase
-    .from('wallets')
-    .select('balance')
-    .eq('id', walletId)
-    .eq('user_id', userId)
-    .single()
-
-  if (!wallet) return
-
-  await supabase
-    .from('wallets')
-    .update({ balance: Number(wallet.balance) + delta })
-    .eq('id', walletId)
-    .eq('user_id', userId)
-}
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -80,10 +57,14 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Update wallet balance
   if (wallet_id) {
     const delta = type === 'income' ? Number(amount) : -Number(amount)
-    await adjustBalance(supabase, wallet_id, delta, user.id)
+    const { error: balErr } = await supabase.rpc('adjust_wallet_balance', {
+      p_wallet_id: wallet_id,
+      p_delta: delta,
+      p_user_id: user.id,
+    })
+    if (balErr) return NextResponse.json({ error: balErr.message }, { status: 500 })
   }
 
   return NextResponse.json(data, { status: 201 })

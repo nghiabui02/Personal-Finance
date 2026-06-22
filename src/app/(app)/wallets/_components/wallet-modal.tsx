@@ -21,15 +21,41 @@ const TYPE_ICONS: Record<Wallet['type'], string> = {
   e_wallet: '📱',
   investment: '📈',
   other: '💼',
+  credit: '💳',
 }
 
-const TYPE_OPTIONS = (Object.entries(WALLET_TYPE_LABELS) as [Wallet['type'], string][]).map(
-  ([value, label]) => ({ value, label, icon: TYPE_ICONS[value] })
-)
+const TYPE_ORDER: Wallet['type'][] = ['cash', 'bank', 'credit', 'e_wallet', 'investment', 'other']
+
+const TYPE_OPTIONS = TYPE_ORDER.map(value => ({
+  value,
+  label: WALLET_TYPE_LABELS[value],
+  icon: TYPE_ICONS[value],
+}))
 
 interface WalletModalProps {
   editing: Wallet | null
   onClose: () => void
+}
+
+function DaySelect({ label, name, defaultValue }: { label: string; name: string; defaultValue?: number | null }) {
+  const options = Array.from({ length: 28 }, (_, i) => ({
+    value: String(i + 1),
+    label: `Ngày ${i + 1}`,
+  }))
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{label}</label>
+      <select
+        name={name}
+        defaultValue={String(defaultValue ?? 1)}
+        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {options.map(o => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+  )
 }
 
 export function WalletModal({ editing, onClose }: WalletModalProps) {
@@ -37,21 +63,37 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [selectedColor, setSelectedColor] = useState(editing?.color ?? PRESET_COLORS[2])
+  const [selectedColor, setSelectedColor] = useState(editing?.color ?? PRESET_COLORS[5])
   const [type, setType] = useState<Wallet['type']>(editing?.type ?? 'cash')
+
+  const isCredit = type === 'credit'
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
-    const balance = Number((form.elements.namedItem('balance') as HTMLInputElement).value)
-    const icon = (form.elements.namedItem('icon') as HTMLInputElement).value.trim()
-    const is_default = (form.elements.namedItem('is_default') as HTMLInputElement).checked
+    const get = (name: string) => (form.elements.namedItem(name) as HTMLInputElement)?.value ?? ''
+
+    const name = get('name').trim()
+    const icon = get('icon').trim()
+    const is_default = (form.elements.namedItem('is_default') as HTMLInputElement)?.checked ?? false
+
+    if (!name) { setError('Name is required.'); return }
 
     setError(null)
     startTransition(async () => {
       try {
-        const payload = { name, type, balance, icon: icon || undefined, color: selectedColor, is_default }
+        const base = { name, type, icon: icon || undefined, color: selectedColor, is_default }
+
+        const payload = isCredit
+          ? {
+              ...base,
+              balance: 0,
+              credit_limit: Number(get('credit_limit')) || 0,
+              statement_day: Number(get('statement_day')) || 26,
+              payment_due_day: Number(get('payment_due_day')) || 10,
+            }
+          : { ...base, balance: Number(get('balance')) || 0 }
+
         if (editing) {
           await walletsApi.update(editing.id, payload)
         } else {
@@ -66,14 +108,14 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
   }
 
   return (
-    <Modal title={editing ? 'Edit wallet' : 'New wallet'} onClose={onClose}>
+    <Modal title={editing ? 'Edit wallet' : 'New wallet'} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Name"
           name="name"
           defaultValue={editing?.name ?? ''}
           required
-          placeholder="e.g. Vietcombank"
+          placeholder={isCredit ? 'e.g. Vietcombank Visa' : 'e.g. Vietcombank'}
         />
 
         <CustomSelect
@@ -84,12 +126,30 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
           onChange={v => setType(v as Wallet['type'])}
         />
 
-        <AmountInput
-          label="Balance"
-          name="balance"
-          defaultValue={editing?.balance ?? 0}
-          required
-        />
+        {isCredit ? (
+          <>
+            <AmountInput
+              label="Credit Limit"
+              name="credit_limit"
+              defaultValue={editing?.credit_limit ?? 0}
+              required
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <DaySelect label="Statement Day" name="statement_day" defaultValue={editing?.statement_day ?? 26} />
+              <DaySelect label="Payment Due Day" name="payment_due_day" defaultValue={editing?.payment_due_day ?? 10} />
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 -mt-1">
+              Ví dụ: sao kê ngày 26, thanh toán ngày 10 tháng sau
+            </p>
+          </>
+        ) : (
+          <AmountInput
+            label="Balance"
+            name="balance"
+            defaultValue={editing?.balance ?? 0}
+            required
+          />
+        )}
 
         <EmojiPickerInput
           label="Icon"

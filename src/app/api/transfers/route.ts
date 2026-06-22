@@ -1,15 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { SupabaseClient } from '@supabase/supabase-js'
-
-async function adjustBalance(supabase: SupabaseClient, walletId: string, delta: number, userId: string) {
-  const { data: wallet } = await supabase
-    .from('wallets').select('balance').eq('id', walletId).eq('user_id', userId).single()
-  if (!wallet) return
-  await supabase.from('wallets')
-    .update({ balance: Number(wallet.balance) + delta })
-    .eq('id', walletId).eq('user_id', userId)
-}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -31,7 +21,7 @@ export async function POST(request: NextRequest) {
   // Fetch both wallet names for the notes
   const { data: wallets } = await supabase
     .from('wallets')
-    .select('id, name')
+    .select('id, name, balance')
     .in('id', [from_wallet_id, to_wallet_id])
     .eq('user_id', user.id)
 
@@ -74,8 +64,8 @@ export async function POST(request: NextRequest) {
   }
 
   await Promise.all([
-    adjustBalance(supabase, from_wallet_id, -Number(amount), user.id),
-    adjustBalance(supabase, to_wallet_id, Number(amount), user.id),
+    supabase.rpc('adjust_wallet_balance', { p_wallet_id: from_wallet_id, p_delta: -Number(amount), p_user_id: user.id }),
+    supabase.rpc('adjust_wallet_balance', { p_wallet_id: to_wallet_id, p_delta: Number(amount), p_user_id: user.id }),
   ])
 
   return NextResponse.json({ success: true, transfer_pair_id: pairId }, { status: 201 })

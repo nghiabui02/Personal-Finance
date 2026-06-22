@@ -11,7 +11,7 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { name, type, balance, icon, color, is_default } = body
+  const { name, type, balance, icon, color, is_default, credit_limit, statement_day, payment_due_day } = body
 
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required.' }, { status: 400 })
 
@@ -19,15 +19,36 @@ export async function PATCH(
     await supabase.from('wallets').update({ is_default: false }).eq('user_id', user.id).neq('id', id)
   }
 
+  const isCredit = type === 'credit'
+
+  let newBalance: number | undefined = isCredit ? undefined : (Number(balance) || 0)
+
+  if (isCredit) {
+    const { data: current } = await supabase
+      .from('wallets')
+      .select('balance, credit_limit')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (current) {
+      const debtUsed = Number(current.credit_limit ?? 0) - Number(current.balance)
+      newBalance = Math.max(0, Number(credit_limit) - debtUsed)
+    }
+  }
+
   const { data, error } = await supabase
     .from('wallets')
     .update({
       name: name.trim(),
       type,
-      balance: Number(balance) || 0,
+      balance: newBalance,
       icon: icon?.trim() || null,
       color: color || null,
       is_default: is_default ?? false,
+      credit_limit: isCredit ? (Number(credit_limit) || null) : null,
+      statement_day: isCredit ? (Number(statement_day) || null) : null,
+      payment_due_day: isCredit ? (Number(payment_due_day) || null) : null,
     })
     .eq('id', id)
     .eq('user_id', user.id)
@@ -72,12 +93,19 @@ export async function DELETE(
     const pairId = crypto.randomUUID()
     const today = new Date().toISOString().slice(0, 10)
     await Promise.all([
-      supabase.from('wallets').update({ balance: Number(defaultWallet.balance) + balance }).eq('id', defaultWallet.id),
-      supabase.from('transactions').insert({
-        user_id: user.id, wallet_id: defaultWallet.id, type: 'income',
-        amount: balance, note: 'Balance transferred from deleted wallet',
-        transaction_date: today, transfer_pair_id: pairId,
-      }),
+      supabase.rpc('adjust_wallet_balance', { p_wallet_id: defaultWallet.id, p_delta: balance, p_user_id: user.id }),
+      supabase.from('transactions').insert([
+        {
+          user_id: user.id, wallet_id: id, type: 'expense',
+          amount: balance, note: 'Balance transferred to default wallet',
+          transaction_date: today, transfer_pair_id: pairId,
+        },
+        {
+          user_id: user.id, wallet_id: defaultWallet.id, type: 'income',
+          amount: balance, note: 'Balance transferred from deleted wallet',
+          transaction_date: today, transfer_pair_id: pairId,
+        },
+      ]),
     ])
   }
 
