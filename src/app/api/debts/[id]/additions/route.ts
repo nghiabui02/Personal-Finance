@@ -1,16 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { SupabaseClient } from '@supabase/supabase-js'
 import { ensureDebtCategory } from '@/lib/server/debt-categories'
-
-async function adjustBalance(supabase: SupabaseClient, walletId: string, delta: number, userId: string) {
-  const { data: wallet } = await supabase
-    .from('wallets').select('balance').eq('id', walletId).eq('user_id', userId).single()
-  if (!wallet) return
-  await supabase.from('wallets')
-    .update({ balance: Number(wallet.balance) + delta })
-    .eq('id', walletId).eq('user_id', userId)
-}
 
 export async function POST(
   request: NextRequest,
@@ -78,7 +68,7 @@ export async function POST(
         note: txNote,
         category_id: categoryId,
       }),
-      adjustBalance(supabase, wallet_id, txType === 'income' ? addAmount : -addAmount, user.id),
+      supabase.rpc('adjust_wallet_balance', { p_wallet_id: wallet_id, p_delta: txType === 'income' ? addAmount : -addAmount, p_user_id: user.id }),
     ])
   }
 

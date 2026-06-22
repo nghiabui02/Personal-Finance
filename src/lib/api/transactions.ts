@@ -9,6 +9,8 @@ export type Transaction = {
   amount: number
   note: string | null
   transaction_date: string
+  debt_payment_id: string | null
+  transfer_pair_id: string | null
   categories: { id: string; name: string; icon: string | null; color: string | null } | null
   wallets: { id: string; name: string } | null
 }

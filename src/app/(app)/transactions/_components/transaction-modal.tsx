@@ -12,6 +12,7 @@ import { type Category } from '@/lib/api/categories'
 import { type Transaction, transactionsApi } from '@/lib/api/transactions'
 import { type Wallet } from '@/lib/api/wallets'
 import { formatVND } from '@/lib/utils/currency'
+import { localYMD } from '@/lib/utils/date'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
@@ -45,7 +46,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
     editing ? (editing.wallet_id ?? '') : (wallets.find(w => w.is_default)?.id ?? '')
   )
   const [date, setDate] = useState(
-    editing?.transaction_date ?? defaultDate ?? new Date().toISOString().slice(0, 10)
+    editing?.transaction_date ?? defaultDate ?? localYMD()
   )
   const [showFee, setShowFee] = useState(false)
   const [selectedDebtId, setSelectedDebtId] = useState('')
@@ -160,7 +161,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
         />
 
         <div className="grid grid-cols-2 gap-3">
-          <AmountInput label="Amount" name="amount" defaultValue={editing?.amount ?? selectedDebt?.remaining_amount} required />
+          <AmountInput key={selectedDebtId || 'no-debt'} label="Amount" name="amount" defaultValue={editing?.amount ?? selectedDebt?.remaining_amount} required />
           <DatePicker label="Date" name="transaction_date" value={date} onChange={setDate} required />
         </div>
 
@@ -222,6 +223,12 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
               </div>
             )}
           </div>
+        )}
+
+        {editing?.debt_payment_id && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
+            Giao dịch này liên kết với một khoản nợ. Chỉnh sửa sẽ không cập nhật số dư nợ.
+          </p>
         )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

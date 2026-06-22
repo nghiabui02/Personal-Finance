@@ -18,17 +18,24 @@ export async function POST(
 
   const { data: debt } = await supabase
     .from('debts')
-    .select('remaining_amount, type, person_name, wallet_id, wallets(type)')
+    .select('remaining_amount, type, person_name, wallet_id')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
 
   if (!debt) return NextResponse.json({ error: 'Debt not found.' }, { status: 404 })
 
+  if (Number(debt.remaining_amount) <= 0) {
+    return NextResponse.json({ error: 'This debt is already fully paid.' }, { status: 400 })
+  }
+
+  if (Number(amount) > Number(debt.remaining_amount)) {
+    return NextResponse.json({ error: 'Payment exceeds remaining balance.' }, { status: 400 })
+  }
+
   const newRemaining = Math.max(0, Number(debt.remaining_amount) - Number(amount))
   const isSettled = newRemaining === 0
 
-  // Insert payment record first to get its id
   const { data: payment, error: payErr } = await supabase
     .from('debt_payments')
     .insert({ debt_id: id, amount: Number(amount), note: note?.trim() || null })
@@ -47,12 +54,23 @@ export async function POST(
 
   const effectiveWalletId = wallet_id || debt.wallet_id
   if (effectiveWalletId) {
-    const walletType = (debt.wallets as unknown as { type: string } | null)?.type
-    const isCreditWallet = walletType === 'credit'
+    // Fetch type + balance of the actual wallet being used (not debt's default wallet)
+    const { data: walletData } = await supabase
+      .from('wallets')
+      .select('type, balance')
+      .eq('id', effectiveWalletId)
+      .eq('user_id', user.id)
+      .single()
 
-    // For credit wallets: paying a borrow debt restores available credit (income direction)
-    // For normal wallets: lend=income (money back), borrow=expense (money out)
+    const isCreditWallet = walletData?.type === 'credit'
+
+    // lend=income (collecting), borrow=expense (paying out); credit wallet always restores (income)
     const txType = isCreditWallet ? 'income' : (debt.type === 'lend' ? 'income' : 'expense')
+
+    if (txType === 'expense' && walletData && Number(walletData.balance) < Number(amount)) {
+      return NextResponse.json({ error: 'Insufficient balance in wallet.' }, { status: 400 })
+    }
+
     const txNote = note?.trim() || (debt.type === 'lend'
       ? `Repayment from ${debt.person_name}`
       : `Repayment to ${debt.person_name}`)

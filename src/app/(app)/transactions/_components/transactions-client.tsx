@@ -96,12 +96,14 @@ function TransactionRow({
       </span>
 
       <div className="flex gap-0.5">
-        <button
-          onClick={() => onEdit(tx)}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          {PENCIL_SVG}
-        </button>
+        {!tx.transfer_pair_id && (
+          <button
+            onClick={() => onEdit(tx)}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {PENCIL_SVG}
+          </button>
+        )}
         <button
           onClick={() => onDelete(tx.id)}
           className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
