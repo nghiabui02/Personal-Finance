@@ -35,11 +35,12 @@ function getDateRange(
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; month?: string; week?: string; date?: string }>
+  searchParams: Promise<{ view?: string; month?: string; week?: string; date?: string; q?: string }>
 }) {
   const params = await searchParams
   const view = (['month', 'week', 'day'].includes(params.view ?? '') ? params.view : 'month') as ViewMode
-  const today = localYMD() // timezone-aware today
+  const today = localYMD()
+  const q = params.q?.trim() ?? ''
 
   const { startDate, endDate, period } = getDateRange(view, params, today)
 
@@ -53,14 +54,23 @@ export default async function TransactionsPage({
     { data: wallets },
     { data: debts },
   ] = await Promise.all([
-    supabase
-      .from('transactions')
-      .select('*, categories(id, name, icon, color), wallets(id, name)')
-      .eq('user_id', user.id)
-      .gte('transaction_date', startDate)
-      .lt('transaction_date', endDate)
-      .order('transaction_date', { ascending: false })
-      .order('created_at', { ascending: false }),
+    q
+      ? supabase
+          .from('transactions')
+          .select('*, categories(id, name, icon, color), wallets(id, name)')
+          .eq('user_id', user.id)
+          .ilike('note', `%${q}%`)
+          .order('transaction_date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(100)
+      : supabase
+          .from('transactions')
+          .select('*, categories(id, name, icon, color), wallets(id, name)')
+          .eq('user_id', user.id)
+          .gte('transaction_date', startDate)
+          .lt('transaction_date', endDate)
+          .order('transaction_date', { ascending: false })
+          .order('created_at', { ascending: false }),
     supabase
       .from('categories')
       .select('id, user_id, name, icon, color, type, is_default, parent_id')
@@ -89,6 +99,7 @@ export default async function TransactionsPage({
       debts={(debts ?? []) as { id: string; type: 'lend' | 'borrow'; person_name: string; remaining_amount: number }[]}
       view={view}
       period={period}
+      searchQuery={q}
     />
   )
 }

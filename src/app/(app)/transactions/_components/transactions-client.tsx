@@ -45,6 +45,7 @@ interface TransactionsClientProps {
   debts: DebtOption[]
   view: ViewMode
   period: string
+  searchQuery?: string
 }
 
 const PAGE_SIZE = 10
@@ -115,6 +116,55 @@ function TransactionRow({
   )
 }
 
+function CategoryChips({
+  transactions,
+  selected,
+  onSelect,
+}: {
+  transactions: Transaction[]
+  selected: string
+  onSelect: (id: string) => void
+}) {
+  const cats = new Map<string, { id: string; name: string; icon: string | null; color: string | null }>()
+  for (const tx of transactions) {
+    if (tx.categories && !cats.has(tx.categories.id)) {
+      cats.set(tx.categories.id, tx.categories as { id: string; name: string; icon: string | null; color: string | null })
+    }
+  }
+  const list = [...cats.values()]
+  if (list.length < 2) return null
+
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <button
+        onClick={() => onSelect('')}
+        className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+          selected === ''
+            ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-transparent'
+            : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+        }`}
+      >
+        All
+      </button>
+      {list.map(cat => (
+        <button
+          key={cat.id}
+          onClick={() => onSelect(selected === cat.id ? '' : cat.id)}
+          className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+            selected === cat.id
+              ? 'text-white border-transparent'
+              : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+          }`}
+          style={selected === cat.id ? { backgroundColor: cat.color ?? '#374151' } : undefined}
+        >
+          {cat.icon && <span>{cat.icon}</span>}
+          <span>{cat.name}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function TransactionList({
   transactions,
   filter,
@@ -135,9 +185,13 @@ function TransactionList({
   onAdd: () => void
 }) {
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE)
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  const filtered = filter === 'all' ? transactions : transactions.filter(tx => tx.type === filter)
+  const byType = filter === 'all' ? transactions : transactions.filter(tx => tx.type === filter)
+  const filtered = selectedCategoryId
+    ? byType.filter(tx => tx.categories?.id === selectedCategoryId)
+    : byType
   const visible  = filtered.slice(0, displayCount)
   const hasMore  = displayCount < filtered.length
   const groups   = groupByDate(visible)
@@ -152,6 +206,9 @@ function TransactionList({
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [hasMore])
+
+  // Reset pagination when filter or category changes
+  useEffect(() => { setDisplayCount(PAGE_SIZE) }, [filter, selectedCategoryId])
 
   const income  = transactions.filter(tx => tx.type === 'income').reduce((s, tx) => s + Number(tx.amount), 0)
   const expense = transactions.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0)
@@ -174,22 +231,29 @@ function TransactionList({
         </div>
       )}
 
-      <TabGroup
-        tabs={[
-          { key: 'all',     label: 'All'     },
-          { key: 'expense', label: 'Expense' },
-          { key: 'income',  label: 'Income'  },
-        ]}
-        value={filter}
-        onChange={onFilter}
-        className={`w-fit mb-4 ${scrollableBody ? 'shrink-0' : ''}`}
-      />
+      <div className={`space-y-3 mb-4 ${scrollableBody ? 'shrink-0' : ''}`}>
+        <TabGroup
+          tabs={[
+            { key: 'all',     label: 'All'     },
+            { key: 'expense', label: 'Expense' },
+            { key: 'income',  label: 'Income'  },
+          ]}
+          value={filter}
+          onChange={onFilter}
+          className="w-fit"
+        />
+        <CategoryChips
+          transactions={transactions}
+          selected={selectedCategoryId}
+          onSelect={setSelectedCategoryId}
+        />
+      </div>
 
       <div className={scrollableBody ? 'flex-1 overflow-y-auto min-h-0' : ''}>
         {filtered.length === 0 ? (
           <EmptyState
-            message={filter === 'all' ? 'No transactions.' : `No ${filter} transactions.`}
-            action={filter === 'all' ? { label: 'Add one', onClick: onAdd } : undefined}
+            message={filter === 'all' && !selectedCategoryId ? 'No transactions.' : 'No transactions match this filter.'}
+            action={filter === 'all' && !selectedCategoryId ? { label: 'Add one', onClick: onAdd } : undefined}
           />
         ) : (
           <div className="space-y-4">
@@ -247,6 +311,7 @@ export default function TransactionsClient({
   debts,
   view,
   period,
+  searchQuery = '',
 }: TransactionsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -255,6 +320,49 @@ export default function TransactionsClient({
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+
+  // Search state
+  const [searchOpen, setSearchOpen] = useState(!!searchQuery)
+  const [searchValue, setSearchValue] = useState(searchQuery)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const isSearchMode = searchOpen || !!searchQuery
+
+  // Sync from URL changes (browser back/forward)
+  useEffect(() => {
+    setSearchValue(searchQuery)
+    setSearchOpen(!!searchQuery)
+  }, [searchQuery])
+
+  // Focus input when search opens
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus()
+  }, [searchOpen])
+
+  // Debounced URL push
+  useEffect(() => {
+    if (searchValue === searchQuery) return
+    const timer = setTimeout(() => {
+      const url = new URL(window.location.href)
+      if (searchValue) {
+        url.searchParams.set('q', searchValue)
+        // Remove period params when searching across all time
+        url.searchParams.delete('view')
+        url.searchParams.delete('month')
+        url.searchParams.delete('week')
+        url.searchParams.delete('date')
+      } else {
+        url.searchParams.delete('q')
+      }
+      router.push(url.pathname + (url.search ? url.search : ''))
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [searchValue]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function clearSearch() {
+    setSearchValue('')
+    setSearchOpen(false)
+    router.push('/transactions')
+  }
 
   const totalIncome  = transactions.filter(tx => tx.type === 'income').reduce((s, tx) => s + Number(tx.amount), 0)
   const totalExpense = transactions.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0)
@@ -286,6 +394,7 @@ export default function TransactionsClient({
 
   return (
     <div className="flex flex-col lg:h-full">
+      {/* ── Header ─────────────────────────────────── */}
       <div className="shrink-0 pb-3 mb-1">
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
@@ -299,19 +408,93 @@ export default function TransactionsClient({
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between mb-5">
-          <ViewSelector view={view} />
-          <Button onClick={() => openModal()}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span className="hidden sm:inline">Add</span>
-          </Button>
+
+        <div className="flex items-center justify-between mb-3">
+          {!isSearchMode && <ViewSelector view={view} />}
+          {isSearchMode && <div />}
+          <div className="flex items-center gap-2">
+            {/* Search toggle */}
+            {!isSearchMode ? (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
+                aria-label="Search transactions"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                onClick={clearSearch}
+                className="p-2 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 transition-colors"
+                aria-label="Close search"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            <Button onClick={() => openModal()}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span className="hidden sm:inline">Add</span>
+            </Button>
+          </div>
         </div>
+
+        {/* Search bar */}
+        {isSearchMode && (
+          <div className="relative mb-1">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchValue}
+              onChange={e => setSearchValue(e.target.value)}
+              placeholder="Tìm theo ghi chú..."
+              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+            />
+            {searchValue && (
+              <button onClick={() => setSearchValue('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
+
+        {isSearchMode && searchQuery && (
+          <p className="text-xs text-gray-400 mt-1">
+            {transactions.length} kết quả cho &quot;{searchQuery}&quot;
+          </p>
+        )}
       </div>
 
+      {/* ── Content ────────────────────────────────── */}
       <div className="lg:flex-1 lg:min-h-0 lg:overflow-hidden">
-        {view === 'month' ? (
+        {isSearchMode ? (
+          /* Search results — flat list, no calendar */
+          <div className="lg:flex lg:flex-col lg:h-full">
+            <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col lg:overflow-hidden">
+              <TransactionList
+                key={`search-${filter}`}
+                transactions={transactions}
+                filter={filter}
+                onFilter={setFilter}
+                onEdit={openModal}
+                onDelete={setConfirmId}
+                onAdd={() => openModal()}
+                scrollableBody
+                hideSummary
+              />
+            </div>
+          </div>
+        ) : view === 'month' ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:h-full">
             <div className="lg:overflow-y-auto">
               <TransactionCalendar
