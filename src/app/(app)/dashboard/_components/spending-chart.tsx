@@ -37,8 +37,8 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
 
   if (data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col flex-1">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Spending by Category</h2>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 flex flex-col flex-1">
+        <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-5">Spending by Category</h2>
         <div className="py-10 text-center text-sm text-gray-400">No expense data this month</div>
       </div>
     )
@@ -55,8 +55,8 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
     : null
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 flex flex-col flex-1">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Spending by Category</h2>
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 flex flex-col flex-1">
+      <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-5">Spending by Category</h2>
 
       <div className="relative">
         <ResponsiveContainer width="100%" height={220}>
