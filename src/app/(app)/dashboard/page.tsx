@@ -97,13 +97,13 @@ export default async function DashboardPage({
     if (b.spent > b.amount) {
       alerts.push({
         type: 'budget_over',
-        label: `Budget vượt ngưỡng: ${b.category.icon ?? ''} ${b.category.name} — chi ${formatVND(b.spent)} / ${formatVND(b.amount)}`,
+        label: `Over budget: ${b.category.icon ?? ''} ${b.category.name} — spent ${formatVND(b.spent)} of ${formatVND(b.amount)}`,
         href: '/budgets',
       })
     } else if (pct >= 0.8) {
       alerts.push({
         type: 'budget_near',
-        label: `Gần hết ngân sách: ${b.category.icon ?? ''} ${b.category.name} — đã dùng ${Math.round(pct * 100)}%`,
+        label: `Budget nearly full: ${b.category.icon ?? ''} ${b.category.name} — ${Math.round(pct * 100)}% used`,
         href: '/budgets',
       })
     }
@@ -112,11 +112,15 @@ export default async function DashboardPage({
     if (d.status !== 'active' || Number(d.remaining_amount) <= 0 || !d.due_date) continue
     if (d.due_date <= sevenDaysLater) {
       const isOverdue = d.due_date < todayStr
+      // lend = they owe you; borrow = you owe them
+      const direction = d.type === 'lend'
+        ? `${d.person_name} owes you`
+        : `You owe ${d.person_name}`
       alerts.push({
         type: 'debt_due',
         label: isOverdue
-          ? `Quá hạn: nợ với ${d.person_name} — ${formatVND(d.remaining_amount)} còn lại`
-          : `Sắp đến hạn: nợ với ${d.person_name} vào ${d.due_date} — ${formatVND(d.remaining_amount)} còn lại`,
+          ? `Overdue: ${direction} — ${formatVND(d.remaining_amount)} remaining`
+          : `Due soon: ${direction} — ${formatVND(d.remaining_amount)} on ${d.due_date}`,
         href: '/debts',
       })
     }

@@ -116,6 +116,16 @@ body {
 
 /* ── Modal animations (unused keyframes kept for reference) ── */
 
+/* ── Search bar expand animation (right-to-left) ── */
+@keyframes searchExpand {
+  from { max-width: 0; opacity: 0; }
+  to   { max-width: 800px; opacity: 1; }
+}
+@utility animate-search-expand {
+  animation: searchExpand 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+  overflow: hidden;
+}
+
 /* ── Mobile sidebar animations ── */
 @keyframes sidebar-in {
   from { transform: translateX(-100%); }

@@ -325,7 +325,7 @@ export default function TransactionsClient({
   const [searchOpen, setSearchOpen] = useState(!!searchQuery)
   const [searchValue, setSearchValue] = useState(searchQuery)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const isSearchMode = searchOpen || !!searchQuery
+  const isSearchMode = !!searchQuery
 
   // Sync from URL changes (browser back/forward)
   useEffect(() => {
@@ -338,25 +338,20 @@ export default function TransactionsClient({
     if (searchOpen) searchInputRef.current?.focus()
   }, [searchOpen])
 
-  // Debounced URL push
-  useEffect(() => {
-    if (searchValue === searchQuery) return
-    const timer = setTimeout(() => {
-      const url = new URL(window.location.href)
-      if (searchValue) {
-        url.searchParams.set('q', searchValue)
-        // Remove period params when searching across all time
-        url.searchParams.delete('view')
-        url.searchParams.delete('month')
-        url.searchParams.delete('week')
-        url.searchParams.delete('date')
-      } else {
-        url.searchParams.delete('q')
-      }
-      router.push(url.pathname + (url.search ? url.search : ''))
-    }, 350)
-    return () => clearTimeout(timer)
-  }, [searchValue]) // eslint-disable-line react-hooks/exhaustive-deps
+  function handleSearch() {
+    const q = searchValue.trim()
+    if (!q) {
+      clearSearch()
+      return
+    }
+    const url = new URL(window.location.href)
+    url.searchParams.set('q', q)
+    url.searchParams.delete('view')
+    url.searchParams.delete('month')
+    url.searchParams.delete('week')
+    url.searchParams.delete('date')
+    router.push(url.pathname + url.search)
+  }
 
   function clearSearch() {
     setSearchValue('')
@@ -409,32 +404,65 @@ export default function TransactionsClient({
           ))}
         </div>
 
-        <div className="flex items-center justify-between mb-3">
-          {!isSearchMode && <ViewSelector view={view} />}
-          {isSearchMode && <div />}
-          <div className="flex items-center gap-2">
-            {/* Search toggle */}
-            {!isSearchMode ? (
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="p-2 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
-                aria-label="Search transactions"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        {/* Toolbar — search expands inline from the icon */}
+        <div className="flex items-center gap-2 mb-3">
+          {/* ViewSelector — collapses when search opens */}
+          <div
+            style={{
+              maxWidth: searchOpen ? '0' : '300px',
+              opacity: searchOpen ? 0 : 1,
+              overflow: 'hidden',
+              flexShrink: 0,
+              transition: 'max-width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.18s ease',
+            }}
+          >
+            <ViewSelector view={view} />
+          </div>
+
+          {/* Search input — slides in from right */}
+          {searchOpen && (
+            <div className="animate-search-expand flex-1 min-w-0">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
-              </button>
-            ) : (
-              <button
-                onClick={clearSearch}
-                className="p-2 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 transition-colors"
-                aria-label="Close search"
-              >
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchValue}
+                  onChange={e => setSearchValue(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleSearch()
+                    if (e.key === 'Escape') clearSearch()
+                  }}
+                  placeholder="Search by note… (Enter)"
+                  className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Right buttons */}
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <button
+              onClick={searchOpen ? clearSearch : () => setSearchOpen(true)}
+              className={`p-2 rounded-xl border transition-colors ${
+                searchOpen
+                  ? 'text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:text-rose-600 hover:border-rose-200 dark:hover:border-rose-800'
+                  : 'text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700'
+              }`}
+              aria-label={searchOpen ? 'Close search' : 'Search'}
+            >
+              {searchOpen ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
-              </button>
-            )}
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+              )}
+            </button>
             <Button onClick={() => openModal()}>
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -443,36 +471,6 @@ export default function TransactionsClient({
             </Button>
           </div>
         </div>
-
-        {/* Search bar */}
-        {isSearchMode && (
-          <div className="relative mb-1">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchValue}
-              onChange={e => setSearchValue(e.target.value)}
-              placeholder="Tìm theo ghi chú..."
-              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
-            />
-            {searchValue && (
-              <button onClick={() => setSearchValue('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-        )}
-
-        {isSearchMode && searchQuery && (
-          <p className="text-xs text-gray-400 mt-1">
-            {transactions.length} kết quả cho &quot;{searchQuery}&quot;
-          </p>
-        )}
       </div>
 
       {/* ── Content ────────────────────────────────── */}
