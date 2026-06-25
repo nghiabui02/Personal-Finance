@@ -2,7 +2,10 @@
 
 import { formatVND } from '@/lib/utils/currency'
 import { useState } from 'react'
-import { Pie, PieChart, ResponsiveContainer, Sector } from 'recharts'
+import { Pie as PieBase, PieChart, ResponsiveContainer, Sector } from 'recharts'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Pie = PieBase as React.ComponentType<any>
 
 type CategorySpend = {
   id: string
@@ -72,7 +75,7 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
               strokeWidth={0}
               activeIndex={activeIndex ?? undefined}
               activeShape={renderActiveShape}
-              onMouseEnter={(_, index) => setActiveIndex(index)}
+              onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(null)}
             />
           </PieChart>

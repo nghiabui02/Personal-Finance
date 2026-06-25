@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import ReportsClient, { type PeriodType } from './_components/reports-client'
 import type { ChartPoint, CategoryData } from './_components/types'
 
+type NetWorthSnapshot = { recorded_date: string; net_worth: number }
+
 export const metadata: Metadata = { title: 'Reports' }
 export const dynamic = 'force-dynamic'
 
@@ -109,16 +111,57 @@ export default async function ReportsPage({
   const start  = params.start ?? getDefaultStart(period)
   const { startDate, endDate } = getDateRange(period, start)
 
+  const now = new Date()
+  const todayStr = toYMD(getLocalNow())
+  const ninetyDaysAgo = toYMD(new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000))
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: rows } = await supabase
-    .from('transactions')
-    .select('type, amount, transaction_date, categories(id, name, icon, color)')
-    .eq('user_id', user.id)
-    .gte('transaction_date', startDate)
-    .lt('transaction_date', endDate)
+  const [
+    { data: rows },
+    { data: walletRows },
+    { data: debtRows },
+    { data: snapshotRows },
+  ] = await Promise.all([
+    supabase
+      .from('transactions')
+      .select('type, amount, transaction_date, categories(id, name, icon, color)')
+      .eq('user_id', user.id)
+      .gte('transaction_date', startDate)
+      .lt('transaction_date', endDate),
+    supabase.from('wallets').select('type, balance, credit_limit').eq('user_id', user.id),
+    supabase.from('debts').select('type, remaining_amount, status').eq('user_id', user.id),
+    supabase
+      .from('net_worth_snapshots')
+      .select('recorded_date, net_worth')
+      .eq('user_id', user.id)
+      .gte('recorded_date', ninetyDaysAgo)
+      .order('recorded_date', { ascending: true }),
+  ])
+
+  // Net worth calculation
+  let totalWalletBalance = 0
+  let totalCreditDebt = 0
+  for (const w of walletRows ?? []) {
+    if (w.type === 'credit') totalCreditDebt += Math.max(0, Number(w.credit_limit ?? 0) - Number(w.balance))
+    else totalWalletBalance += Number(w.balance)
+  }
+  let totalLent = 0
+  let totalBorrowed = 0
+  for (const d of debtRows ?? []) {
+    if (d.status !== 'active' || Number(d.remaining_amount) <= 0) continue
+    if (d.type === 'lend') totalLent += Number(d.remaining_amount)
+    else totalBorrowed += Number(d.remaining_amount)
+  }
+  const netWorth = totalWalletBalance + totalLent - totalCreditDebt - totalBorrowed
+
+  // Upsert today's snapshot so chart stays current
+  supabase.from('net_worth_snapshots').upsert(
+    { user_id: user.id, net_worth: netWorth, recorded_date: todayStr },
+    { onConflict: 'user_id,recorded_date' }
+  ).then(() => {})
 
   const transactions = (rows ?? []) as RawTx[]
   let totalIncome = 0
@@ -143,6 +186,12 @@ export default async function ReportsPage({
       byCategory={[...catMap.values()].sort((a, b) => b.amount - a.amount).slice(0, 8)}
       totalIncome={totalIncome}
       totalExpense={totalExpense}
+      netWorth={netWorth}
+      totalWalletBalance={totalWalletBalance}
+      totalLent={totalLent}
+      totalCreditDebt={totalCreditDebt}
+      totalBorrowed={totalBorrowed}
+      netWorthSnapshots={(snapshotRows ?? []) as NetWorthSnapshot[]}
     />
   )
 }

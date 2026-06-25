@@ -4,6 +4,7 @@ import { formatVND } from '@/lib/utils/currency'
 import { useRouter } from 'next/navigation'
 import { TabGroup } from '@/components/ui/tab-group'
 import { AIInsights } from '@/app/(app)/dashboard/_components/ai-insights'
+import { NetWorthChart } from '@/app/(app)/dashboard/_components/net-worth-chart'
 import { CategoryChart } from './category-chart'
 import { BarChart } from './bar-chart'
 import type { ChartPoint, CategoryData } from './types'
@@ -62,10 +63,17 @@ interface ReportsClientProps {
   byCategory: CategoryData[]
   totalIncome: number
   totalExpense: number
+  netWorth: number
+  totalWalletBalance: number
+  totalLent: number
+  totalCreditDebt: number
+  totalBorrowed: number
+  netWorthSnapshots: { recorded_date: string; net_worth: number }[]
 }
 
 export default function ReportsClient({
   period, start, chartData, byCategory, totalIncome, totalExpense,
+  netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed, netWorthSnapshots,
 }: ReportsClientProps) {
   const router = useRouter()
   const net = totalIncome - totalExpense
@@ -216,6 +224,36 @@ export default function ReportsClient({
 
       {/* Spending breakdown leaderboard */}
       <CategoryChart data={byCategory} totalExpense={totalExpense} />
+
+      {/* Net Worth */}
+      <div className="bg-[#111111] dark:bg-[#0a0a0a] rounded-2xl px-5 py-5">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Net Worth</p>
+        <p className={`text-3xl sm:text-4xl font-light tabular-nums leading-none ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
+          {formatVND(netWorth)}
+        </p>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+          <span className="text-xs tabular-nums text-emerald-400 font-medium">
+            Cash&nbsp;&nbsp;{formatVND(totalWalletBalance)}
+          </span>
+          {totalLent > 0 && (
+            <span className="text-xs tabular-nums text-emerald-400/70 font-medium">
+              Lent&nbsp;&nbsp;+{formatVND(totalLent)}
+            </span>
+          )}
+          {totalCreditDebt > 0 && (
+            <span className="text-xs tabular-nums text-rose-400 font-medium">
+              Credit&nbsp;&nbsp;−{formatVND(totalCreditDebt)}
+            </span>
+          )}
+          {totalBorrowed > 0 && (
+            <span className="text-xs tabular-nums text-rose-400/70 font-medium">
+              Borrowed&nbsp;&nbsp;−{formatVND(totalBorrowed)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <NetWorthChart snapshots={netWorthSnapshots} />
 
       <AIInsights
         periodLabel={getPeriodLabel(period, start)}

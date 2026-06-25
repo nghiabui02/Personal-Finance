@@ -32,5 +32,5 @@ export default async function WalletDetailPage({
 
   if (!wallet) notFound()
 
-  return <WalletDetailClient wallet={wallet} transactions={transactions ?? []} />
+  return <WalletDetailClient wallet={wallet} transactions={(transactions ?? []) as unknown as Parameters<typeof WalletDetailClient>[0]['transactions']} />
 }
