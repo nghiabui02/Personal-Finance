@@ -116,6 +116,15 @@ body {
 
 /* ── Modal animations (unused keyframes kept for reference) ── */
 
+/* ── Quick-add panel slide up ── */
+@keyframes slideUp {
+  from { transform: translateY(1.5rem); opacity: 0; }
+  to   { transform: translateY(0);      opacity: 1; }
+}
+@utility animate-slide-up {
+  animation: slideUp 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 /* ── Search bar expand animation (right-to-left) ── */
 @keyframes searchExpand {
   from { max-width: 0; opacity: 0; }

@@ -21,12 +21,11 @@ async function adjustBalance(
   delta: number,
   userId: string,
 ) {
-  const { data: wallet } = await supabase
-    .from('wallets').select('balance').eq('id', walletId).eq('user_id', userId).single()
-  if (!wallet) return
-  await supabase.from('wallets')
-    .update({ balance: Number(wallet.balance) + delta })
-    .eq('id', walletId).eq('user_id', userId)
+  await supabase.rpc('adjust_wallet_balance', {
+    p_wallet_id: walletId,
+    p_delta: delta,
+    p_user_id: userId,
+  })
 }
 
 /**
