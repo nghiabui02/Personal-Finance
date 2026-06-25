@@ -15,8 +15,10 @@ interface DashboardHeroProps {
   totalIncome: number
   totalExpense: number
   netWorth: number
-  totalAssets: number
+  totalWalletBalance: number
+  totalLent: number
   totalCreditDebt: number
+  totalBorrowed: number
   alerts: Alert[]
 }
 
@@ -36,8 +38,10 @@ export function DashboardHero({
   totalIncome,
   totalExpense,
   netWorth,
-  totalAssets,
+  totalWalletBalance,
+  totalLent,
   totalCreditDebt,
+  totalBorrowed,
   alerts,
 }: DashboardHeroProps) {
   const router = useRouter()
@@ -110,21 +114,26 @@ export function DashboardHero({
         <p className={`text-2xl sm:text-3xl font-light tabular-nums ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
           {formatVND(netWorth)}
         </p>
-        {(totalAssets > 0 || totalCreditDebt > 0) && (
-          <div className="flex items-center gap-4 mt-2 flex-wrap">
-            <span className="text-xs tabular-nums text-emerald-400 font-medium">
-              Assets&nbsp;&nbsp;{formatVND(totalAssets)}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+          <span className="text-xs tabular-nums text-emerald-400 font-medium">
+            Cash&nbsp;&nbsp;{formatVND(totalWalletBalance)}
+          </span>
+          {totalLent > 0 && (
+            <span className="text-xs tabular-nums text-emerald-400/70 font-medium">
+              Lent&nbsp;&nbsp;+{formatVND(totalLent)}
             </span>
-            {totalCreditDebt > 0 && (
-              <>
-                <span className="text-[10px] text-white/20 select-none">·</span>
-                <span className="text-xs tabular-nums text-rose-400 font-medium">
-                  Credit&nbsp;&nbsp;−{formatVND(totalCreditDebt)}
-                </span>
-              </>
-            )}
-          </div>
-        )}
+          )}
+          {totalCreditDebt > 0 && (
+            <span className="text-xs tabular-nums text-rose-400 font-medium">
+              Credit&nbsp;&nbsp;−{formatVND(totalCreditDebt)}
+            </span>
+          )}
+          {totalBorrowed > 0 && (
+            <span className="text-xs tabular-nums text-rose-400/70 font-medium">
+              Borrowed&nbsp;&nbsp;−{formatVND(totalBorrowed)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Alerts */}

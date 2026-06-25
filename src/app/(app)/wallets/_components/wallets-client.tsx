@@ -42,26 +42,18 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
 
   return (
     <>
-      {/* Net worth hero — matches dashboard hero style */}
+      {/* Total balance hero */}
       {wallets.length > 0 && (
         <div className="bg-[#111111] dark:bg-[#0a0a0a] rounded-2xl px-5 py-5 mb-4">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Net Worth</p>
-          <p className={`text-3xl sm:text-4xl font-light tabular-nums leading-none ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
-            {formatVND(netWorth)}
+          <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Total Balance</p>
+          <p className="text-3xl sm:text-4xl font-light tabular-nums leading-none text-white">
+            {formatVND(totalAssets)}
           </p>
-          <div className="flex items-center gap-5 mt-3 flex-wrap">
-            <span className="text-xs tabular-nums text-emerald-400 font-medium">
-              Assets&nbsp;&nbsp;{formatVND(totalAssets)}
-            </span>
-            {totalCreditDebt > 0 && (
-              <>
-                <span className="text-[10px] text-white/20">·</span>
-                <span className="text-xs tabular-nums text-rose-400 font-medium">
-                  Credit debt&nbsp;&nbsp;−{formatVND(totalCreditDebt)}
-                </span>
-              </>
-            )}
-          </div>
+          {wallets.length > 0 && (
+            <p className="text-xs tabular-nums text-white/30 mt-2">
+              {wallets.filter(w => w.type !== 'credit').length} wallet{wallets.filter(w => w.type !== 'credit').length !== 1 ? 's' : ''}
+            </p>
+          )}
         </div>
       )}
 

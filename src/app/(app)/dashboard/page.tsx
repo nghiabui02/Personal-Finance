@@ -54,16 +54,25 @@ export default async function DashboardPage({
   ])
 
   // Net worth
-  let totalAssets = 0
+  let totalWalletBalance = 0
   let totalCreditDebt = 0
   for (const w of walletRows ?? []) {
     if (w.type === 'credit') {
       totalCreditDebt += Math.max(0, Number(w.credit_limit ?? 0) - Number(w.balance))
     } else {
-      totalAssets += Number(w.balance)
+      totalWalletBalance += Number(w.balance)
     }
   }
-  const netWorth = totalAssets - totalCreditDebt
+  let totalLent = 0
+  let totalBorrowed = 0
+  for (const d of debtRows ?? []) {
+    if (d.status !== 'active' || Number(d.remaining_amount) <= 0) continue
+    if (d.type === 'lend') totalLent += Number(d.remaining_amount)
+    else totalBorrowed += Number(d.remaining_amount)
+  }
+  const totalAssets = totalWalletBalance + totalLent
+  const totalLiabilities = totalCreditDebt + totalBorrowed
+  const netWorth = totalAssets - totalLiabilities
 
   supabase.from('net_worth_snapshots').upsert(
     { user_id: user.id, net_worth: netWorth, recorded_date: todayStr },
@@ -133,8 +142,10 @@ export default async function DashboardPage({
         totalIncome={totalIncome}
         totalExpense={totalExpense}
         netWorth={netWorth}
-        totalAssets={totalAssets}
+        totalWalletBalance={totalWalletBalance}
+        totalLent={totalLent}
         totalCreditDebt={totalCreditDebt}
+        totalBorrowed={totalBorrowed}
         alerts={alerts.slice(0, 5)}
       />
 
