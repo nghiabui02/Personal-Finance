@@ -106,15 +106,24 @@ export function DashboardHero({
 
       {/* Net worth */}
       <div className="px-5 py-4">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-1.5">Net Worth</p>
-        <p className={`text-lg font-semibold tabular-nums ${netWorth >= 0 ? 'text-white/90' : 'text-rose-400'}`}>
+        <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Net Worth</p>
+        <p className={`text-2xl sm:text-3xl font-light tabular-nums ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
           {formatVND(netWorth)}
         </p>
         {(totalAssets > 0 || totalCreditDebt > 0) && (
-          <p className="text-[10px] text-white/30 mt-0.5 tabular-nums">
-            {formatVND(totalAssets)} assets
-            {totalCreditDebt > 0 && <span className="text-rose-500/60"> · −{formatVND(totalCreditDebt)} credit</span>}
-          </p>
+          <div className="flex items-center gap-4 mt-2 flex-wrap">
+            <span className="text-xs tabular-nums text-emerald-400 font-medium">
+              Assets&nbsp;&nbsp;{formatVND(totalAssets)}
+            </span>
+            {totalCreditDebt > 0 && (
+              <>
+                <span className="text-[10px] text-white/20 select-none">·</span>
+                <span className="text-xs tabular-nums text-rose-400 font-medium">
+                  Credit&nbsp;&nbsp;−{formatVND(totalCreditDebt)}
+                </span>
+              </>
+            )}
+          </div>
         )}
       </div>
 

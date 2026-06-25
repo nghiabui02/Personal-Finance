@@ -42,36 +42,44 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
 
   return (
     <>
-      <button
-        onClick={() => openModal()}
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-[colors,transform] hover:scale-110 active:scale-95 flex items-center justify-center"
-        aria-label="New wallet"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-        </svg>
-      </button>
-
+      {/* Net worth hero — matches dashboard hero style */}
       {wallets.length > 0 && (
-        <div className="bg-slate-900 dark:bg-slate-800 rounded-2xl p-5 mb-5">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">
-            Net Worth
-          </p>
-          <p className="text-[2.5rem] font-bold tracking-tight text-white tabular-nums leading-none">
+        <div className="bg-[#111111] dark:bg-[#0a0a0a] rounded-2xl px-5 py-5 mb-4">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Net Worth</p>
+          <p className={`text-3xl sm:text-4xl font-light tabular-nums leading-none ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
             {formatVND(netWorth)}
           </p>
-          <div className="flex items-center gap-4 mt-2">
-            <p className="text-sm text-slate-400">
-              Assets <span className="text-emerald-400 font-medium">{formatVND(totalAssets)}</span>
-            </p>
+          <div className="flex items-center gap-5 mt-3 flex-wrap">
+            <span className="text-xs tabular-nums text-emerald-400 font-medium">
+              Assets&nbsp;&nbsp;{formatVND(totalAssets)}
+            </span>
             {totalCreditDebt > 0 && (
-              <p className="text-sm text-slate-400">
-                Credit debt <span className="text-rose-400 font-medium">−{formatVND(totalCreditDebt)}</span>
-              </p>
+              <>
+                <span className="text-[10px] text-white/20">·</span>
+                <span className="text-xs tabular-nums text-rose-400 font-medium">
+                  Credit debt&nbsp;&nbsp;−{formatVND(totalCreditDebt)}
+                </span>
+              </>
             )}
           </div>
         </div>
       )}
+
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+          {wallets.length > 0 ? `${wallets.length} wallet${wallets.length > 1 ? 's' : ''}` : ''}
+        </p>
+        <button
+          onClick={() => openModal()}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+          </svg>
+          New wallet
+        </button>
+      </div>
 
       {wallets.length === 0 ? (
         <EmptyState
