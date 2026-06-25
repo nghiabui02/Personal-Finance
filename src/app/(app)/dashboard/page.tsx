@@ -5,6 +5,7 @@ import { formatVND } from '@/lib/utils/currency'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 import { DashboardHero, type Alert } from './_components/dashboard-hero'
+import { DashboardAddButton } from './_components/dashboard-add-button'
 import { BudgetProgress } from './_components/budget-progress'
 import { DebtSummary } from './_components/debt-summary'
 import { NetWorthChart } from './_components/net-worth-chart'
@@ -43,14 +44,16 @@ export default async function DashboardPage({
     { data: debtRows },
     { data: walletRows },
     { data: snapshotRows },
+    { data: categoryRows },
   ] = await Promise.all([
     supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate),
     supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
     supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
     supabase.from('budgets').select('id, amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('month', startDate),
     supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
-    supabase.from('wallets').select('type, balance, credit_limit').eq('user_id', user.id),
+    supabase.from('wallets').select('id, name, type, balance, credit_limit, color, icon, is_default, user_id').eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
     supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
+    supabase.from('categories').select('id, user_id, name, icon, color, type, is_default, parent_id').order('is_default', { ascending: false }).order('name'),
   ])
 
   // Net worth
@@ -135,6 +138,10 @@ export default async function DashboardPage({
     }
   }
 
+  const activeDebtsForModal = (debtRows ?? [])
+    .filter(d => d.status === 'active' && Number(d.remaining_amount) > 0)
+    .map(d => ({ id: d.id, type: d.type as 'lend' | 'borrow', person_name: d.person_name, remaining_amount: Number(d.remaining_amount) }))
+
   return (
     <div className="space-y-4 pb-2">
       <DashboardHero
@@ -164,6 +171,12 @@ export default async function DashboardPage({
       </div>
 
       <NetWorthChart snapshots={(snapshotRows ?? []) as { recorded_date: string; net_worth: number }[]} />
+
+      <DashboardAddButton
+        categories={categoryRows ?? []}
+        wallets={(walletRows ?? []) as unknown as Parameters<typeof DashboardAddButton>[0]['wallets']}
+        debts={activeDebtsForModal}
+      />
     </div>
   )
 }

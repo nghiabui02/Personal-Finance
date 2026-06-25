@@ -4,7 +4,6 @@ import { ReactNode, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { QuickAddButton } from '@/components/quick-add-button'
 import Header from './header'
 import Sidebar from './sidebar'
 
@@ -148,7 +147,6 @@ export default function AppShell({
         </main>
       </div>
 
-      <QuickAddButton />
       <MobileBottomNav pathname={pathname} />
     </div>
   )
