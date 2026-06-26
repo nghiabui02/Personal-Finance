@@ -56,7 +56,14 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input label="Email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" />
-      <Input label="Password" name="password" type="password" autoComplete="current-password" required placeholder="••••••••" />
+      <div className="space-y-1">
+        <Input label="Password" name="password" type="password" autoComplete="current-password" required placeholder="••••••••" />
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-xs text-gray-400 hover:text-indigo-500 transition-colors">
+            Forgot password?
+          </Link>
+        </div>
+      </div>
       {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
       <Button type="submit" disabled={isPending} fullWidth>
         {isPending ? 'Signing in...' : 'Sign in'}
