@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { authApi } from '@/lib/api/auth'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
@@ -308,6 +309,32 @@ export default function SettingsClient({
           </div>
         )}
       </Section>
+
+      {/* Sign out */}
+      <SignOutSection router={router} />
     </div>
+  )
+}
+
+function SignOutSection({ router }: { router: ReturnType<typeof useRouter> }) {
+  const [pending, setPending] = useState(false)
+
+  async function handleSignOut() {
+    setPending(true)
+    await authApi.signOut()
+    router.push('/login')
+    router.refresh()
+  }
+
+  return (
+    <Section title="Account">
+      <button
+        onClick={handleSignOut}
+        disabled={pending}
+        className="text-sm font-medium text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors disabled:opacity-50"
+      >
+        {pending ? 'Signing out…' : 'Sign out'}
+      </button>
+    </Section>
   )
 }

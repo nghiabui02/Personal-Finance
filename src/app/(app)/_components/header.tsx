@@ -8,11 +8,9 @@ import { useState } from 'react'
 export default function Header({
   user,
   title,
-  onMenuToggle,
 }: {
   user: User
   title?: string
-  onMenuToggle?: () => void
 }) {
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
@@ -33,17 +31,6 @@ export default function Header({
   return (
     <header className="shrink-0 pt-safe bg-gray-50 md:bg-white md:border-b md:border-gray-200 dark:bg-gray-950 md:dark:bg-gray-900 md:dark:border-gray-800">
       <div className="h-14 flex items-center gap-2 px-4 md:px-6">
-      {/* Hamburger — mobile only */}
-      <button
-        onClick={onMenuToggle}
-        className="md:hidden p-2 -ml-1 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        aria-label="Open menu"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-        </svg>
-      </button>
-
       {/* Page title */}
       <span className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
         {title ?? 'Finance'}
