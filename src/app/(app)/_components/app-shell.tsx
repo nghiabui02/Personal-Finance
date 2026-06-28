@@ -24,6 +24,9 @@ const PAGE_TITLES: Record<string, string> = {
 // Paths that make the "More" tab active
 const MORE_PATHS = ['/more', '/categories', '/budgets', '/debts', '/saving-goals', '/recurring', '/settings']
 
+// Sub-pages of More that should show a back button on mobile
+const MORE_SUB_PATHS = ['/categories', '/budgets', '/debts', '/saving-goals', '/recurring', '/settings']
+
 const BOTTOM_NAV = [
   {
     href: '/dashboard',
@@ -117,6 +120,9 @@ export default function AppShell({
 }) {
   const pathname = usePathname()
 
+  const title = PAGE_TITLES[pathname] ?? Object.entries(PAGE_TITLES).find(([k]) => pathname.startsWith(k + '/'))?.at(1) ?? 'Finance'
+  const isMoreSubPage = MORE_SUB_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
+
   return (
     <div className="bg-gray-50 dark:bg-gray-950 md:flex md:h-dvh md:overflow-hidden">
       {/* Desktop sidebar */}
@@ -127,7 +133,8 @@ export default function AppShell({
       <div className="flex flex-col md:flex-1 md:min-w-0 md:overflow-hidden">
         <Header
           user={user}
-          title={PAGE_TITLES[pathname] ?? Object.entries(PAGE_TITLES).find(([k]) => pathname.startsWith(k + '/'))?.at(1) ?? 'Finance'}
+          title={title}
+          backHref={isMoreSubPage ? '/more' : undefined}
         />
         <main className="pt-4 px-4 pb-bottom-nav md:pb-6 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pt-6 md:px-6">
           {children}

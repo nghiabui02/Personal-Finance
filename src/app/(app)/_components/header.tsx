@@ -1,67 +1,68 @@
 'use client'
 
-import { authApi } from '@/lib/api/auth'
 import { User } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useState } from 'react'
 
 export default function Header({
   user,
   title,
+  backHref,
 }: {
   user: User
   title?: string
+  backHref?: string
 }) {
-  const router = useRouter()
-  const [signingOut, setSigningOut] = useState(false)
-
   const meta = user.user_metadata ?? {}
   const avatarUrl = meta.avatar_url as string | undefined
-  const displayName = (meta.full_name as string) || user.email || ''
+  const displayName = (meta.full_name as string) || user.email?.split('@')[0] || 'User'
   const initials = displayName[0]?.toUpperCase() ?? 'U'
   const [avatarErr, setAvatarErr] = useState(false)
 
-  async function handleSignOut() {
-    setSigningOut(true)
-    await authApi.signOut()
-    router.push('/login')
-    router.refresh()
-  }
-
   return (
     <header className="shrink-0 pt-safe bg-gray-50 md:bg-white md:border-b md:border-gray-200 dark:bg-gray-950 md:dark:bg-gray-900 md:dark:border-gray-800">
-      <div className="h-14 flex items-center gap-2 px-4 md:px-6">
-      {/* Page title */}
-      <span className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
-        {title ?? 'Finance'}
-      </span>
+      <div className="h-14 flex items-center gap-3 px-4 md:px-6">
 
-      {/* Avatar + name/email */}
-      <div className="hidden sm:flex items-center gap-2">
-        {avatarUrl && !avatarErr ? (
-          <img
-            src={avatarUrl}
-            alt="Avatar"
-            className="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 shrink-0"
-            onError={() => setAvatarErr(true)}
-          />
+        {/* Mobile: back link for More sub-pages */}
+        {backHref ? (
+          <>
+            <Link
+              href={backHref}
+              className="md:hidden flex items-center gap-0.5 text-indigo-500 dark:text-indigo-400 -ml-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+              <span className="text-base font-semibold">{title ?? 'Back'}</span>
+            </Link>
+            {/* Desktop: plain title */}
+            <span className="hidden md:block text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
+              {title ?? 'Finance'}
+            </span>
+          </>
         ) : (
-          <div className="w-7 h-7 rounded-full bg-gray-900 dark:bg-gray-200 flex items-center justify-center text-white dark:text-gray-900 text-xs font-semibold shrink-0">
-            {initials}
-          </div>
+          <span className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
+            {title ?? 'Finance'}
+          </span>
         )}
-        <span className="text-sm text-gray-500 dark:text-gray-400 max-w-35 truncate">
-          {displayName}
-        </span>
-      </div>
 
-      <button
-        onClick={handleSignOut}
-        disabled={signingOut}
-        className="text-sm font-medium text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-50 whitespace-nowrap"
-      >
-        {signingOut ? 'Signing out...' : 'Sign out'}
-      </button>
+        <div className="flex items-center gap-2 ml-auto">
+          {avatarUrl && !avatarErr ? (
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 shrink-0"
+              onError={() => setAvatarErr(true)}
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-gray-900 dark:bg-gray-200 flex items-center justify-center text-white dark:text-gray-900 text-xs font-semibold shrink-0">
+              {initials}
+            </div>
+          )}
+          <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 max-w-36 truncate">
+            {displayName}
+          </span>
+        </div>
       </div>
     </header>
   )
