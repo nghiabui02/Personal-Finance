@@ -13,10 +13,9 @@ import { type Transaction, transactionsApi } from '@/lib/api/transactions'
 import { type Wallet } from '@/lib/api/wallets'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
+import type { DebtOption } from '@/lib/types'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-
-type DebtOption = { id: string; type: 'lend' | 'borrow'; person_name: string; remaining_amount: number }
 
 interface TransactionModalProps {
   editing: Transaction | null

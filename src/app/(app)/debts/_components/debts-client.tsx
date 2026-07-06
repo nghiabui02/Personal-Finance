@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
-import { EmptyState } from '@/components/ui/empty-state'
 import { TabGroup } from '@/components/ui/tab-group'
 import { AmountInput } from '@/components/ui/amount-input'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -11,6 +10,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { formatVND } from '@/lib/utils/currency'
+import { localYMD } from '@/lib/utils/date'
 import { type Debt, debtsApi } from '@/lib/api/debts'
 import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
@@ -45,7 +45,7 @@ function DebtModal({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [type, setType] = useState<'lend' | 'borrow'>(editing?.type ?? defaultType)
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localYMD())
   const [dueDate, setDueDate] = useState(editing?.due_date ?? '')
   const [walletId, setWalletId] = useState(
     editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? ''
@@ -158,7 +158,7 @@ function PaymentModal({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localYMD())
 
   const walletOptions = [
     { value: '', label: 'No wallet' },

@@ -1,20 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, notFound, noContent, supabaseError } from '@/lib/server/route'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
+  const { id } = params
 
   const body = await request.json()
   const { type, amount, category_id, wallet_id, transaction_date, note } = body
 
   if (!type || !amount || !transaction_date) {
-    return NextResponse.json({ error: 'Type, amount and date are required.' }, { status: 400 })
+    return badRequest('Type, amount and date are required.')
   }
 
   // Fetch original to reverse its balance effect
@@ -25,7 +19,7 @@ export async function PATCH(
     .eq('user_id', user.id)
     .single()
 
-  if (!original) return NextResponse.json({ error: 'Transaction not found.' }, { status: 404 })
+  if (!original) return notFound('Transaction not found.')
 
   // Reverse old balance effect
   if (original.wallet_id) {
@@ -35,7 +29,7 @@ export async function PATCH(
       p_delta: oldDelta,
       p_user_id: user.id,
     })
-    if (balErr) return NextResponse.json({ error: balErr.message }, { status: 500 })
+    if (balErr) return supabaseError(balErr)
   }
 
   // Update transaction
@@ -54,7 +48,7 @@ export async function PATCH(
     .select('*, categories(id, name, icon, color), wallets(id, name)')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
 
   // Apply new balance effect
   if (wallet_id) {
@@ -64,20 +58,14 @@ export async function PATCH(
       p_delta: newDelta,
       p_user_id: user.id,
     })
-    if (balErr) return NextResponse.json({ error: balErr.message }, { status: 500 })
+    if (balErr) return supabaseError(balErr)
   }
 
   return NextResponse.json(data)
-}
+})
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {
+  const { id } = params
 
   // Fetch transaction to reverse balance and check for linked debt payment
   const { data: tx } = await supabase
@@ -93,7 +81,7 @@ export async function DELETE(
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
 
   // Reverse wallet balance
   if (tx?.wallet_id) {
@@ -133,5 +121,5 @@ export async function DELETE(
     }
   }
 
-  return new NextResponse(null, { status: 204 })
-}
+  return noContent()
+})

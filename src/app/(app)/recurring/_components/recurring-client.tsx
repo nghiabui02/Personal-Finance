@@ -10,6 +10,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { formatVND } from '@/lib/utils/currency'
+import { localYMD } from '@/lib/utils/date'
 import { type Category } from '@/lib/api/categories'
 import { type Wallet } from '@/lib/api/wallets'
 import { type RecurringTransaction, FREQUENCY_LABELS, recurringApi } from '@/lib/api/recurring-transactions'
@@ -37,7 +38,7 @@ function RecurringModal({
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
   const [walletId, setWalletId] = useState(editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
   const [frequency, setFrequency] = useState<RecurringTransaction['frequency']>(editing?.frequency ?? 'monthly')
-  const [startDate, setStartDate] = useState(editing?.start_date ?? new Date().toISOString().slice(0, 10))
+  const [startDate, setStartDate] = useState(editing?.start_date ?? localYMD())
   const [endDate, setEndDate] = useState(editing?.end_date ?? '')
 
   const walletOptions = [
@@ -152,7 +153,7 @@ function RecurringCard({
   onDelete: () => void
 }) {
   const cat = item.categories
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localYMD()
   const isOverdue = item.next_run_date && item.next_run_date <= today
   const isExpired = item.end_date && item.end_date < today
 
@@ -236,8 +237,8 @@ export default function RecurringClient({
   const [editingItem, setEditingItem] = useState<RecurringTransaction | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
-  const active  = items.filter(i => !i.end_date || i.end_date >= new Date().toISOString().slice(0, 10))
-  const expired = items.filter(i => i.end_date && i.end_date < new Date().toISOString().slice(0, 10))
+  const active  = items.filter(i => !i.end_date || i.end_date >= localYMD())
+  const expired = items.filter(i => i.end_date && i.end_date < localYMD())
 
   function handleDeleteConfirmed() {
     if (!confirmId) return

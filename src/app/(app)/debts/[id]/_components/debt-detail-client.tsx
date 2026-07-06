@@ -10,6 +10,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { formatVND } from '@/lib/utils/currency'
+import { localYMD } from '@/lib/utils/date'
 import { debtsApi, type Debt, type DebtPayment } from '@/lib/api/debts'
 import type { Wallet } from '@/lib/api/wallets'
 
@@ -34,7 +35,7 @@ function PaymentModal({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localYMD())
 
   const walletOptions = [
     { value: '', label: 'No wallet' },
@@ -98,7 +99,7 @@ function AdditionModal({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localYMD())
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
 
   const walletOptions = [

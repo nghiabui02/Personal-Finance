@@ -3,9 +3,8 @@
 import { useState } from 'react'
 import { type Category } from '@/lib/api/categories'
 import { type Wallet } from '@/lib/api/wallets'
+import type { DebtOption } from '@/lib/types'
 import { TransactionModal } from '../../transactions/_components/transaction-modal'
-
-type DebtOption = { id: string; type: 'lend' | 'borrow'; person_name: string; remaining_amount: number }
 
 interface DashboardAddButtonProps {
   categories: Category[]

@@ -1,46 +1,41 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, notFound, supabaseError } from '@/lib/server/route'
+import { localYMD } from '@/lib/utils/date'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
+  const { id } = params
 
   const { from_wallet_id, amount, note, date } = await request.json()
-  if (!amount || Number(amount) <= 0) return NextResponse.json({ error: 'Amount is required.' }, { status: 400 })
-  if (!from_wallet_id) return NextResponse.json({ error: 'Source wallet is required.' }, { status: 400 })
+  if (!amount || Number(amount) <= 0) return badRequest('Amount is required.')
+  if (!from_wallet_id) return badRequest('Source wallet is required.')
 
   const [{ data: creditWallet }, { data: sourceWallet }] = await Promise.all([
     supabase.from('wallets').select('type, balance, credit_limit, name').eq('id', id).eq('user_id', user.id).single(),
     supabase.from('wallets').select('balance, name').eq('id', from_wallet_id).eq('user_id', user.id).single(),
   ])
 
-  if (!creditWallet || creditWallet.type !== 'credit') return NextResponse.json({ error: 'Not a credit wallet.' }, { status: 400 })
-  if (!sourceWallet) return NextResponse.json({ error: 'Source wallet not found.' }, { status: 404 })
+  if (!creditWallet || creditWallet.type !== 'credit') return badRequest('Not a credit wallet.')
+  if (!sourceWallet) return notFound('Source wallet not found.')
 
   const creditLimit = Number(creditWallet.credit_limit ?? 0)
   const creditBalance = Number(creditWallet.balance)
   const amountOwed = creditLimit - creditBalance
 
   if (amountOwed <= 0) {
-    return NextResponse.json({ error: 'No outstanding balance to pay.' }, { status: 400 })
+    return badRequest('No outstanding balance to pay.')
   }
 
   const payAmount = Number(amount)
 
   if (payAmount > amountOwed) {
-    return NextResponse.json({ error: `Payment exceeds outstanding balance of ${amountOwed}.` }, { status: 400 })
+    return badRequest(`Payment exceeds outstanding balance of ${amountOwed}.`)
   }
   if (Number(sourceWallet.balance) < payAmount) {
-    return NextResponse.json({ error: 'Insufficient balance in source wallet.' }, { status: 400 })
+    return badRequest('Insufficient balance in source wallet.')
   }
 
   const newCreditBalance = creditBalance + payAmount
-  const txDate = date ?? new Date().toISOString().slice(0, 10)
+  const txDate = date ?? localYMD()
   const txNote = note?.trim() || `Credit card payment — ${creditWallet.name}`
   const pairId = crypto.randomUUID()
 
@@ -53,9 +48,9 @@ export async function POST(
     ]),
   ])
 
-  if (updateCredit.error) return NextResponse.json({ error: updateCredit.error.message }, { status: 500 })
-  if (updateSource.error) return NextResponse.json({ error: updateSource.error.message }, { status: 500 })
-  if (insertTxns.error) return NextResponse.json({ error: insertTxns.error.message }, { status: 500 })
+  if (updateCredit.error) return supabaseError(updateCredit.error)
+  if (updateSource.error) return supabaseError(updateSource.error)
+  if (insertTxns.error) return supabaseError(insertTxns.error)
 
   return NextResponse.json({ ok: true, new_credit_balance: newCreditBalance })
-}
+})

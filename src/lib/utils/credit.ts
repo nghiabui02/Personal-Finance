@@ -25,7 +25,6 @@ export function getCreditCycle(
   const clamp = (y: number, m: number) => Math.min(statementDay, daysInMonth(y, m))
 
   let cycleStartY: number, cycleStartM: number
-  let cycleEndY: number, cycleEndM: number
   let stmtY: number, stmtM: number
 
   if (td < clamp(ty, tm)) {
@@ -44,8 +43,8 @@ export function getCreditCycle(
     stmtM = tm === 12 ? 1 : tm + 1
   }
 
-  cycleEndM = stmtM === 1 ? 12 : stmtM - 1
-  cycleEndY = stmtM === 1 ? stmtY - 1 : stmtY
+  const cycleEndM = stmtM === 1 ? 12 : stmtM - 1
+  const cycleEndY = stmtM === 1 ? stmtY - 1 : stmtY
 
   const start = ymd(cycleStartY, cycleStartM, clamp(cycleStartY, cycleStartM))
   const end = ymd(cycleEndY, cycleEndM, clamp(cycleEndY, cycleEndM) - 1 < 1

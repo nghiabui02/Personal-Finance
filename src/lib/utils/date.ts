@@ -28,6 +28,18 @@ export function getMondayOfLocalWeek(localDateStr: string): string {
   return `${date.getFullYear()}-${mm}-${dd}`
 }
 
+// Date range for a YYYY-MM month: [startDate, endDate) where endDate is the
+// first day of the next month. Pure string math — no Date/UTC conversion.
+export function monthRange(ym: string): { startDate: string; endDate: string } {
+  const [y, m] = ym.split('-').map(Number)
+  const nextY = m === 12 ? y + 1 : y
+  const nextM = m === 12 ? 1 : m + 1
+  return {
+    startDate: `${ym}-01`,
+    endDate: `${nextY}-${String(nextM).padStart(2, '0')}-01`,
+  }
+}
+
 // Shifts a local YYYY-MM-DD by N days.
 export function shiftLocalDate(localDateStr: string, days: number): string {
   const [y, m, d] = localDateStr.split('-').map(Number)

@@ -1,19 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, notFound, noContent, supabaseError } from '@/lib/server/route'
+import { localYMD } from '@/lib/utils/date'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
+  const { id } = params
 
   const body = await request.json()
   const { name, type, balance, icon, color, is_default, credit_limit, statement_day, payment_due_day } = body
 
-  if (!name?.trim()) return NextResponse.json({ error: 'Name is required.' }, { status: 400 })
+  if (!name?.trim()) return badRequest('Name is required.')
 
   if (is_default) {
     await supabase.from('wallets').update({ is_default: false }).eq('user_id', user.id).neq('id', id)
@@ -55,24 +50,18 @@ export async function PATCH(
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
   return NextResponse.json(data)
-}
+})
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {
+  const { id } = params
 
   // Fetch the wallet being deleted
   const { data: wallet } = await supabase
     .from('wallets').select('balance, is_default').eq('id', id).eq('user_id', user.id).single()
 
-  if (!wallet) return NextResponse.json({ error: 'Wallet not found.' }, { status: 404 })
+  if (!wallet) return notFound('Wallet not found.')
 
   const balance = Number(wallet.balance)
 
@@ -83,15 +72,12 @@ export async function DELETE(
       .eq('user_id', user.id).eq('is_default', true).neq('id', id).single()
 
     if (!defaultWallet) {
-      return NextResponse.json(
-        { error: 'Cannot delete: wallet has balance but no default wallet found to receive it.' },
-        { status: 400 }
-      )
+      return badRequest('Cannot delete: wallet has balance but no default wallet found to receive it.')
     }
 
     // Move balance to default wallet and record a transfer transaction pair
     const pairId = crypto.randomUUID()
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localYMD()
     await Promise.all([
       supabase.rpc('adjust_wallet_balance', { p_wallet_id: defaultWallet.id, p_delta: balance, p_user_id: user.id }),
       supabase.from('transactions').insert([
@@ -110,6 +96,6 @@ export async function DELETE(
   }
 
   const { error } = await supabase.from('wallets').delete().eq('id', id).eq('user_id', user.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return new NextResponse(null, { status: 204 })
-}
+  if (error) return supabaseError(error)
+  return noContent()
+})

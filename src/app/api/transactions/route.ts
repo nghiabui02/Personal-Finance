@@ -1,17 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
+import { localYM, monthRange } from '@/lib/utils/date'
 
-export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const monthParam = request.nextUrl.searchParams.get('month')
-  const now = new Date()
-  const month = monthParam ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const [year, monthNum] = month.split('-').map(Number)
-  const startDate = `${month}-01`
-  const endDate = new Date(year, monthNum, 1).toISOString().slice(0, 10)
+export const GET = withAuth(async (request, { supabase, user }) => {
+  const month = request.nextUrl.searchParams.get('month') ?? localYM()
+  const { startDate, endDate } = monthRange(month)
 
   const { data, error } = await supabase
     .from('transactions')
@@ -22,23 +15,19 @@ export async function GET(request: NextRequest) {
     .order('transaction_date', { ascending: false })
     .order('created_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
   return NextResponse.json(data)
-}
+})
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { type, amount, category_id, wallet_id, transaction_date, note } = body
 
   if (!type || !amount || !transaction_date) {
-    return NextResponse.json({ error: 'Type, amount and date are required.' }, { status: 400 })
+    return badRequest('Type, amount and date are required.')
   }
   if (type !== 'income' && type !== 'expense') {
-    return NextResponse.json({ error: 'Invalid type.' }, { status: 400 })
+    return badRequest('Invalid type.')
   }
 
   const { data, error } = await supabase
@@ -55,7 +44,7 @@ export async function POST(request: NextRequest) {
     .select('*, categories(id, name, icon, color), wallets(id, name)')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
 
   if (wallet_id) {
     const delta = type === 'income' ? Number(amount) : -Number(amount)
@@ -64,8 +53,8 @@ export async function POST(request: NextRequest) {
       p_delta: delta,
       p_user_id: user.id,
     })
-    if (balErr) return NextResponse.json({ error: balErr.message }, { status: 500 })
+    if (balErr) return supabaseError(balErr)
   }
 
   return NextResponse.json(data, { status: 201 })
-}
+})

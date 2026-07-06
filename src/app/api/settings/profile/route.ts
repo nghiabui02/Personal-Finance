@@ -1,11 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, supabaseError } from '@/lib/server/route'
 
-export async function PATCH(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const PATCH = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { full_name, phone, avatar_url } = body
 
@@ -18,6 +14,6 @@ export async function PATCH(request: NextRequest) {
     },
   })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
   return NextResponse.json({ user: data.user })
-}
+})

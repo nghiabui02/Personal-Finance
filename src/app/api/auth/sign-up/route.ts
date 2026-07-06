@@ -1,14 +1,15 @@
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { withRoute, badRequest } from '@/lib/server/route'
 
-export async function POST(request: NextRequest) {
+export const POST = withRoute(async (request) => {
   const { email, password } = await request.json()
 
   if (!email || !password) {
-    return NextResponse.json({ error: 'Please fill in all fields.' }, { status: 400 })
+    return badRequest('Please fill in all fields.')
   }
   if (password.length < 6) {
-    return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 })
+    return badRequest('Password must be at least 6 characters.')
   }
 
   const supabase = await createClient()
@@ -21,8 +22,8 @@ export async function POST(request: NextRequest) {
   })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return badRequest(error.message)
   }
 
   return NextResponse.json({ message: 'check_email' })
-}
+})

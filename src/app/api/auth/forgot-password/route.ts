@@ -1,11 +1,12 @@
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { withRoute, badRequest } from '@/lib/server/route'
 
-export async function POST(request: NextRequest) {
+export const POST = withRoute(async (request) => {
   const { email } = await request.json()
 
   if (!email) {
-    return NextResponse.json({ error: 'Email is required.' }, { status: 400 })
+    return badRequest('Email is required.')
   }
 
   const origin = new URL(request.url).origin
@@ -17,4 +18,4 @@ export async function POST(request: NextRequest) {
 
   // Always return success — don't reveal whether the email exists
   return NextResponse.json({ success: true })
-}
+})

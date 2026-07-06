@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { localYM, monthRange } from '@/lib/utils/date'
 import BudgetsClient from './_components/budgets-client'
 
 export const metadata: Metadata = { title: 'Budgets' }
@@ -11,11 +12,8 @@ export default async function BudgetsPage({
   searchParams: Promise<{ month?: string }>
 }) {
   const { month: monthParam } = await searchParams
-  const now = new Date()
-  const month = monthParam ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const startDate = `${month}-01`
-  const [y, m] = month.split('-').map(Number)
-  const endDate = new Date(y, m, 1).toISOString().slice(0, 10)
+  const month = monthParam ?? localYM()
+  const { startDate, endDate } = monthRange(month)
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

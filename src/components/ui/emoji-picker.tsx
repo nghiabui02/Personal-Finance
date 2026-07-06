@@ -94,14 +94,6 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
     setQuery('')
   }
 
-  const filteredEmojis = query.trim()
-    ? ALL_EMOJIS.filter(e => {
-        // Match by pasting actual emoji
-        if (query.trim() === e) return true
-        return false
-      })
-    : null
-
   // For text search, we do a simple name-based approach via keyword map
   const searchResults = query.trim() ? getSearchResults(query) : null
   const displayedEmojis = searchResults ?? CATEGORIES.find(c => c.key === activeCategory)!.emojis
@@ -315,8 +307,7 @@ const EMOJI_KEYWORDS: Record<string, string[]> = {
 
 function getSearchResults(q: string): string[] {
   const lq = q.toLowerCase().trim()
-  const all = CATEGORIES.flatMap(c => c.emojis)
-  const unique = [...new Set(all)]
+  const unique = [...new Set(ALL_EMOJIS)]
   return unique.filter(emoji => {
     if (emoji.includes(lq)) return true
     const keywords = EMOJI_KEYWORDS[emoji] ?? []

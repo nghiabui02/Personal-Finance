@@ -1,17 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
 
-export async function PATCH(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const PATCH = withAuth(async (request, { supabase, user }) => {
   const { email } = await request.json()
-  if (!email?.trim()) return NextResponse.json({ error: 'Email is required.' }, { status: 400 })
-  if (email.trim() === user.email) return NextResponse.json({ error: 'This is already your current email.' }, { status: 400 })
+  if (!email?.trim()) return badRequest('Email is required.')
+  if (email.trim() === user.email) return badRequest('This is already your current email.')
 
   const { error } = await supabase.auth.updateUser({ email: email.trim() })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
 
   return NextResponse.json({ message: 'Confirmation email sent. Check your inbox.' })
-}
+})

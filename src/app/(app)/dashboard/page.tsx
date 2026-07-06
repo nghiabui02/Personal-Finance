@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { processRecurring } from '@/lib/server/process-recurring'
+import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
+import type { CategoryRef } from '@/lib/types'
 import { formatVND } from '@/lib/utils/currency'
+import { localYM, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 import { DashboardHero, type Alert } from './_components/dashboard-hero'
@@ -20,15 +23,11 @@ export default async function DashboardPage({
   searchParams: Promise<{ month?: string }>
 }) {
   const { month: monthParam } = await searchParams
-  const now = new Date()
-  const month = monthParam ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const todayStr = now.toISOString().slice(0, 10)
-  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-
-  const [year, monthNum] = month.split('-').map(Number)
-  const startDate = `${month}-01`
-  const endDate = new Date(year, monthNum, 1).toISOString().slice(0, 10)
+  const month = monthParam ?? localYM()
+  const todayStr = localYMD()
+  const ninetyDaysAgo = shiftLocalDate(todayStr, -90)
+  const sevenDaysLater = shiftLocalDate(todayStr, 7)
+  const { startDate, endDate } = monthRange(month)
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -56,40 +55,18 @@ export default async function DashboardPage({
     supabase.from('categories').select('id, user_id, name, icon, color, type, is_default, parent_id').order('is_default', { ascending: false }).order('name'),
   ])
 
-  // Net worth
-  let totalWalletBalance = 0
-  let totalCreditDebt = 0
-  for (const w of walletRows ?? []) {
-    if (w.type === 'credit') {
-      totalCreditDebt += Math.max(0, Number(w.credit_limit ?? 0) - Number(w.balance))
-    } else {
-      totalWalletBalance += Number(w.balance)
-    }
-  }
-  let totalLent = 0
-  let totalBorrowed = 0
-  for (const d of debtRows ?? []) {
-    if (d.status !== 'active' || Number(d.remaining_amount) <= 0) continue
-    if (d.type === 'lend') totalLent += Number(d.remaining_amount)
-    else totalBorrowed += Number(d.remaining_amount)
-  }
-  const totalAssets = totalWalletBalance + totalLent
-  const totalLiabilities = totalCreditDebt + totalBorrowed
-  const netWorth = totalAssets - totalLiabilities
-
-  supabase.from('net_worth_snapshots').upsert(
-    { user_id: user.id, net_worth: netWorth, recorded_date: todayStr },
-    { onConflict: 'user_id,recorded_date' }
-  ).then(() => {})
+  const { netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed } =
+    computeNetWorth(walletRows ?? [], debtRows ?? [])
+  await recordNetWorthSnapshot(supabase, user.id, netWorth)
 
   const totalIncome = (incomeRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
 
   let totalExpense = 0
-  const catMap = new Map<string, { id: string; name: string; icon: string | null; color: string | null; amount: number }>()
+  const catMap = new Map<string, CategoryRef & { amount: number }>()
   for (const row of expenseCatRows ?? []) {
     const rowAmount = Number(row.amount)
     totalExpense += rowAmount
-    const cat = row.categories as unknown as { id: string; name: string; icon: string | null; color: string | null } | null
+    const cat = row.categories as unknown as CategoryRef | null
     if (!cat) continue
     const prev = catMap.get(cat.id)
     catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + rowAmount })
@@ -97,7 +74,7 @@ export default async function DashboardPage({
   const expenseByCategory = [...catMap.values()].sort((a, b) => b.amount - a.amount)
 
   const budgets = (budgetRows ?? []).map(b => {
-    const cat = b.categories as unknown as { id: string; name: string; icon: string | null; color: string | null } | null
+    const cat = b.categories as unknown as CategoryRef | null
     return { id: b.id, amount: Number(b.amount), spent: cat ? (catMap.get(cat.id)?.amount ?? 0) : 0, category: cat }
   })
 

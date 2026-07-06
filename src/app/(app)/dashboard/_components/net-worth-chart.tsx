@@ -1,9 +1,8 @@
 'use client'
 
 import { formatVND } from '@/lib/utils/currency'
+import type { NetWorthSnapshot as Snapshot } from '@/lib/types'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-
-type Snapshot = { recorded_date: string; net_worth: number }
 
 function formatDate(dateStr: string) {
   const [, m, d] = dateStr.split('-').map(Number)

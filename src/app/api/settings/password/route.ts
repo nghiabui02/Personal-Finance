@@ -1,19 +1,15 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
 
-export async function PATCH(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const PATCH = withAuth(async (request, { supabase }) => {
   const { password, confirmPassword } = await request.json()
 
-  if (!password) return NextResponse.json({ error: 'Password is required.' }, { status: 400 })
-  if (password.length < 6) return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 })
-  if (password !== confirmPassword) return NextResponse.json({ error: 'Passwords do not match.' }, { status: 400 })
+  if (!password) return badRequest('Password is required.')
+  if (password.length < 6) return badRequest('Password must be at least 6 characters.')
+  if (password !== confirmPassword) return badRequest('Passwords do not match.')
 
   const { error } = await supabase.auth.updateUser({ password })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
 
   return NextResponse.json({ message: 'Password updated successfully.' })
-}
+})

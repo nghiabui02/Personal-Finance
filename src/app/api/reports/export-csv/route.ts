@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { withAuth } from '@/lib/server/route'
 
 function esc(v: string | number | null | undefined): string {
   const s = String(v ?? '')
@@ -38,12 +38,8 @@ function getDateRange(period: string, start: string): { startDate: string; endDa
   return { startDate: `${y}-01-01`, endDate: `${y + 1}-01-01` }
 }
 
-export async function GET(req: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { searchParams } = new URL(req.url)
+export const GET = withAuth(async (request, { supabase, user }) => {
+  const { searchParams } = request.nextUrl
   const period = searchParams.get('period') ?? 'month'
   const start  = searchParams.get('start') ?? toYMD(new Date())
   const { startDate, endDate } = getDateRange(period, start)
@@ -195,4 +191,4 @@ export async function GET(req: Request) {
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   })
-}
+})

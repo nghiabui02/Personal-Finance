@@ -6,13 +6,10 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { formatVND } from '@/lib/utils/currency'
+import { localYMD } from '@/lib/utils/date'
 import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-
-function todayYMD() {
-  return new Date().toISOString().slice(0, 10)
-}
 
 function formatWithDots(v: string) {
   const d = v.replace(/\D/g, '')
@@ -33,7 +30,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
     wallets.find(w => w.id !== (defaultFromId ?? wallets[0]?.id))?.id ?? ''
   )
   const [amountDisplay, setAmountDisplay] = useState('')
-  const [date, setDate] = useState(todayYMD())
+  const [date, setDate] = useState(localYMD())
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)

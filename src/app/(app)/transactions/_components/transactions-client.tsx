@@ -11,6 +11,7 @@ import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
+import type { DebtOption } from '@/lib/types'
 import { TransactionModal } from './transaction-modal'
 import { PeriodNavigator, ViewSelector, type ViewMode } from './period-navigator'
 import { TransactionCalendar } from './transaction-calendar'
@@ -35,8 +36,6 @@ function groupByDate(transactions: Transaction[]): [string, Transaction[]][] {
   }
   return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]))
 }
-
-type DebtOption = { id: string; type: 'lend' | 'borrow'; person_name: string; remaining_amount: number }
 
 interface TransactionsClientProps {
   transactions: Transaction[]

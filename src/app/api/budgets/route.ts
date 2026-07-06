@@ -1,17 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, conflict, supabaseError } from '@/lib/server/route'
+import { localYM, monthRange } from '@/lib/utils/date'
 
-export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const monthParam = request.nextUrl.searchParams.get('month')
-  const now = new Date()
-  const month = monthParam ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const startDate = `${month}-01`
-  const [y, m] = month.split('-').map(Number)
-  const endDate = new Date(y, m, 1).toISOString().slice(0, 10)
+export const GET = withAuth(async (request, { supabase, user }) => {
+  const month = request.nextUrl.searchParams.get('month') ?? localYM()
+  const { startDate, endDate } = monthRange(month)
 
   const [{ data: budgets }, { data: expenses }] = await Promise.all([
     supabase
@@ -42,18 +35,14 @@ export async function GET(request: NextRequest) {
   }))
 
   return NextResponse.json(result)
-}
+})
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { category_id, amount, month } = body
 
-  if (!amount || Number(amount) <= 0) return NextResponse.json({ error: 'Amount is required.' }, { status: 400 })
-  if (!month) return NextResponse.json({ error: 'Month is required.' }, { status: 400 })
+  if (!amount || Number(amount) <= 0) return badRequest('Amount is required.')
+  if (!month) return badRequest('Month is required.')
 
   const { data, error } = await supabase
     .from('budgets')
@@ -62,9 +51,9 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) {
-    if (error.code === '23505') return NextResponse.json({ error: 'A budget for this category already exists in this month.' }, { status: 409 })
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error.code === '23505') return conflict('A budget for this category already exists in this month.')
+    return supabaseError(error)
   }
 
   return NextResponse.json(data, { status: 201 })
-}
+})

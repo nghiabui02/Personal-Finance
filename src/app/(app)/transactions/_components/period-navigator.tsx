@@ -82,7 +82,6 @@ interface ViewSelectorProps {
 
 export function ViewSelector({ view }: ViewSelectorProps) {
   const router = useRouter()
-  const now = new Date()
 
   function switchView(v: ViewMode) {
     const today = localYMD()

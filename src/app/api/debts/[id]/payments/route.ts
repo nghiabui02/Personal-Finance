@@ -1,19 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, notFound, supabaseError } from '@/lib/server/route'
 import { ensureDebtCategory } from '@/lib/server/debt-categories'
+import { localYMD } from '@/lib/utils/date'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
+  const { id } = params
 
   const { amount, note, wallet_id, date } = await request.json()
   if (!amount || Number(amount) <= 0) {
-    return NextResponse.json({ error: 'Amount is required.' }, { status: 400 })
+    return badRequest('Amount is required.')
   }
 
   const { data: debt } = await supabase
@@ -23,14 +18,14 @@ export async function POST(
     .eq('user_id', user.id)
     .single()
 
-  if (!debt) return NextResponse.json({ error: 'Debt not found.' }, { status: 404 })
+  if (!debt) return notFound('Debt not found.')
 
   if (Number(debt.remaining_amount) <= 0) {
-    return NextResponse.json({ error: 'This debt is already fully paid.' }, { status: 400 })
+    return badRequest('This debt is already fully paid.')
   }
 
   if (Number(amount) > Number(debt.remaining_amount)) {
-    return NextResponse.json({ error: 'Payment exceeds remaining balance.' }, { status: 400 })
+    return badRequest('Payment exceeds remaining balance.')
   }
 
   const newRemaining = Math.max(0, Number(debt.remaining_amount) - Number(amount))
@@ -42,7 +37,7 @@ export async function POST(
     .select('id')
     .single()
 
-  if (payErr) return NextResponse.json({ error: payErr.message }, { status: 500 })
+  if (payErr) return supabaseError(payErr)
 
   const { error: debtErr } = await supabase
     .from('debts')
@@ -50,7 +45,7 @@ export async function POST(
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (debtErr) return NextResponse.json({ error: debtErr.message }, { status: 500 })
+  if (debtErr) return supabaseError(debtErr)
 
   const effectiveWalletId = wallet_id || debt.wallet_id
   if (effectiveWalletId) {
@@ -68,13 +63,13 @@ export async function POST(
     const txType = isCreditWallet ? 'income' : (debt.type === 'lend' ? 'income' : 'expense')
 
     if (txType === 'expense' && walletData && Number(walletData.balance) < Number(amount)) {
-      return NextResponse.json({ error: 'Insufficient balance in wallet.' }, { status: 400 })
+      return badRequest('Insufficient balance in wallet.')
     }
 
     const txNote = note?.trim() || (debt.type === 'lend'
       ? `Repayment from ${debt.person_name}`
       : `Repayment to ${debt.person_name}`)
-    const txDate = date ?? new Date().toISOString().slice(0, 10)
+    const txDate = date ?? localYMD()
     const categoryId = await ensureDebtCategory(supabase, user.id, debt.type === 'lend' ? 'collect_debt' : 'repay_debt')
 
     const delta = txType === 'income' ? Number(amount) : -Number(amount)
@@ -94,4 +89,4 @@ export async function POST(
   }
 
   return NextResponse.json({ remaining_amount: newRemaining, settled: isSettled }, { status: 201 })
-}
+})

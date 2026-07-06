@@ -1,19 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, notFound, supabaseError } from '@/lib/server/route'
 import { ensureDebtCategory } from '@/lib/server/debt-categories'
+import { localYMD } from '@/lib/utils/date'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
+  const { id } = params
 
   const { amount, note, date, wallet_id } = await request.json()
   if (!amount || Number(amount) <= 0) {
-    return NextResponse.json({ error: 'Amount is required.' }, { status: 400 })
+    return badRequest('Amount is required.')
   }
 
   const { data: debt } = await supabase
@@ -23,12 +18,12 @@ export async function POST(
     .eq('user_id', user.id)
     .single()
 
-  if (!debt) return NextResponse.json({ error: 'Debt not found.' }, { status: 404 })
+  if (!debt) return notFound('Debt not found.')
 
   const addAmount = Number(amount)
   const newAmount = Number(debt.amount) + addAmount
   const newRemaining = Number(debt.remaining_amount) + addAmount
-  const txDate = date ?? new Date().toISOString().slice(0, 10)
+  const txDate = date ?? localYMD()
 
   const [{ error: payErr }, { error: debtErr }] = await Promise.all([
     supabase.from('debt_payments').insert({
@@ -45,7 +40,7 @@ export async function POST(
   ])
 
   if (payErr || debtErr) {
-    return NextResponse.json({ error: payErr?.message ?? debtErr?.message }, { status: 500 })
+    return supabaseError((payErr ?? debtErr)!)
   }
 
   if (wallet_id) {
@@ -73,4 +68,4 @@ export async function POST(
   }
 
   return NextResponse.json({ amount: newAmount, remaining_amount: newRemaining }, { status: 201 })
-}
+})

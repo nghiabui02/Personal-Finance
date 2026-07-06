@@ -7,6 +7,7 @@ import { AIInsights } from '@/app/(app)/dashboard/_components/ai-insights'
 import { NetWorthChart } from '@/app/(app)/dashboard/_components/net-worth-chart'
 import { CategoryChart } from './category-chart'
 import { BarChart } from './bar-chart'
+import type { NetWorthSnapshot } from '@/lib/types'
 import type { ChartPoint, CategoryData } from './types'
 
 export type PeriodType = 'week' | 'month' | 'quarter' | 'year'
@@ -68,7 +69,7 @@ interface ReportsClientProps {
   totalLent: number
   totalCreditDebt: number
   totalBorrowed: number
-  netWorthSnapshots: { recorded_date: string; net_worth: number }[]
+  netWorthSnapshots: NetWorthSnapshot[]
 }
 
 export default function ReportsClient({

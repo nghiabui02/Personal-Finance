@@ -1,18 +1,14 @@
 import Groq from 'groq-sdk'
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { withAuth, jsonError } from '@/lib/server/route'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
-export async function POST(req: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const POST = withAuth(async (request, { supabase, user }) => {
   const apiKey = process.env.GROQ_API_KEY
-  if (!apiKey) return NextResponse.json({ error: 'Groq not configured' }, { status: 500 })
+  if (!apiKey) return jsonError(500, 'Groq not configured')
 
-  const { periodLabel, period, totalIncome, totalExpense, categories, budgets, force } = await req.json()
+  const { periodLabel, period, totalIncome, totalExpense, categories, budgets, force } = await request.json()
   const periodType: 'week' | 'month' | 'quarter' | 'year' = period ?? 'month'
 
   // Check DB cache (skip if force-refresh)
@@ -123,11 +119,11 @@ export async function POST(req: Request) {
       }
       console.error('[AI spending analysis]', err)
       if (e?.status === 429) {
-        return NextResponse.json({ error: 'rate_limit' }, { status: 429 })
+        return jsonError(429, 'rate_limit')
       }
-      return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
+      return jsonError(500, 'Analysis failed')
     }
   }
 
-  return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
-}
+  return jsonError(500, 'Analysis failed')
+})

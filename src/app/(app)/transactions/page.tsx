@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import TransactionsClient from './_components/transactions-client'
 import type { ViewMode } from './_components/period-navigator'
-import { localYMD, localYM, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
+import { localYMD, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
 
 export const metadata: Metadata = { title: 'Transactions' }
 export const dynamic = 'force-dynamic'

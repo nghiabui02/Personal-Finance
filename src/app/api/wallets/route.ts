@@ -1,11 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
 
-export async function GET() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const GET = withAuth(async (_request, { supabase, user }) => {
   const { data, error } = await supabase
     .from('wallets')
     .select('*')
@@ -13,21 +9,17 @@ export async function GET() {
     .order('is_default', { ascending: false })
     .order('created_at')
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
   return NextResponse.json(data)
-}
+})
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { name, type, balance, icon, color, is_default, credit_limit, statement_day, payment_due_day } = body
 
-  if (!name?.trim()) return NextResponse.json({ error: 'Name is required.' }, { status: 400 })
+  if (!name?.trim()) return badRequest('Name is required.')
   if (!['cash', 'bank', 'e_wallet', 'investment', 'other', 'credit'].includes(type)) {
-    return NextResponse.json({ error: 'Invalid wallet type.' }, { status: 400 })
+    return badRequest('Invalid wallet type.')
   }
 
   if (is_default) {
@@ -54,6 +46,6 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return supabaseError(error)
   return NextResponse.json(data, { status: 201 })
-}
+})
