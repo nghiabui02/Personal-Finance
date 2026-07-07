@@ -43,15 +43,29 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
   const ox = useRef(_originX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 400))
   const oy = useRef(_originY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 300))
 
+  const closingRef = useRef(false)
+
   function handleClose() {
+    if (closingRef.current) return
+    closingRef.current = true
     setStage('closing')
     setTimeout(onClose, 420)
   }
 
-  // Push handleClose onto the stack when modal opens, pop when it unmounts
+  // Push handleClose onto the stack when modal opens, pop when it unmounts.
+  // Escape closes only the topmost modal in the stack.
   useEffect(() => {
     _closeStack.push(handleClose)
-    return () => { _closeStack.pop() }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && _closeStack[_closeStack.length - 1] === handleClose) {
+        handleClose()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      _closeStack.pop()
+      document.removeEventListener('keydown', onKeyDown)
+    }
   }, [])
 
   // enter → open
