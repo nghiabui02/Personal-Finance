@@ -40,6 +40,7 @@ function RecurringModal({
   const [frequency, setFrequency] = useState<RecurringTransaction['frequency']>(editing?.frequency ?? 'monthly')
   const [startDate, setStartDate] = useState(editing?.start_date ?? localYMD())
   const [endDate, setEndDate] = useState(editing?.end_date ?? '')
+  const [showFee, setShowFee] = useState(Number(editing?.bank_fee) > 0)
 
   const walletOptions = [
     { value: '', label: 'No wallet' },
@@ -53,6 +54,7 @@ function RecurringModal({
     const amount = Number(getValue('amount'))
     // frequency comes from state, not form input
     const note = getValue('note')
+    const fee = showFee ? Number(getValue('fee') || '0') : 0
 
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     if (!startDate) { setError('Start date is required.'); return }
@@ -67,6 +69,7 @@ function RecurringModal({
             wallet_id: walletId || undefined,
             note: note || undefined,
             end_date: endDate || undefined,
+            bank_fee: fee > 0 ? fee : null,
           })
         } else {
           await recurringApi.create({
@@ -75,6 +78,7 @@ function RecurringModal({
             wallet_id: walletId || undefined,
             note: note || undefined,
             end_date: endDate || undefined,
+            bank_fee: fee > 0 ? fee : undefined,
           })
         }
         router.refresh()
@@ -132,6 +136,36 @@ function RecurringModal({
         )}
 
         <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="e.g. Netflix subscription" />
+
+        {/* Bank fee — same pattern as the transaction modal, but persisted so
+            every auto-created occurrence gets its own fee transaction */}
+        {txType === 'expense' && !!walletId && (
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
+            {!showFee ? (
+              <button type="button" onClick={() => setShowFee(true)}
+                className="text-xs text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                Add bank fee (for international transactions)
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Bank fee</p>
+                  <button type="button" onClick={() => setShowFee(false)}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                    Remove
+                  </button>
+                </div>
+                <AmountInput label="" name="fee" defaultValue={editing?.bank_fee ?? 0} />
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  A separate &quot;Bank fee&quot; expense transaction will be created with each occurrence.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex gap-2 pt-1">
@@ -193,6 +227,7 @@ function RecurringCard({
                 </span>
               )}
               {item.end_date && <span>Until {formatDate(item.end_date)}</span>}
+              {Number(item.bank_fee) > 0 && <span>+{formatVND(item.bank_fee!)} fee</span>}
             </div>
           </div>
         </div>
