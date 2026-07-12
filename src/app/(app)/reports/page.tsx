@@ -35,7 +35,20 @@ function getDateRange(period: PeriodType, start: string): { startDate: string; e
   return { startDate: `${y}-01-01`, endDate: `${y + 1}-01-01` }
 }
 
-type RawTx = { type: 'income' | 'expense'; amount: number; transaction_date: string }
+// Start of the period immediately before the given one — for AI trend comparison
+function getPrevStart(period: PeriodType, start: string): string {
+  if (period === 'week') return shiftLocalDate(start, -7)
+  const [y, m] = start.split('-').map(Number)
+  if (period === 'month') {
+    return m === 1 ? `${y - 1}-12-01` : `${y}-${String(m - 1).padStart(2, '0')}-01`
+  }
+  if (period === 'quarter') {
+    return m <= 3 ? `${y - 1}-${String(m + 9).padStart(2, '0')}-01` : `${y}-${String(m - 3).padStart(2, '0')}-01`
+  }
+  return `${y - 1}-01-01`
+}
+
+type RawTx = { type: 'income' | 'expense'; amount: number; transaction_date: string; note?: string | null }
 
 function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): ChartPoint[] {
   const sum = (list: RawTx[], type: 'income' | 'expense') =>
@@ -93,6 +106,8 @@ export default async function ReportsPage({
     ? params.period : 'week') as PeriodType
   const start  = params.start ?? getDefaultStart(period)
   const { startDate, endDate } = getDateRange(period, start)
+  const prevStart = getPrevStart(period, start)
+  const { startDate: prevStartDate, endDate: prevEndDate } = getDateRange(period, prevStart)
 
   const ninetyDaysAgo = shiftLocalDate(localYMD(), -90)
 
@@ -105,10 +120,12 @@ export default async function ReportsPage({
     { data: walletRows },
     { data: debtRows },
     { data: snapshotRows },
+    { data: prevRows },
+    { data: budgetRows },
   ] = await Promise.all([
     supabase
       .from('transactions')
-      .select('type, amount, transaction_date, categories(id, name, icon, color)')
+      .select('type, amount, note, transaction_date, categories(id, name, icon, color)')
       .eq('user_id', user.id)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate),
@@ -120,6 +137,21 @@ export default async function ReportsPage({
       .eq('user_id', user.id)
       .gte('recorded_date', ninetyDaysAgo)
       .order('recorded_date', { ascending: true }),
+    // Previous period — lets the AI compare trends with real data
+    supabase
+      .from('transactions')
+      .select('type, amount, categories(name)')
+      .eq('user_id', user.id)
+      .gte('transaction_date', prevStartDate)
+      .lt('transaction_date', prevEndDate),
+    // Budgets only make sense for the month view (they are monthly)
+    period === 'month'
+      ? supabase
+          .from('budgets')
+          .select('amount, category_id, categories(name)')
+          .eq('user_id', user.id)
+          .eq('month', `${start.slice(0, 7)}-01`)
+      : Promise.resolve({ data: null }),
   ])
 
   const { netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed } =
@@ -141,14 +173,54 @@ export default async function ReportsPage({
     catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + amt })
   }
 
+  // --- Extra context for the AI analysis ---
+  let prevIncome = 0
+  let prevExpense = 0
+  const prevCatMap = new Map<string, number>()
+  for (const row of prevRows ?? []) {
+    const amt = Number(row.amount)
+    if (row.type === 'income') { prevIncome += amt; continue }
+    prevExpense += amt
+    const name = (row.categories as unknown as { name: string } | null)?.name
+    if (name) prevCatMap.set(name, (prevCatMap.get(name) ?? 0) + amt)
+  }
+
+  const topTransactions = (rows ?? [])
+    .filter(r => r.type === 'expense')
+    .sort((a, b) => Number(b.amount) - Number(a.amount))
+    .slice(0, 5)
+    .map(r => ({
+      note: (r as unknown as RawTx).note ?? null,
+      category: (r.categories as unknown as CategoryRef | null)?.name ?? null,
+      amount: Number(r.amount),
+      date: r.transaction_date,
+    }))
+
+  const aiBudgets = (budgetRows ?? []).map(b => ({
+    name: (b.categories as unknown as { name: string } | null)?.name ?? 'Khác',
+    budgeted: Number(b.amount),
+    spent: b.category_id ? (catMap.get(b.category_id)?.amount ?? 0) : 0,
+  }))
+
   return (
     <ReportsClient
       period={period}
       start={start}
+      prevStart={prevStart}
       chartData={buildChartData(transactions, period, startDate)}
       byCategory={[...catMap.values()].sort((a, b) => b.amount - a.amount).slice(0, 8)}
       totalIncome={totalIncome}
       totalExpense={totalExpense}
+      aiPrevious={{
+        totalIncome: prevIncome,
+        totalExpense: prevExpense,
+        categories: [...prevCatMap.entries()]
+          .map(([name, amount]) => ({ name, amount }))
+          .sort((a, b) => b.amount - a.amount)
+          .slice(0, 8),
+      }}
+      aiTopTransactions={topTransactions}
+      aiBudgets={aiBudgets}
       netWorth={netWorth}
       totalWalletBalance={totalWalletBalance}
       totalLent={totalLent}

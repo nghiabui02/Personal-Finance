@@ -60,6 +60,7 @@ function navigatePeriod(period: PeriodType, start: string, dir: -1 | 1): string 
 interface ReportsClientProps {
   period: PeriodType
   start: string
+  prevStart: string
   chartData: ChartPoint[]
   byCategory: CategoryData[]
   totalIncome: number
@@ -70,11 +71,15 @@ interface ReportsClientProps {
   totalCreditDebt: number
   totalBorrowed: number
   netWorthSnapshots: NetWorthSnapshot[]
+  aiPrevious: { totalIncome: number; totalExpense: number; categories: { name: string; amount: number }[] }
+  aiTopTransactions: { note: string | null; category: string | null; amount: number; date: string }[]
+  aiBudgets: { name: string; budgeted: number; spent: number }[]
 }
 
 export default function ReportsClient({
-  period, start, chartData, byCategory, totalIncome, totalExpense,
+  period, start, prevStart, chartData, byCategory, totalIncome, totalExpense,
   netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed, netWorthSnapshots,
+  aiPrevious, aiTopTransactions, aiBudgets,
 }: ReportsClientProps) {
   const router = useRouter()
   const net = totalIncome - totalExpense
@@ -262,6 +267,10 @@ export default function ReportsClient({
         totalIncome={totalIncome}
         totalExpense={totalExpense}
         categories={byCategory.map(c => ({ name: c.name, icon: c.icon, amount: c.amount }))}
+        budgets={aiBudgets.length ? aiBudgets : undefined}
+        previous={{ label: getPeriodLabel(period, prevStart), ...aiPrevious }}
+        topTransactions={aiTopTransactions}
+        timeline={chartData}
       />
     </div>
   )

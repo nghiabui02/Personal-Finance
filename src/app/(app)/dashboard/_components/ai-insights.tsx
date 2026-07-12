@@ -22,6 +22,9 @@ interface AIInsightsProps {
   totalExpense: number
   categories: { name: string; icon: string | null; amount: number }[]
   budgets?: { name: string; budgeted: number; spent: number }[]
+  previous?: { label: string; totalIncome: number; totalExpense: number; categories: { name: string; amount: number }[] }
+  topTransactions?: { note: string | null; category: string | null; amount: number; date: string }[]
+  timeline?: { label: string; income: number; expense: number }[]
 }
 
 const insightColors: Record<Insight['type'], string> = {
@@ -30,11 +33,11 @@ const insightColors: Record<Insight['type'], string> = {
   good:    'bg-emerald-500/10 text-emerald-300',
 }
 
-export function AIInsights({ periodLabel, period = 'month', totalIncome, totalExpense, categories, budgets }: AIInsightsProps) {
+export function AIInsights({ periodLabel, period = 'month', totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline }: AIInsightsProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error' | 'rate_limit'>('idle')
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [retryIn, setRetryIn] = useState(0)
-  const cacheKey = `ai-insights::${periodLabel}::${totalIncome}::${totalExpense}`
+  const cacheKey = `ai-insights::v3::${periodLabel}::${totalIncome}::${totalExpense}`
   const abortRef = useRef<AbortController | null>(null)
 
   // Load from cache on mount (no API call)
@@ -68,7 +71,7 @@ export function AIInsights({ periodLabel, period = 'month', totalIncome, totalEx
       method: 'POST',
       signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ periodLabel, period, totalIncome, totalExpense, categories, budgets, force }),
+      body: JSON.stringify({ periodLabel, period, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, force }),
     })
       .then(r => r.json().then(data => ({ status: r.status, data })))
       .then(({ status, data }) => {
