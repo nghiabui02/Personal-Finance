@@ -5,7 +5,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   const { id } = params
 
   const body = await request.json()
-  const { amount, category_id, wallet_id, note, frequency, end_date } = body
+  const { amount, category_id, wallet_id, note, frequency, end_date, bank_fee } = body
 
   const { data, error } = await supabase
     .from('recurring_transactions')
@@ -16,6 +16,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
       note: note !== undefined ? (note?.trim() || null) : undefined,
       frequency: frequency || undefined,
       end_date: end_date !== undefined ? (end_date || null) : undefined,
+      bank_fee: bank_fee !== undefined ? (Number(bank_fee) > 0 ? Number(bank_fee) : null) : undefined,
     })
     .eq('id', id)
     .eq('user_id', user.id)

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import RecurringClient from './_components/recurring-client'
-import { processRecurring } from '@/lib/server/process-recurring'
 
 export const metadata: Metadata = { title: 'Recurring' }
 export const dynamic = 'force-dynamic'
@@ -10,9 +9,6 @@ export default async function RecurringPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-
-  // Process any due recurring transactions first
-  const processedCount = await processRecurring(supabase, user.id)
 
   const [{ data: items }, { data: categories }, { data: wallets }] = await Promise.all([
     supabase
@@ -37,7 +33,6 @@ export default async function RecurringPage() {
       items={(items ?? []) as unknown as Parameters<typeof RecurringClient>[0]['items']}
       categories={categories ?? []}
       wallets={(wallets ?? []) as unknown as Parameters<typeof RecurringClient>[0]['wallets']}
-      processedCount={processedCount}
     />
   )
 }

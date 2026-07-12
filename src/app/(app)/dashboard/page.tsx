@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { processRecurring } from '@/lib/server/process-recurring'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
 import type { CategoryRef } from '@/lib/types'
 import { formatVND } from '@/lib/utils/currency'
@@ -32,8 +31,6 @@ export default async function DashboardPage({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-
-  await processRecurring(supabase, user.id)
 
   const [
     { data: incomeRows },

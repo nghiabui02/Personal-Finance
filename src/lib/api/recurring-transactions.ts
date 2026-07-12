@@ -12,6 +12,7 @@ export type RecurringTransaction = {
   start_date: string
   end_date: string | null
   next_run_date: string | null
+  bank_fee: number | null
   categories: { id: string; name: string; icon: string | null; color: string | null } | null
   wallets: { id: string; name: string } | null
 }
@@ -37,6 +38,7 @@ export const recurringApi = {
     wallet_id?: string
     note?: string
     end_date?: string
+    bank_fee?: number
   }): Promise<RecurringTransaction> {
     return apiFetch('/api/recurring-transactions', { method: 'POST', body: JSON.stringify(payload) })
   },
@@ -48,6 +50,7 @@ export const recurringApi = {
     note: string
     frequency: RecurringTransaction['frequency']
     end_date: string
+    bank_fee: number | null
   }>): Promise<RecurringTransaction> {
     return apiFetch(`/api/recurring-transactions/${id}`, { method: 'PATCH', body: JSON.stringify(payload) })
   },

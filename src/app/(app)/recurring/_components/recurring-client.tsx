@@ -224,12 +224,11 @@ function RecurringCard({
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function RecurringClient({
-  items, categories, wallets, processedCount,
+  items, categories, wallets,
 }: {
   items: RecurringTransaction[]
   categories: Category[]
   wallets: Wallet[]
-  processedCount: number
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -260,13 +259,6 @@ export default function RecurringClient({
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
       </button>
-
-      {/* Processed notification */}
-      {processedCount > 0 && (
-        <div className="mb-4 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
-          ✓ Auto-created {processedCount} transaction{processedCount > 1 ? 's' : ''} from your recurring schedules
-        </div>
-      )}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
