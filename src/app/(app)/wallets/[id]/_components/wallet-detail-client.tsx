@@ -1,19 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useRef, useState } from 'react'
 import { formatVND } from '@/lib/utils/currency'
-import { type Wallet, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
-
-type TxRow = {
-  id: string
-  type: 'income' | 'expense'
-  amount: number
-  note: string | null
-  transaction_date: string
-  category_id: string | null
-  transfer_pair_id: string | null
-  categories: { id: string; name: string; icon: string | null; color: string | null } | null
-}
+import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
 
 const WALLET_ICONS: Record<Wallet['type'], string> = {
   cash: '💵',
@@ -42,19 +32,53 @@ const TransferIcon = () => (
 
 export default function WalletDetailClient({
   wallet,
-  transactions,
+  initialTransactions,
+  initialHasMore,
+  totalIncome,
+  totalExpense,
 }: {
   wallet: Wallet
-  transactions: TxRow[]
+  initialTransactions: WalletTransaction[]
+  initialHasMore: boolean
+  totalIncome: number
+  totalExpense: number
 }) {
   const bg = wallet.color ?? '#3b82f6'
   const defaultIcon = WALLET_ICONS[wallet.type]
 
-  const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+  const [transactions, setTransactions] = useState(initialTransactions)
+  const [hasMore, setHasMore] = useState(initialHasMore)
+  const loadingRef = useRef(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  // Load the next page when the sentinel at the bottom of the list scrolls into view
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasMore) return
+
+    const observer = new IntersectionObserver(async ([entry]) => {
+      if (!entry.isIntersecting || loadingRef.current) return
+      loadingRef.current = true
+      try {
+        const { transactions: next, hasMore: more } = await walletsApi.transactions(wallet.id, transactions.length)
+        setTransactions(prev => {
+          const seen = new Set(prev.map(t => t.id))
+          return [...prev, ...next.filter(t => !seen.has(t.id))]
+        })
+        setHasMore(more)
+      } catch {
+        // Network hiccup — leave hasMore as-is so scrolling retries
+      } finally {
+        loadingRef.current = false
+      }
+    }, { rootMargin: '200px' })
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [wallet.id, transactions.length, hasMore])
 
   const groups = Object.entries(
-    transactions.reduce<Record<string, TxRow[]>>((acc, tx) => {
+    transactions.reduce<Record<string, WalletTransaction[]>>((acc, tx) => {
       const d = tx.transaction_date
       acc[d] = acc[d] ?? []
       acc[d].push(tx)
@@ -170,6 +194,12 @@ export default function WalletDetailClient({
               </div>
             </div>
           ))}
+
+          {hasMore && (
+            <div ref={sentinelRef} className="flex justify-center py-4">
+              <div className="w-5 h-5 rounded-full border-2 border-gray-200 dark:border-gray-700 border-t-gray-400 dark:border-t-gray-400 animate-spin" />
+            </div>
+          )}
         </div>
       )}
     </>

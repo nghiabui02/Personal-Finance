@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import type { CategoryRef } from '@/lib/types'
 
 export type Wallet = {
   id: string
@@ -22,6 +23,19 @@ export const WALLET_TYPE_LABELS: Record<Wallet['type'], string> = {
   other: 'Other',
   credit: 'Credit Card',
 }
+
+export type WalletTransaction = {
+  id: string
+  type: 'income' | 'expense'
+  amount: number
+  note: string | null
+  transaction_date: string
+  category_id: string | null
+  transfer_pair_id: string | null
+  categories: CategoryRef | null
+}
+
+export const WALLET_TX_PAGE_SIZE = 20
 
 type WalletPayload = {
   name: string
@@ -56,5 +70,9 @@ export const walletsApi = {
 
   delete(id: string): Promise<null> {
     return apiFetch(`/api/wallets/${id}`, { method: 'DELETE' })
+  },
+
+  transactions(id: string, offset: number): Promise<{ transactions: WalletTransaction[]; hasMore: boolean }> {
+    return apiFetch(`/api/wallets/${id}/transactions?offset=${offset}&limit=${WALLET_TX_PAGE_SIZE}`)
   },
 }
