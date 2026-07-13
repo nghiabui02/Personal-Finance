@@ -3,6 +3,7 @@
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { useState } from 'react'
+import { NotificationBell } from './notification-bell'
 
 export default function Header({
   user,
@@ -47,8 +48,10 @@ export default function Header({
           </span>
         )}
 
+        <div className="flex items-center gap-1.5 ml-auto">
+        <NotificationBell />
         {/* Mobile only — on desktop the user block lives at the bottom of the sidebar */}
-        <div className="flex md:hidden items-center gap-2 ml-auto">
+        <div className="flex md:hidden items-center gap-2">
           {avatarUrl && !avatarErr ? (
             <img
               src={avatarUrl}
@@ -64,6 +67,7 @@ export default function Header({
           <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 max-w-36 truncate">
             {displayName}
           </span>
+        </div>
         </div>
       </div>
     </header>

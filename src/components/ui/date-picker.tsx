@@ -65,6 +65,7 @@ interface DatePickerProps {
 export function DatePicker({ label, name, value, onChange, required }: DatePickerProps) {
   const [open, setOpen]             = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
+  const [alignRight, setAlignRight] = useState(false)
   const [viewYear, setViewYear]     = useState(new Date().getFullYear())
   const [viewMonth, setViewMonth]   = useState(new Date().getMonth() + 1)
   const ref        = useRef<HTMLDivElement>(null)
@@ -87,10 +88,18 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
       setViewYear(y)
       setViewMonth(m)
 
-      // Decide if calendar should open upward
+      // Decide direction based on available space around the trigger
       if (triggerRef.current) {
         const rect = triggerRef.current.getBoundingClientRect()
         setOpenUpward(window.innerHeight - rect.bottom < 380)
+
+        // The panel is at least 268px wide; when the trigger is narrower
+        // (e.g. half-width field on mobile) anchor it to whichever edge
+        // leaves the panel inside the viewport
+        const panelWidth = Math.max(268, rect.width)
+        const overflowsRight = rect.left + panelWidth > window.innerWidth - 8
+        const fitsWhenRightAligned = rect.right - panelWidth >= 8
+        setAlignRight(overflowsRight && fitsWhenRightAligned)
       }
     }
     setOpen(v => !v)
@@ -161,7 +170,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
       {/* Calendar panel */}
       {open && (
-        <div className={`absolute z-50 left-0 min-w-[268px] w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-3 animate-dropdown-in ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+        <div className={`absolute z-50 min-w-[268px] w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-3 animate-dropdown-in ${alignRight ? 'right-0' : 'left-0'} ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
 
           {/* Month header */}
           <div className="flex items-center justify-between mb-3">
