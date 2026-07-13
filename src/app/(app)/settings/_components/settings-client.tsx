@@ -77,6 +77,7 @@ export default function SettingsClient({
   const [newEmail, setNewEmail] = useState('')
   const [emailMsg, setEmailMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [savingEmail, setSavingEmail] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -180,11 +181,12 @@ export default function SettingsClient({
       const res = await fetch('/api/settings/password', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: newPassword, confirmPassword }),
+        body: JSON.stringify({ currentPassword, password: newPassword, confirmPassword }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error)
       setPasswordMsg({ type: 'success', text: json.message })
+      setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
     } catch (err) {
@@ -281,11 +283,12 @@ export default function SettingsClient({
       {/* Password */}
       <Section title="Password">
         <div className="space-y-4">
+          <Input label="Current password" name="current-password" type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="Your current password" clearable={false} />
           <Input label="New password" name="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="At least 6 characters" clearable={false} />
           <Input label="Confirm new password" name="confirm-password" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter new password" clearable={false} />
         </div>
         {passwordMsg && <p className={`mt-3 text-sm ${msgClass(passwordMsg.type)}`}>{passwordMsg.text}</p>}
-        <Button onClick={handleUpdatePassword} disabled={savingPassword || !newPassword || !confirmPassword} className="mt-4">
+        <Button onClick={handleUpdatePassword} disabled={savingPassword || !currentPassword || !newPassword || !confirmPassword} className="mt-4">
           {savingPassword ? 'Updating...' : 'Update password'}
         </Button>
       </Section>
