@@ -43,7 +43,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
     <>
       {/* Total balance hero */}
       {wallets.length > 0 && (
-        <div className="bg-[#111111] dark:bg-[#0a0a0a] rounded-2xl px-5 py-5 mb-4">
+        <div className="bg-[#111111] dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl px-5 py-5 mb-4">
           <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Total Balance</p>
           <p className="text-3xl sm:text-4xl font-light tabular-nums leading-none text-white">
             {formatVND(totalAssets)}

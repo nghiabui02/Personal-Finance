@@ -232,7 +232,7 @@ export default function ReportsClient({
       <CategoryChart data={byCategory} totalExpense={totalExpense} />
 
       {/* Net Worth */}
-      <div className="bg-[#111111] dark:bg-[#0a0a0a] rounded-2xl px-5 py-5">
+      <div className="bg-[#111111] dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl px-5 py-5">
         <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Net Worth</p>
         <p className={`text-3xl sm:text-4xl font-light tabular-nums leading-none ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
           {formatVND(netWorth)}

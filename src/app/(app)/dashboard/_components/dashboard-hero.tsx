@@ -126,27 +126,27 @@ export function DashboardHero({
         </div>
 
         {/* Net worth */}
-        <div className="rounded-2xl bg-[#1e2836] dark:bg-[#0a0a0a] p-5 sm:p-6 flex flex-col">
+        <div className="rounded-2xl bg-[#1e2836] dark:bg-gray-900 dark:border dark:border-gray-800 p-5 sm:p-6 flex flex-col">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">Net Worth</p>
           <p className={`mt-3 text-3xl sm:text-4xl font-bold tabular-nums tracking-tight ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
             {formatVND(netWorth)}
           </p>
           <div className="mt-auto pt-5 flex flex-wrap gap-2">
-            <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-white/10 text-white">
+            <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-white/10 dark:bg-white/5 text-white dark:text-gray-100">
               Cash {formatVND(totalWalletBalance)}
             </span>
             {totalLent > 0 && (
-              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-emerald-400/10 text-emerald-300">
+              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-white/10 dark:bg-white/5 text-emerald-300 dark:text-emerald-400">
                 Lent +{formatVND(totalLent)}
               </span>
             )}
             {totalCreditDebt > 0 && (
-              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-rose-400/10 text-rose-300">
+              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-white/10 dark:bg-white/5 text-rose-300 dark:text-rose-400">
                 Credit −{formatVND(totalCreditDebt)}
               </span>
             )}
             {totalBorrowed > 0 && (
-              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-rose-400/10 text-rose-300/80">
+              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-white/10 dark:bg-white/5 text-rose-300/80 dark:text-rose-400/80">
                 Borrowed −{formatVND(totalBorrowed)}
               </span>
             )}
