@@ -6,7 +6,7 @@ import { authApi } from '@/lib/api/auth'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useRef, useState, useSyncExternalStore } from 'react'
 
 interface SettingsClientProps {
   userId: string
@@ -60,13 +60,17 @@ export default function SettingsClient({
   const [avatarPreview, setAvatarPreview] = useState(initialAvatarUrl)
   const [imgError, setImgError] = useState(false)
 
-  useEffect(() => {
-    if (initialAvatarUrl !== avatarUrl && !avatarFile) {
+  // Sync from server data (e.g. after router.refresh()) — adjust state during render
+  // instead of in an effect: https://react.dev/learn/you-might-not-need-an-effect
+  const [prevInitialAvatarUrl, setPrevInitialAvatarUrl] = useState(initialAvatarUrl)
+  if (initialAvatarUrl !== prevInitialAvatarUrl) {
+    setPrevInitialAvatarUrl(initialAvatarUrl)
+    if (!avatarFile) {
       setAvatarUrl(initialAvatarUrl)
       setAvatarPreview(initialAvatarUrl)
       setImgError(false)
     }
-  }, [initialAvatarUrl])
+  }
 
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
@@ -204,7 +208,8 @@ export default function SettingsClient({
     type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
 
   return (
-    <div className="max-w-lg mx-auto space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <div className="space-y-4">
       {/* Profile */}
       <Section title="Profile">
         <div className="flex items-center gap-4 mb-5">
@@ -270,7 +275,9 @@ export default function SettingsClient({
         </Button>
         <p className="mt-2 text-xs text-gray-400">A confirmation link will be sent to the new email.</p>
       </Section>
+      </div>
 
+      <div className="space-y-4">
       {/* Password */}
       <Section title="Password">
         <div className="space-y-4">
@@ -312,6 +319,7 @@ export default function SettingsClient({
 
       {/* Sign out */}
       <SignOutSection router={router} />
+      </div>
     </div>
   )
 }

@@ -13,14 +13,12 @@ export default async function SettingsPage() {
   const meta = user.user_metadata ?? {}
 
   return (
-    <div className="max-w-lg mx-auto">
-      <SettingsClient
-        userId={user.id}
-        currentEmail={user.email ?? ''}
-        initialName={meta.full_name ?? ''}
-        initialPhone={meta.phone ?? ''}
-        initialAvatarUrl={meta.avatar_url ?? ''}
-      />
-    </div>
+    <SettingsClient
+      userId={user.id}
+      currentEmail={user.email ?? ''}
+      initialName={meta.full_name ?? ''}
+      initialPhone={meta.phone ?? ''}
+      initialAvatarUrl={meta.avatar_url ?? ''}
+    />
   )
 }

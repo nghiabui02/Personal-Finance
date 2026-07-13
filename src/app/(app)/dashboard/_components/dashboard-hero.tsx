@@ -65,92 +65,109 @@ export function DashboardHero({
 
   const net = totalIncome - totalExpense
   const netPositive = net >= 0
+  const savingRate = totalIncome > 0 ? Math.round((net / totalIncome) * 100) : null
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-[#111111] dark:bg-[#0a0a0a]">
+    <div className="space-y-4">
       {/* Month nav */}
-      <div className="px-5 pt-4 pb-3.5 flex items-center justify-between border-b border-white/8">
+      <div className="flex items-center gap-5">
         <button
           onClick={() => navigate(-1)}
           aria-label="Previous month"
-          className="p-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/8 transition-colors"
+          className="w-10 h-10 rounded-xl bg-white dark:bg-gray-900 shadow-sm ring-1 ring-gray-200/60 dark:ring-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
         >
           {PREV_ICON}
         </button>
-        <span className="text-sm font-medium text-white/50 tracking-wide">{monthLabel}</span>
+        <span className="text-base font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{monthLabel}</span>
         <button
           onClick={() => navigate(1)}
           aria-label="Next month"
           disabled={isCurrentMonth}
-          className="p-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/8 transition-colors disabled:opacity-20 disabled:pointer-events-none"
+          className="w-10 h-10 rounded-xl bg-white dark:bg-gray-900 shadow-sm ring-1 ring-gray-200/60 dark:ring-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
         >
           {NEXT_ICON}
         </button>
       </div>
 
-      {/* Cash flow — the protagonist */}
-      <div className="px-5 pt-5 pb-4">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Net Cash Flow</p>
-        <p className={`text-3xl sm:text-4xl font-light tabular-nums ${netPositive ? 'text-white' : 'text-rose-400'}`}>
-          {netPositive ? '+' : ''}{formatVND(net)}
-        </p>
-        <div className="mt-3 flex items-center gap-5 flex-wrap">
-          <span className="text-xs tabular-nums text-emerald-400 font-medium">
-            ↑ {formatVND(totalIncome)}
-          </span>
-          <span className="text-[10px] text-white/20 select-none">·</span>
-          <span className="text-xs tabular-nums text-rose-400 font-medium">
-            ↓ {formatVND(totalExpense)}
-          </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+        {/* Net cash flow */}
+        <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-5 sm:p-6 flex flex-col">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">Net Cash Flow</p>
+            {savingRate !== null && (
+              <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                netPositive
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                  : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+              }`}>
+                Saving {savingRate}%
+              </span>
+            )}
+          </div>
+          <p className={`mt-3 text-3xl sm:text-4xl font-bold tabular-nums tracking-tight ${netPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
+            {netPositive ? '+' : ''}{formatVND(net)}
+          </p>
+          <div className="mt-auto pt-5 grid grid-cols-2">
+            <div className="pr-4">
+              <p className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                Income
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">{formatVND(totalIncome)}</p>
+            </div>
+            <div className="pl-4 border-l border-gray-100 dark:border-gray-800">
+              <p className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                Expense
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">{formatVND(totalExpense)}</p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Divider */}
-      <div className="mx-5 h-px bg-white/8" />
-
-      {/* Net worth */}
-      <div className="px-5 py-4">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Net Worth</p>
-        <p className={`text-2xl sm:text-3xl font-light tabular-nums ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
-          {formatVND(netWorth)}
-        </p>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-          <span className="text-xs tabular-nums text-emerald-400 font-medium">
-            Cash&nbsp;&nbsp;{formatVND(totalWalletBalance)}
-          </span>
-          {totalLent > 0 && (
-            <span className="text-xs tabular-nums text-emerald-400/70 font-medium">
-              Lent&nbsp;&nbsp;+{formatVND(totalLent)}
+        {/* Net worth */}
+        <div className="rounded-2xl bg-[#1e2836] dark:bg-[#0a0a0a] p-5 sm:p-6 flex flex-col">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">Net Worth</p>
+          <p className={`mt-3 text-3xl sm:text-4xl font-bold tabular-nums tracking-tight ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
+            {formatVND(netWorth)}
+          </p>
+          <div className="mt-auto pt-5 flex flex-wrap gap-2">
+            <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-white/10 text-white">
+              Cash {formatVND(totalWalletBalance)}
             </span>
-          )}
-          {totalCreditDebt > 0 && (
-            <span className="text-xs tabular-nums text-rose-400 font-medium">
-              Credit&nbsp;&nbsp;−{formatVND(totalCreditDebt)}
-            </span>
-          )}
-          {totalBorrowed > 0 && (
-            <span className="text-xs tabular-nums text-rose-400/70 font-medium">
-              Borrowed&nbsp;&nbsp;−{formatVND(totalBorrowed)}
-            </span>
-          )}
+            {totalLent > 0 && (
+              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-emerald-400/10 text-emerald-300">
+                Lent +{formatVND(totalLent)}
+              </span>
+            )}
+            {totalCreditDebt > 0 && (
+              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-rose-400/10 text-rose-300">
+                Credit −{formatVND(totalCreditDebt)}
+              </span>
+            )}
+            {totalBorrowed > 0 && (
+              <span className="text-xs font-medium tabular-nums px-3 py-1.5 rounded-full bg-rose-400/10 text-rose-300/80">
+                Borrowed −{formatVND(totalBorrowed)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Alerts */}
       {alerts.length > 0 && (
-        <div className="px-3 pb-3 space-y-1.5">
-          <div className="h-px bg-white/8 mb-1.5" />
+        <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2 space-y-1">
           {alerts.map((a, i) => (
             <Link
               key={i}
               href={a.href}
-              className="flex items-center gap-2.5 bg-white/6 hover:bg-white/10 rounded-xl px-3 py-2.5 transition-colors group"
+              className="flex items-center gap-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl px-3 py-2.5 transition-colors group"
             >
               <span className="text-sm shrink-0">
                 {a.type === 'budget_over' ? '🔴' : '🟡'}
               </span>
-              <span className="text-[11px] text-white/60 flex-1 leading-snug">{a.label}</span>
-              <svg className="w-3 h-3 text-white/20 group-hover:text-white/40 shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <span className="text-xs text-gray-600 dark:text-gray-300 flex-1 leading-snug">{a.label}</span>
+              <svg className="w-3 h-3 text-gray-300 group-hover:text-gray-500 dark:text-gray-600 dark:group-hover:text-gray-400 shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" />
               </svg>
             </Link>

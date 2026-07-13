@@ -124,22 +124,22 @@ export default function AppShell({
   const isMoreSubPage = MORE_SUB_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-950 md:flex md:h-dvh md:overflow-hidden">
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex">
-        <Sidebar />
+    <div className="bg-gray-50 dark:bg-gray-950 md:h-dvh md:overflow-hidden md:flex md:flex-col">
+      {/* Full-width header */}
+      <Header
+        user={user}
+        title={title}
+        backHref={isMoreSubPage ? '/more' : undefined}
+      />
+
+      {/* Desktop sidebar — fixed, full height, above the header */}
+      <div className="hidden md:block fixed inset-y-0 left-0 z-30">
+        <Sidebar user={user} />
       </div>
 
-      <div className="flex flex-col md:flex-1 md:min-w-0 md:overflow-hidden">
-        <Header
-          user={user}
-          title={title}
-          backHref={isMoreSubPage ? '/more' : undefined}
-        />
-        <main className="pt-4 px-4 pb-bottom-nav md:pb-6 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pt-6 md:px-6">
-          {children}
-        </main>
-      </div>
+      <main className="pt-4 px-4 pb-bottom-nav md:pb-6 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pt-6 md:px-6 md:ml-60 md:min-w-0">
+        {children}
+      </main>
 
       <MobileBottomNav pathname={pathname} />
     </div>

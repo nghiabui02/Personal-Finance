@@ -20,8 +20,9 @@ export default function Header({
   const [avatarErr, setAvatarErr] = useState(false)
 
   return (
-    <header className="shrink-0 pt-safe bg-gray-50 md:bg-white md:border-b md:border-gray-200 dark:bg-gray-950 md:dark:bg-gray-900 md:dark:border-gray-800">
-      <div className="h-14 flex items-center gap-3 px-4 md:px-6">
+    <header className="shrink-0 pt-safe w-full bg-gray-50 dark:bg-gray-950 md:border-b md:border-gray-200 md:dark:border-gray-800">
+      {/* md:pl offset = sidebar width (w-60) + content padding, since the fixed sidebar overlays the header */}
+      <div className="h-14 md:h-16 flex items-center gap-3 px-4 md:pl-[calc(15rem+1.5rem)] md:pr-6">
 
         {/* Mobile: back link for More sub-pages */}
         {backHref ? (
@@ -36,17 +37,18 @@ export default function Header({
               <span className="text-base font-semibold">{title ?? 'Back'}</span>
             </Link>
             {/* Desktop: plain title */}
-            <span className="hidden md:block text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
+            <span className="hidden md:block text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1">
               {title ?? 'Finance'}
             </span>
           </>
         ) : (
-          <span className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
+          <span className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1">
             {title ?? 'Finance'}
           </span>
         )}
 
-        <div className="flex items-center gap-2 ml-auto">
+        {/* Mobile only — on desktop the user block lives at the bottom of the sidebar */}
+        <div className="flex md:hidden items-center gap-2 ml-auto">
           {avatarUrl && !avatarErr ? (
             <img
               src={avatarUrl}
