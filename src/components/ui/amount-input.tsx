@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-function formatWithDots(value: string): string {
+export function formatWithDots(value: string): string {
   const digits = value.replace(/\D/g, '')
   if (!digits) return ''
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.')

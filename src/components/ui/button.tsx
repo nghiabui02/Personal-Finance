@@ -1,6 +1,6 @@
 import { forwardRef } from 'react'
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -16,6 +16,8 @@ const variants: Record<Variant, string> = {
     'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800',
   danger:
     'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-40',
+  success:
+    'bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-60',
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(

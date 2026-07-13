@@ -1,6 +1,6 @@
 'use client'
 
-import { AmountInput } from '@/components/ui/amount-input'
+import { AmountInput, formatWithDots } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
 import { CategorySelect } from '@/components/ui/category-select'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -34,6 +34,44 @@ function isDebtCategory(name: string, list: string[]) {
   return list.some(n => name.toLowerCase().includes(n))
 }
 
+/** Big centered amount display, tinted by transaction type */
+function CenteredAmountInput({
+  name,
+  defaultValue,
+  txType,
+}: {
+  name: string
+  defaultValue?: number
+  txType: 'income' | 'expense'
+}) {
+  const [display, setDisplay] = useState(
+    defaultValue ? formatWithDots(String(defaultValue)) : ''
+  )
+  const rawValue = display.replace(/\./g, '')
+  const isExpense = txType === 'expense'
+
+  return (
+    <div className="text-center">
+      <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-1.5">Amount</p>
+      <input type="hidden" name={name} value={rawValue} />
+      <div className={`inline-flex items-baseline gap-1.5 ${isExpense ? 'text-red-500' : 'text-emerald-500'}`}>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={display}
+          onChange={e => setDisplay(formatWithDots(e.target.value))}
+          placeholder="0"
+          size={1}
+          style={{ width: `${Math.max(display.length, 1)}ch` }}
+          className="bg-transparent text-4xl font-bold tabular-nums text-center outline-none placeholder:text-current caret-current"
+        />
+        <span className="text-xl font-semibold">đ</span>
+      </div>
+      <div className={`mx-auto mt-2 h-0.5 w-36 rounded-full ${isExpense ? 'bg-red-400' : 'bg-emerald-400'}`} />
+    </div>
+  )
+}
+
 export function TransactionModal({ editing, categories, wallets, debts, defaultDate, onClose }: TransactionModalProps) {
   const close = useModalClose()
   const router = useRouter()
@@ -49,6 +87,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
   )
   const [showFee, setShowFee] = useState(false)
   const [selectedDebtId, setSelectedDebtId] = useState('')
+  const [moreOpen, setMoreOpen] = useState(false)
 
   const walletOptions = [
     { value: '', label: 'No wallet' },
@@ -80,12 +119,19 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
     setTxType(t)
     setCategoryId('')
     setSelectedDebtId('')
+    setMoreOpen(false)
   }
 
   function handleCategoryChange(id: string) {
     setCategoryId(id)
     setSelectedDebtId('')
   }
+
+  // Category tile grid: first 7 of the current type + a "More" tile
+  const typeCategories = categories.filter(c => c.type === txType)
+  const visibleCategories = typeCategories.slice(0, 7)
+  const selectedInGrid = visibleCategories.some(c => c.id === categoryId)
+  const overflowSelected = !selectedInGrid && selectedCat ? selectedCat : null
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -156,22 +202,83 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           tabs={[{ key: 'expense', label: '− Expense' }, { key: 'income', label: '+ Income' }]}
           value={txType}
           onChange={handleTypeChange}
-          activeColors={{ expense: '#ef4444', income: '#22c55e' }}
+          activeTextColors={{ expense: '#ef4444', income: '#10b981' }}
+          size="lg"
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          <AmountInput key={selectedDebtId || 'no-debt'} label="Amount" name="amount" defaultValue={editing?.amount ?? selectedDebt?.remaining_amount} required />
-          <DatePicker label="Date" name="transaction_date" value={date} onChange={setDate} required />
+        <div className="py-2">
+          <CenteredAmountInput
+            key={`${txType}-${selectedDebtId || 'no-debt'}`}
+            name="amount"
+            defaultValue={editing?.amount ?? selectedDebt?.remaining_amount}
+            txType={txType}
+          />
+        </div>
+
+        {/* Category tiles */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</p>
+          <div className="grid grid-cols-4 gap-2.5">
+            {visibleCategories.map(c => {
+              const active = c.id === categoryId
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => handleCategoryChange(active ? '' : c.id)}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border px-1 py-3 transition-colors ${
+                    active
+                      ? txType === 'expense'
+                        ? 'border-red-400 bg-red-50 dark:border-red-500/60 dark:bg-red-950/30'
+                        : 'border-emerald-400 bg-emerald-50 dark:border-emerald-500/60 dark:bg-emerald-950/30'
+                      : 'border-gray-200 bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:border-gray-600'
+                  }`}
+                >
+                  <span className="text-2xl leading-none">{c.icon ?? '🏷️'}</span>
+                  <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 truncate w-full text-center">
+                    {c.name}
+                  </span>
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => setMoreOpen(o => !o)}
+              className={`flex flex-col items-center gap-1.5 rounded-xl border px-1 py-3 transition-colors ${
+                overflowSelected
+                  ? txType === 'expense'
+                    ? 'border-red-400 bg-red-50 dark:border-red-500/60 dark:bg-red-950/30'
+                    : 'border-emerald-400 bg-emerald-50 dark:border-emerald-500/60 dark:bg-emerald-950/30'
+                  : 'border-gray-200 bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:border-gray-600'
+              }`}
+            >
+              {overflowSelected ? (
+                <span className="text-2xl leading-none">{overflowSelected.icon ?? '🏷️'}</span>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} className="text-gray-900 dark:text-gray-100">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+              )}
+              <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 truncate w-full text-center">
+                {overflowSelected ? overflowSelected.name : 'More'}
+              </span>
+            </button>
+          </div>
+          {moreOpen && (
+            <div className="mt-2.5">
+              <CategorySelect
+                categories={categories} filterType={txType} label=""
+                value={categoryId} onChange={handleCategoryChange} searchable />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <CategorySelect
-            categories={categories} filterType={txType}
-            value={categoryId} onChange={handleCategoryChange} searchable />
           {wallets.length > 0
             ? <CustomSelect label="Wallet" name="wallet_id" options={walletOptions}
                 value={walletId} onChange={setWalletId} placeholder="None" />
             : <div />}
+          <DatePicker label="Date" name="transaction_date" value={date} onChange={setDate} required />
         </div>
 
         {/* Debt selector — shown when category is Trả nợ / Thu nợ */}
@@ -234,8 +341,8 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
 
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
-          <Button type="submit" disabled={isPending} fullWidth>
-            {isPending ? 'Saving...' : 'Save'}
+          <Button type="submit" variant="success" disabled={isPending} fullWidth>
+            {isPending ? 'Saving...' : 'Save transaction'}
           </Button>
         </div>
       </form>

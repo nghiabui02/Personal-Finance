@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 // Track last pointer-down position for origin animation
 let _originX = 0
@@ -40,8 +41,11 @@ interface ModalProps {
 
 export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
   const [stage, setStage] = useState<'enter' | 'open' | 'closing'>('enter')
-  const ox = useRef(_originX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 400))
-  const oy = useRef(_originY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 300))
+  // Origin is captured once on mount (last pointer-down position)
+  const [origin] = useState(() => ({
+    x: _originX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 400),
+    y: _originY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 300),
+  }))
 
   const closingRef = useRef(false)
 
@@ -79,8 +83,8 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
 
   const vw = typeof window !== 'undefined' ? window.innerWidth : 800
   const vh = typeof window !== 'undefined' ? window.innerHeight : 600
-  const dx = ox.current - vw / 2
-  const dy = oy.current - vh / 2
+  const dx = origin.x - vw / 2
+  const dy = origin.y - vh / 2
 
   const backdropStyle = {
     opacity: stage === 'open' ? 1 : 0,
@@ -103,7 +107,11 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
               : 'none',
         }
 
-  return (
+  // Portal to <body> so ancestors with transform/filter (e.g. entrance animations)
+  // can't become the containing block and clip the fixed backdrop
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       <div
         className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
@@ -112,7 +120,7 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className={`bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full ${sizes[size]} p-6 pointer-events-auto`}
+          className={`bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full ${sizes[size]} p-6 pointer-events-auto max-h-[calc(100dvh-2rem)] overflow-y-auto`}
           style={cardStyle}
           onClick={e => e.stopPropagation()}
         >
@@ -122,6 +130,7 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
           {children}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
