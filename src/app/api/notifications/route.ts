@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { withAuth } from '@/lib/server/route'
+import { badRequest, noContent, withAuth } from '@/lib/server/route'
 import { formatVND } from '@/lib/utils/currency'
 import { localYM, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
 
@@ -17,6 +17,7 @@ export type AppNotification = {
   title: string
   detail?: string
   href: string
+  read: boolean
 }
 
 const SEVERITY_ORDER: Record<NotificationSeverity, number> = {
@@ -44,6 +45,7 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     { data: recurringRows },
     { data: goalRows },
     { data: creditWallets },
+    { data: stateRows },
   ] = await Promise.all([
     supabase.from('budgets')
       .select('id, amount, category_id, categories(name, icon)')
@@ -66,9 +68,12 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     supabase.from('wallets')
       .select('id, name, balance, credit_limit')
       .eq('user_id', user.id).eq('type', 'credit'),
+    supabase.from('notification_states')
+      .select('notification_id, read_at, dismissed_at')
+      .eq('user_id', user.id),
   ])
 
-  const notifications: AppNotification[] = []
+  const notifications: Omit<AppNotification, 'read'>[] = []
 
   // Budgets: over / nearly full (this month)
   const spentByCategory: Record<string, number> = {}
@@ -109,7 +114,9 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
       ? `${d.person_name} owes you`
       : `You owe ${d.person_name}`
     notifications.push({
-      id: `debt:${d.id}`,
+      // due_date + phase in the id so a dismissed notification re-arms
+      // when the deadline changes or the debt turns overdue
+      id: `${isOverdue ? 'debt_overdue' : 'debt_due'}:${d.id}:${d.due_date}`,
       type: isOverdue ? 'debt_overdue' : 'debt_due',
       severity: isOverdue ? 'alert' : 'warning',
       title: isOverdue ? `Overdue debt: ${direction}` : `Debt due soon: ${direction}`,
@@ -125,7 +132,7 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     const cat = r.categories as unknown as CategoryRef
     const label = r.note || cat?.name || (r.type === 'income' ? 'Income' : 'Expense')
     notifications.push({
-      id: `recurring:${r.id}`, type: 'recurring_upcoming', severity: 'info',
+      id: `recurring:${r.id}:${r.next_run_date}`, type: 'recurring_upcoming', severity: 'info',
       title: `Upcoming recurring: ${label}`,
       detail: `${r.type === 'income' ? '+' : '−'}${formatVND(Number(r.amount))} on ${shortDate(r.next_run_date)}`,
       href: '/recurring',
@@ -148,7 +155,8 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
       const pct = target > 0 ? Math.round((current / target) * 100) : 0
       const overdue = g.deadline < today
       notifications.push({
-        id: `goal_deadline:${g.id}`, type: 'goal_deadline',
+        id: `goal_deadline:${g.id}:${g.deadline}:${overdue ? 'overdue' : 'soon'}`,
+        type: 'goal_deadline',
         severity: overdue ? 'alert' : 'warning',
         title: overdue ? `Goal past deadline: ${label}` : `Goal deadline soon: ${label}`,
         detail: `${pct}% funded · ${overdue ? 'was due' : 'due'} ${shortDate(g.deadline)}`,
@@ -173,7 +181,62 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     }
   }
 
-  notifications.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity])
+  // Drop state rows whose condition no longer holds — keeps the table
+  // small and re-arms dismissed notifications if the condition returns
+  const currentIds = new Set(notifications.map(n => n.id))
+  const staleIds = (stateRows ?? [])
+    .map(s => s.notification_id)
+    .filter(id => !currentIds.has(id))
+  if (staleIds.length > 0) {
+    await supabase.from('notification_states')
+      .delete()
+      .eq('user_id', user.id)
+      .in('notification_id', staleIds)
+  }
 
-  return NextResponse.json(notifications)
+  const stateById = new Map((stateRows ?? []).map(s => [s.notification_id, s]))
+  const visible: AppNotification[] = notifications
+    .filter(n => !stateById.get(n.id)?.dismissed_at)
+    .map(n => ({ ...n, read: Boolean(stateById.get(n.id)?.read_at) }))
+
+  visible.sort((a, b) =>
+    Number(a.read) - Number(b.read) ||
+    SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
+  )
+
+  return NextResponse.json(visible)
+})
+
+// Mark notifications read or dismissed: { action: 'read' | 'dismiss', ids: string[] }
+export const PATCH = withAuth(async (request, { supabase, user }) => {
+  const body = await request.json()
+  const action = body?.action
+  const ids = body?.ids
+
+  if (action !== 'read' && action !== 'dismiss') {
+    return badRequest("action must be 'read' or 'dismiss'.")
+  }
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 100
+    || !ids.every(id => typeof id === 'string' && id.length <= 200)) {
+    return badRequest('ids must be a non-empty array of strings.')
+  }
+
+  const now = new Date().toISOString()
+  const column = action === 'read' ? 'read_at' : 'dismissed_at'
+  const rows = ids.map(id => ({
+    user_id: user.id,
+    notification_id: id,
+    [column]: now,
+  }))
+
+  // Upsert only touches the column present in the payload, so marking
+  // read never clears an existing dismissed_at and vice versa
+  const { error } = await supabase.from('notification_states')
+    .upsert(rows, { onConflict: 'user_id,notification_id' })
+  if (error) {
+    console.error('[api] notification state upsert failed:', error.message)
+    return badRequest(error.message)
+  }
+
+  return noContent()
 })

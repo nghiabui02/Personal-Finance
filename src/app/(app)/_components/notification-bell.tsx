@@ -13,6 +13,13 @@ const SEVERITY_DOT: Record<NotificationSeverity, string> = {
   success: 'bg-emerald-500',
 }
 
+function patchNotifications(action: 'read' | 'dismiss', ids: string[]) {
+  return apiFetch('/api/notifications', {
+    method: 'PATCH',
+    body: JSON.stringify({ action, ids }),
+  })
+}
+
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<AppNotification[]>([])
@@ -31,14 +38,32 @@ export function NotificationBell() {
     return () => { cancelled = true }
   }, [pathname])
 
+  // Opening persists the read marks, but items stay highlighted until the
+  // panel closes so the user can still tell which ones are new
+  const openPanel = () => {
+    setOpen(true)
+    const unreadIds = items.filter(i => !i.read).map(i => i.id)
+    if (unreadIds.length > 0) patchNotifications('read', unreadIds).catch(() => {})
+  }
+
+  const closePanel = () => {
+    setOpen(false)
+    setItems(prev => prev.some(i => !i.read) ? prev.map(i => ({ ...i, read: true })) : prev)
+  }
+
+  const dismiss = (id: string) => {
+    setItems(prev => prev.filter(i => i.id !== id))
+    patchNotifications('dismiss', [id]).catch(() => {})
+  }
+
   // Close on outside click / Escape
   useEffect(() => {
     if (!open) return
     const onPointerDown = (e: PointerEvent) => {
-      if (!panelRef.current?.contains(e.target as Node)) setOpen(false)
+      if (!panelRef.current?.contains(e.target as Node)) closePanel()
     }
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') closePanel()
     }
     document.addEventListener('pointerdown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
@@ -49,21 +74,22 @@ export function NotificationBell() {
   }, [open])
 
   const count = items.length
+  const unreadCount = items.filter(i => !i.read).length
 
   return (
     <div ref={panelRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
-        aria-label={count > 0 ? `Notifications (${count})` : 'Notifications'}
+        onClick={() => (open ? closePanel() : openPanel())}
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
         className="relative p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
         </svg>
-        {count > 0 && (
+        {unreadCount > 0 && (
           <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-semibold flex items-center justify-center leading-none">
-            {count > 9 ? '9+' : count}
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
@@ -90,24 +116,35 @@ export function NotificationBell() {
             ) : (
               <div className="py-1">
                 {items.map(n => (
-                  <Link
-                    key={n.id}
-                    href={n.href}
-                    onClick={() => setOpen(false)}
-                    className="flex items-start gap-2.5 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
-                  >
-                    <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${SEVERITY_DOT[n.severity]}`} />
-                    <span className="min-w-0">
-                      <span className="block text-[13px] font-medium text-gray-800 dark:text-gray-200 leading-snug">
-                        {n.title}
-                      </span>
-                      {n.detail && (
-                        <span className="block text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-snug tabular-nums">
-                          {n.detail}
+                  <div key={n.id} className="group relative">
+                    <Link
+                      href={n.href}
+                      onClick={closePanel}
+                      className="flex items-start gap-2.5 pl-4 pr-9 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
+                    >
+                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${n.read ? 'bg-gray-300 dark:bg-gray-600' : SEVERITY_DOT[n.severity]}`} />
+                      <span className="min-w-0">
+                        <span className={`block text-[13px] leading-snug ${n.read ? 'font-normal text-gray-500 dark:text-gray-400' : 'font-medium text-gray-800 dark:text-gray-200'}`}>
+                          {n.title}
                         </span>
-                      )}
-                    </span>
-                  </Link>
+                        {n.detail && (
+                          <span className="block text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-snug tabular-nums">
+                            {n.detail}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => dismiss(n.id)}
+                      aria-label="Dismiss notification"
+                      className="absolute right-2 top-2 p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-600 dark:hover:text-gray-300 dark:hover:bg-gray-800 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
