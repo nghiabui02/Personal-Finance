@@ -202,6 +202,18 @@ export default async function ReportsPage({
     spent: b.category_id ? (catMap.get(b.category_id)?.amount ?? 0) : 0,
   }))
 
+  // Net worth change over (roughly) one period length, from the snapshot history
+  const periodDays: Record<PeriodType, number> = { week: 7, month: 30, quarter: 91, year: 365 }
+  const targetDate = shiftLocalDate(localYMD(), -periodDays[period])
+  const baseline = (snapshotRows ?? []).find(s => s.recorded_date >= targetDate)
+  const aiNetWorth = {
+    current: netWorth,
+    changeAmount: baseline ? netWorth - Number(baseline.net_worth) : null,
+    changeDays: baseline
+      ? Math.round((Date.parse(localYMD()) - Date.parse(baseline.recorded_date)) / 86400000)
+      : null,
+  }
+
   return (
     <ReportsClient
       period={period}
@@ -221,6 +233,7 @@ export default async function ReportsPage({
       }}
       aiTopTransactions={topTransactions}
       aiBudgets={aiBudgets}
+      aiNetWorth={aiNetWorth}
       netWorth={netWorth}
       totalWalletBalance={totalWalletBalance}
       totalLent={totalLent}

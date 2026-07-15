@@ -74,12 +74,13 @@ interface ReportsClientProps {
   aiPrevious: { totalIncome: number; totalExpense: number; categories: { name: string; amount: number }[] }
   aiTopTransactions: { note: string | null; category: string | null; amount: number; date: string }[]
   aiBudgets: { name: string; budgeted: number; spent: number }[]
+  aiNetWorth: { current: number; changeAmount: number | null; changeDays: number | null }
 }
 
 export default function ReportsClient({
   period, start, prevStart, chartData, byCategory, totalIncome, totalExpense,
   netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed, netWorthSnapshots,
-  aiPrevious, aiTopTransactions, aiBudgets,
+  aiPrevious, aiTopTransactions, aiBudgets, aiNetWorth,
 }: ReportsClientProps) {
   const router = useRouter()
   const net = totalIncome - totalExpense
@@ -271,6 +272,7 @@ export default function ReportsClient({
         previous={{ label: getPeriodLabel(period, prevStart), ...aiPrevious }}
         topTransactions={aiTopTransactions}
         timeline={chartData}
+        netWorthInfo={aiNetWorth}
       />
     </div>
   )
