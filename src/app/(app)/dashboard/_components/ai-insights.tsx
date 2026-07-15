@@ -102,7 +102,7 @@ export function AIInsights({ periodLabel, period = 'month', totalIncome, totalEx
       <div className="flex items-center gap-2 mb-4">
         <span className="text-base">✨</span>
         <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">AI Insights</p>
-        <span className="ml-auto text-[10px] text-slate-700">Groq · Llama</span>
+        <span className="ml-auto text-[10px] text-slate-700">Groq · GPT-OSS</span>
         {state === 'done' && (
           <button onClick={() => analyze(true)} title="Refresh" className="text-slate-700 hover:text-slate-400 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -296,7 +296,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: userMsg },
