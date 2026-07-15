@@ -147,7 +147,6 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
             label="Balance"
             name="balance"
             defaultValue={editing?.balance ?? 0}
-            required
           />
         )}
 
