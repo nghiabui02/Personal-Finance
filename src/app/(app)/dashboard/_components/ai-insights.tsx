@@ -39,7 +39,7 @@ export function AIInsights({ periodLabel, period = 'month', totalIncome, totalEx
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error' | 'rate_limit'>('idle')
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [retryIn, setRetryIn] = useState(0)
-  const cacheKey = `ai-insights::v5::${periodLabel}::${totalIncome}::${totalExpense}`
+  const cacheKey = `ai-insights::v6::${periodLabel}::${totalIncome}::${totalExpense}`
   const abortRef = useRef<AbortController | null>(null)
 
   // Load from cache on mount (no API call)

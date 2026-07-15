@@ -41,7 +41,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
 
   // Check DB cache (skip if force-refresh). Version prefix invalidates old
   // cached results whenever the prompt changes materially.
-  const cacheKey = `v5::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}::${netWorth}`
+  const cacheKey = `v6::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}::${netWorth}`
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_insights_cache')
