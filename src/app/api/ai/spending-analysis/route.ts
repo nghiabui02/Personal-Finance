@@ -11,9 +11,36 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const { periodLabel, period, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, force } = await request.json()
   const periodType: 'week' | 'month' | 'quarter' | 'year' = period ?? 'month'
 
+  // Balance-sheet snapshot fetched server-side — the client only knows the
+  // period's in/out flows, but sound advice needs the current position too
+  const [{ data: walletRows }, { data: debtRows }, { data: goalRows }] = await Promise.all([
+    supabase.from('wallets')
+      .select('name, type, balance, credit_limit')
+      .eq('user_id', user.id),
+    supabase.from('debts')
+      .select('type, remaining_amount, due_date')
+      .eq('user_id', user.id).eq('status', 'active'),
+    supabase.from('saving_goals')
+      .select('name, target_amount, current_amount')
+      .eq('user_id', user.id).eq('status', 'active'),
+  ])
+
+  const wallets = walletRows ?? []
+  const liquidAssets = wallets
+    .filter(w => w.type !== 'credit')
+    .reduce((s, w) => s + Number(w.balance), 0)
+  const creditWallets = wallets.filter(w => w.type === 'credit' && Number(w.credit_limit) > 0)
+  const creditLimitTotal = creditWallets.reduce((s, w) => s + Number(w.credit_limit), 0)
+  const creditUsed = creditWallets.reduce((s, w) => s + Math.max(0, Number(w.credit_limit) - Number(w.balance)), 0)
+  const receivable = (debtRows ?? []).filter(d => d.type === 'lend')
+    .reduce((s, d) => s + Number(d.remaining_amount), 0)
+  const payable = (debtRows ?? []).filter(d => d.type === 'borrow')
+    .reduce((s, d) => s + Number(d.remaining_amount), 0)
+  const netWorth = liquidAssets + receivable - creditUsed - payable
+
   // Check DB cache (skip if force-refresh). Version prefix invalidates old
   // cached results whenever the prompt changes materially.
-  const cacheKey = `v3::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}`
+  const cacheKey = `v4::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}::${netWorth}`
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_insights_cache')
@@ -61,6 +88,65 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     .slice(0, 3)
     .map(c => `  - Giảm 20% "${c.name}" → tiết kiệm ~${fmt(Math.round(c.amount * 0.2))}đ`)
     .join('\n')
+
+  // --- Balance-sheet metrics (all pre-computed, standard personal-finance ratios) ---
+
+  // Normalize the period's expense to a monthly figure for runway math
+  const monthlyExpenseFactor: Record<typeof periodType, number> = { week: 4.33, month: 1, quarter: 1 / 3, year: 1 / 12 }
+  const monthlyExpense = Math.round(totalExpense * monthlyExpenseFactor[periodType])
+  const runwayMonths = monthlyExpense > 0 ? liquidAssets / monthlyExpense : null
+  const creditUtilPct = creditLimitTotal > 0 ? Math.round((creditUsed / creditLimitTotal) * 100) : null
+
+  const goals = goalRows ?? []
+  const goalTarget = goals.reduce((s, g) => s + Number(g.target_amount), 0)
+  const goalCurrent = goals.reduce((s, g) => s + Number(g.current_amount), 0)
+  const goalPct = goalTarget > 0 ? Math.round((goalCurrent / goalTarget) * 100) : null
+
+  const overdueDebts = (debtRows ?? []).filter(d =>
+    d.type === 'borrow' && Number(d.remaining_amount) > 0 && d.due_date && d.due_date < new Date().toISOString().slice(0, 10))
+
+  const assetSection = [
+    '\n=== TÀI SẢN & DÒNG TIỀN HIỆN TẠI (số dư thực tế, không phải thu chi trong kỳ) ===',
+    `Tiền khả dụng (tiền mặt + tài khoản + ví): ${fmt(liquidAssets)}đ`,
+    creditLimitTotal > 0
+      ? `Nợ thẻ tín dụng: ${fmt(creditUsed)}đ / hạn mức ${fmt(creditLimitTotal)}đ (đang dùng ${creditUtilPct}% hạn mức)`
+      : 'Không có thẻ tín dụng.',
+    receivable > 0 ? `Đang cho vay (chưa thu hồi): ${fmt(receivable)}đ` : '',
+    payable > 0 ? `Đang đi vay (chưa trả): ${fmt(payable)}đ${overdueDebts.length ? ` — trong đó ${overdueDebts.length} khoản ĐÃ QUÁ HẠN` : ''}` : '',
+    `Tài sản ròng (khả dụng + cho vay − nợ thẻ − đi vay): ${fmt(netWorth)}đ`,
+    runwayMonths !== null
+      ? `Quỹ dự phòng: tiền khả dụng đủ chi tiêu cho ${runwayMonths.toFixed(1)} tháng (mức chi ~${fmt(monthlyExpense)}đ/tháng)`
+      : 'Chưa tính được quỹ dự phòng (chưa có chi tiêu trong kỳ).',
+    goalPct !== null ? `Mục tiêu tiết kiệm: đã góp ${fmt(goalCurrent)}đ / ${fmt(goalTarget)}đ (${goalPct}%) cho ${goals.length} mục tiêu` : '',
+    '',
+    'Chuẩn tham chiếu tài chính cá nhân (dùng để đánh giá, KHÔNG tự tính lại):',
+    '  - Quỹ dự phòng an toàn: 3-6 tháng chi tiêu. Dưới 1 tháng là rủi ro cao.',
+    '  - Nợ thẻ tín dụng: nên giữ dưới 30% hạn mức; trên 80% là báo động.',
+    '  - Thứ tự ưu tiên dòng tiền dư: (1) trả nợ quá hạn/nợ thẻ, (2) đắp quỹ dự phòng đủ 3 tháng, (3) góp mục tiêu tiết kiệm.',
+  ].filter(Boolean).join('\n')
+
+  // Score computed here so the model never does arithmetic: start from the
+  // savings-rate band, then adjust for budgets, runway, credit and net worth
+  const rate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0
+  let suggestedScore =
+    net < 0 ? 25 :
+    rate >= 30 ? 90 :
+    rate >= 20 ? 77 :
+    rate >= 10 ? 62 : 47
+  suggestedScore -= 5 * overBudget.length
+  if (runwayMonths !== null) {
+    if (runwayMonths >= 6) suggestedScore += 8
+    else if (runwayMonths >= 3) suggestedScore += 4
+    else if (runwayMonths < 1) suggestedScore -= 10
+    else suggestedScore -= 4
+  }
+  if (creditUtilPct !== null) {
+    if (creditUtilPct >= 80) suggestedScore -= 10
+    else if (creditUtilPct >= 50) suggestedScore -= 5
+  }
+  if (netWorth < 0) suggestedScore -= 15
+  if (overdueDebts.length > 0) suggestedScore -= 5
+  suggestedScore = Math.max(0, Math.min(100, Math.round(suggestedScore)))
 
   const periodFocus: Record<typeof periodType, string> = {
     week:    'Kỳ phân tích là 1 TUẦN. Đánh giá: mức chi 7 ngày so với thu nhập, ngày chi nhiều nhất (nếu có dữ liệu theo ngày), danh mục nào đang chiếm phần lớn tuần này.',
@@ -126,6 +212,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
 
   const system = [
     'Bạn là cố vấn tài chính cá nhân cho một người dùng Việt Nam (đơn vị: đồng).',
+    'Bạn nhận được BÁO CÁO TÀI CHÍNH CÁ NHÂN gồm 2 phần: (1) thu chi trong kỳ (dòng tiền), (2) tài sản & nợ hiện tại (bảng cân đối). Lời khuyên phải kết nối cả hai — ví dụ: chi tiêu trong kỳ đang ảnh hưởng thế nào đến quỹ dự phòng, tiền dư nên ưu tiên vào đâu.',
     '',
     'Nguyên tắc bắt buộc:',
     '- CHỈ dùng số liệu được cung cấp trong tin nhắn. Không bịa số, không tự tính toán % — mọi con số và % cần thiết đã được tính sẵn.',
@@ -153,27 +240,31 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     timelineSection,
     topTxSection,
     comparisonSection,
+    assetSection,
     cutSuggestions ? `\nGợi ý cắt giảm đã tính sẵn (dùng nguyên con số này nếu viết tip cắt giảm):\n${cutSuggestions}` : '',
     '',
     '=== OUTPUT JSON ===',
     '{',
     '  "summary": "1-2 câu tóm tắt: tình hình kỳ này, tỷ lệ tiết kiệm, danh mục chiếm nhiều nhất",',
     `  "topSpend": "dựa đúng dòng đầu danh sách danh mục — ví dụ: ${topCat ? `${topCat.name} chiếm ${topCatPct}% chi tiêu (${fmt(topCat.amount)}đ)` : 'Ăn uống chiếm 45% chi tiêu (2.250.000đ)'}",`,
+    '  "assets": "1-2 câu đánh giá sức khỏe tài sản hiện tại: tài sản ròng, quỹ dự phòng đủ mấy tháng, nợ (nếu có) — dùng đúng số trong mục TÀI SẢN & DÒNG TIỀN",',
     '  "insights": [',
     '    { "emoji": "<emoji khớp nội dung>", "text": "<nhận xét>", "type": "warning|tip|good" }',
     '  ],',
-    '  "score": <số nguyên 0-100>',
+    `  "score": ${suggestedScore}`,
     '}',
     '',
     '=== QUY TẮC ===',
-    '1. 3-5 insights, mỗi insight nói MỘT ý riêng, không trùng ý nhau, không lặp lại summary.',
-    '2. "warning" CHỈ khi có vấn đề thật trong dữ liệu: vượt ngân sách, bội chi, tỷ lệ tiết kiệm dưới 10%, hoặc một danh mục chiếm trên 40% tổng chi. Tài chính lành mạnh thì KHÔNG bịa cảnh báo — dùng "good" để ghi nhận điểm tốt.',
+    '1. 4-6 insights, mỗi insight nói MỘT ý riêng, không trùng ý nhau, không lặp lại summary.',
+    '2. "warning" CHỈ khi có vấn đề thật trong dữ liệu: vượt ngân sách, bội chi, tỷ lệ tiết kiệm dưới 10%, một danh mục chiếm trên 40% tổng chi, quỹ dự phòng dưới 1 tháng, nợ thẻ trên 80% hạn mức, nợ quá hạn, hoặc tài sản ròng âm. Tài chính lành mạnh thì KHÔNG bịa cảnh báo — dùng "good" để ghi nhận điểm tốt.',
     '3. Mỗi danh mục vượt ngân sách phải có 1 warning nêu rõ số tiền vượt.',
     '4. Có ít nhất 1 "tip" hành động được. Nếu là tip cắt giảm, dùng nguyên con số từ phần "Gợi ý cắt giảm đã tính sẵn".',
     comparisonSection ? '4b. Có ít nhất 1 insight về thay đổi đáng chú ý nhất so với kỳ trước, dùng đúng % đã tính sẵn trong mục SO SÁNH.' : '',
+    '4c. Có ít nhất 1 insight kết nối dòng tiền kỳ này với tài sản hiện tại và hướng tới TƯƠNG LAI, theo "Thứ tự ưu tiên dòng tiền dư": tiền tiết kiệm được kỳ này nên đi đâu trước (trả nợ quá hạn/nợ thẻ → đắp quỹ dự phòng đủ 3 tháng → góp mục tiêu tiết kiệm). Nếu bội chi, chỉ rõ khoản thiếu hụt đang bào mòn tiền khả dụng/quỹ dự phòng.',
+    '4d. Nếu quỹ dự phòng dưới 3 tháng: nêu rõ hiện đủ bao nhiêu tháng (số đã tính sẵn) và mức an toàn là 3-6 tháng. Nếu đã đạt 3-6 tháng trở lên: ghi nhận bằng 1 insight "good".',
     '5. Emoji khớp nội dung, không dùng một emoji 2 lần.',
-    '6. Score theo tỷ lệ tiết kiệm: ≥30% → 85-100 | 20-29% → 70-84 | 10-19% → 55-69 | 0-9% → 40-54 | bội chi → 0-39. Sau đó trừ 5 điểm cho mỗi danh mục vượt ngân sách (không xuống dưới 0).',
-    '7. Nếu chưa có giao dịch chi tiêu: score=50, summary khuyến khích bắt đầu ghi chép, 2 tip để bắt đầu.',
+    `6. "score" phải là đúng số ${suggestedScore} — đã được tính sẵn từ tỷ lệ tiết kiệm, ngân sách, quỹ dự phòng, nợ thẻ và tài sản ròng. Không tự tính lại.`,
+    '7. Nếu chưa có giao dịch chi tiêu trong kỳ: summary khuyến khích bắt đầu ghi chép, 2 tip để bắt đầu, và vẫn đánh giá phần tài sản hiện tại trong "assets".',
   ].filter(Boolean).join('\n')
 
   for (let attempt = 0; attempt < 3; attempt++) {

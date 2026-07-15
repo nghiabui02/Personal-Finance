@@ -11,6 +11,7 @@ interface Insight {
 interface Analysis {
   summary: string
   topSpend?: string
+  assets?: string
   insights: Insight[]
   score: number
 }
@@ -37,7 +38,7 @@ export function AIInsights({ periodLabel, period = 'month', totalIncome, totalEx
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error' | 'rate_limit'>('idle')
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [retryIn, setRetryIn] = useState(0)
-  const cacheKey = `ai-insights::v3::${periodLabel}::${totalIncome}::${totalExpense}`
+  const cacheKey = `ai-insights::v4::${periodLabel}::${totalIncome}::${totalExpense}`
   const abortRef = useRef<AbortController | null>(null)
 
   // Load from cache on mount (no API call)
@@ -157,6 +158,15 @@ export function AIInsights({ periodLabel, period = 'month', totalIncome, totalEx
               <div className="min-w-0">
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Chi nhiều nhất</p>
                 <p className="text-sm text-slate-200">{analysis.topSpend}</p>
+              </div>
+            </div>
+          )}
+          {analysis.assets && (
+            <div className="flex items-center gap-2 bg-slate-800/60 rounded-xl px-3 py-2.5">
+              <span className="text-base shrink-0">💼</span>
+              <div className="min-w-0">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Tài sản hiện tại</p>
+                <p className="text-sm text-slate-200">{analysis.assets}</p>
               </div>
             </div>
           )}
