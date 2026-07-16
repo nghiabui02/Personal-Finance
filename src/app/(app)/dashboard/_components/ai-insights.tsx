@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 
 interface Insight {
   emoji: string
@@ -35,39 +35,52 @@ const insightColors: Record<Insight['type'], string> = {
   good:    'bg-emerald-500/10 text-emerald-300',
 }
 
+// sessionStorage never notifies changes we don't make ourselves — subscribe is a no-op
+const emptySubscribe = () => () => {}
+
 export function AIInsights({ periodLabel, period = 'month', totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo }: AIInsightsProps) {
-  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error' | 'rate_limit'>('idle')
-  const [analysis, setAnalysis] = useState<Analysis | null>(null)
-  const [retryIn, setRetryIn] = useState(0)
   const cacheKey = `ai-insights::v6::${periodLabel}::${totalIncome}::${totalExpense}`
   const abortRef = useRef<AbortController | null>(null)
 
-  // Load from cache on mount (no API call)
-  useEffect(() => {
-    const cached = sessionStorage.getItem(cacheKey)
-    if (cached) {
-      try { setAnalysis(JSON.parse(cached)); setState('done') } catch { /* ignore */ }
-    } else {
-      setState('idle')
-      setAnalysis(null)
-    }
-  }, [cacheKey])
+  // Session cache read: null on the server and during hydration, the cached
+  // JSON afterwards — hydration-safe without an effect
+  const cachedRaw = useSyncExternalStore(
+    emptySubscribe,
+    () => sessionStorage.getItem(cacheKey),
+    () => null,
+  )
+  const cached = useMemo<Analysis | null>(() => {
+    if (!cachedRaw) return null
+    try { return JSON.parse(cachedRaw) } catch { return null }
+  }, [cachedRaw])
+
+  // Result and in-flight status of analyze(), keyed by the cacheKey they were
+  // fired for — switching periods mid-request can't leak state across periods
+  const [fetched, setFetched] = useState<{ key: string; data: Analysis } | null>(null)
+  const [request, setRequest] = useState<{ key: string; status: 'loading' | 'error' | 'rate_limit' } | null>(null)
+  const [retryIn, setRetryIn] = useState(0)
+
+  const analysis = fetched?.key === cacheKey ? fetched.data : cached
+  const requestStatus = request?.key === cacheKey ? request.status : null
+  const state: 'idle' | 'loading' | 'done' | 'error' | 'rate_limit' =
+    requestStatus ?? (analysis ? 'done' : 'idle')
 
   // Countdown timer for rate limit retry
   useEffect(() => {
-    if (state !== 'rate_limit' || retryIn <= 0) return
-    const t = setInterval(() => setRetryIn(n => {
-      if (n <= 1) { clearInterval(t); setState('idle'); return 0 }
-      return n - 1
-    }), 1000)
-    return () => clearInterval(t)
-  }, [state, retryIn])
+    if (requestStatus !== 'rate_limit' || retryIn <= 0) return
+    const t = setTimeout(() => {
+      if (retryIn <= 1) { setRetryIn(0); setRequest(null) }
+      else setRetryIn(retryIn - 1)
+    }, 1000)
+    return () => clearTimeout(t)
+  }, [requestStatus, retryIn])
 
   function analyze(force = false) {
     abortRef.current?.abort()
     const ctrl = new AbortController()
     abortRef.current = ctrl
-    setState('loading')
+    const key = cacheKey
+    setRequest({ key, status: 'loading' })
 
     fetch('/api/ai/spending-analysis', {
       method: 'POST',
@@ -78,14 +91,14 @@ export function AIInsights({ periodLabel, period = 'month', totalIncome, totalEx
       .then(r => r.json().then(data => ({ status: r.status, data })))
       .then(({ status, data }) => {
         if (status === 429 || data.error === 'rate_limit') {
-          setRetryIn(60); setState('rate_limit'); return
+          setRetryIn(60); setRequest({ key, status: 'rate_limit' }); return
         }
         if (data.error) throw new Error(data.error)
-        sessionStorage.setItem(cacheKey, JSON.stringify(data))
-        setAnalysis(data)
-        setState('done')
+        sessionStorage.setItem(key, JSON.stringify(data))
+        setFetched({ key, data })
+        setRequest(null)
       })
-      .catch(err => { if (err.name !== 'AbortError') setState('error') })
+      .catch(err => { if (err.name !== 'AbortError') setRequest({ key, status: 'error' }) })
   }
 
   const scoreColor = !analysis ? '' :

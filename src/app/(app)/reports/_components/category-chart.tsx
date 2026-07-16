@@ -12,11 +12,19 @@ const FALLBACK_COLORS = [
 export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; totalExpense: number }) {
   const [ready, setReady] = useState(false)
 
-  useEffect(() => {
+  // Restart the bar-fill animation when the data changes: reset during render
+  // (state-adjust pattern), then arm the timer that flips bars to full width
+  const [prevData, setPrevData] = useState(data)
+  if (prevData !== data) {
+    setPrevData(data)
     setReady(false)
+  }
+
+  useEffect(() => {
+    if (ready) return
     const id = setTimeout(() => setReady(true), 50)
     return () => clearTimeout(id)
-  }, [data])
+  }, [ready])
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">

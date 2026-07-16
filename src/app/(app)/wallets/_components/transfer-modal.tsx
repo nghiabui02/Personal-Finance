@@ -5,16 +5,12 @@ import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { CustomSelect } from '@/components/ui/custom-select'
+import { formatWithDots } from '@/components/ui/amount-input'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-
-function formatWithDots(v: string) {
-  const d = v.replace(/\D/g, '')
-  return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''
-}
 
 interface TransferModalProps {
   wallets: Wallet[]

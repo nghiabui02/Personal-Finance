@@ -40,6 +40,15 @@ export function monthRange(ym: string): { startDate: string; endDate: string } {
   }
 }
 
+// Formats a Date object's LOCAL calendar fields as YYYY-MM-DD (no timezone
+// conversion — use only for Dates already constructed in the intended zone,
+// e.g. new Date(y, m - 1, d) arithmetic).
+export function toYMD(date: Date): string {
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${m}-${d}`
+}
+
 // Shifts a local YYYY-MM-DD by N days.
 export function shiftLocalDate(localDateStr: string, days: number): string {
   const [y, m, d] = localDateStr.split('-').map(Number)

@@ -187,6 +187,15 @@ function TransactionList({
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const sentinelRef = useRef<HTMLDivElement>(null)
 
+  // Reset pagination when filter or category changes (state-adjust-during-render,
+  // see react.dev "You Might Not Need an Effect")
+  const filterKey = `${filter}::${selectedCategoryId}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey)
+    setDisplayCount(PAGE_SIZE)
+  }
+
   const byType = filter === 'all' ? transactions : transactions.filter(tx => tx.type === filter)
   const filtered = selectedCategoryId
     ? byType.filter(tx => tx.categories?.id === selectedCategoryId)
@@ -205,9 +214,6 @@ function TransactionList({
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [hasMore])
-
-  // Reset pagination when filter or category changes
-  useEffect(() => { setDisplayCount(PAGE_SIZE) }, [filter, selectedCategoryId])
 
   const income  = transactions.filter(tx => tx.type === 'income').reduce((s, tx) => s + Number(tx.amount), 0)
   const expense = transactions.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0)
@@ -326,11 +332,13 @@ export default function TransactionsClient({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const isSearchMode = !!searchQuery
 
-  // Sync from URL changes (browser back/forward)
-  useEffect(() => {
+  // Sync from URL changes, e.g. browser back/forward (state-adjust-during-render)
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery)
+  if (prevSearchQuery !== searchQuery) {
+    setPrevSearchQuery(searchQuery)
     setSearchValue(searchQuery)
     setSearchOpen(!!searchQuery)
-  }, [searchQuery])
+  }
 
   // Focus input when search opens
   useEffect(() => {

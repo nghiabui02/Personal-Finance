@@ -217,6 +217,7 @@ export default function SettingsClient({
         <div className="flex items-center gap-4 mb-5">
           <div className="relative shrink-0">
             {avatarPreview && !imgError ? (
+              // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
               <img
                 src={avatarPreview}
                 alt="Avatar"

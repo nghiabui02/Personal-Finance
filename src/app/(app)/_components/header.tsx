@@ -53,6 +53,7 @@ export default function Header({
         {/* Mobile only — on desktop the user block lives at the bottom of the sidebar */}
         <div className="flex md:hidden items-center gap-2">
           {avatarUrl && !avatarErr ? (
+            // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
             <img
               src={avatarUrl}
               alt="Avatar"

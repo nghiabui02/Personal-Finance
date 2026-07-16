@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { toYMD } from '@/lib/utils/date'
 
 // Week starts Monday
 const DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
@@ -34,14 +35,6 @@ function getCalendarDays(year: number, month: number): Date[] {
   }
 
   return days
-}
-
-/** Internal value is always YYYY-MM-DD */
-function toYMD(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
 }
 
 /** Display value in DD-MM-YYYY */

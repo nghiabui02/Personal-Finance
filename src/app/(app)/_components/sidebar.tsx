@@ -124,6 +124,7 @@ export default function Sidebar({ user, onClose }: { user: User; onClose?: () =>
       {/* User */}
       <div className="shrink-0 border-t border-gray-100 dark:border-gray-800 px-4 py-4 flex items-center gap-3">
         {avatarUrl && !avatarErr ? (
+          // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
           <img
             src={avatarUrl}
             alt="Avatar"

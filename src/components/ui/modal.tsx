@@ -49,12 +49,16 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
 
   const closingRef = useRef(false)
 
-  function handleClose() {
+  // Track the latest onClose without re-registering the stack/keydown effect
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose })
+
+  const handleClose = useCallback(() => {
     if (closingRef.current) return
     closingRef.current = true
     setStage('closing')
-    setTimeout(onClose, 420)
-  }
+    setTimeout(() => onCloseRef.current(), 420)
+  }, [])
 
   // Push handleClose onto the stack when modal opens, pop when it unmounts.
   // Escape closes only the topmost modal in the stack.
@@ -70,7 +74,7 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
       _closeStack.pop()
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [])
+  }, [handleClose])
 
   // enter → open
   useEffect(() => {

@@ -9,12 +9,9 @@ import { CategoryChart } from './category-chart'
 import { BarChart } from './bar-chart'
 import type { NetWorthSnapshot } from '@/lib/types'
 import type { ChartPoint, CategoryData } from './types'
+import { getMondayOfLocalWeek, localYMD, toYMD } from '@/lib/utils/date'
 
 export type PeriodType = 'week' | 'month' | 'quarter' | 'year'
-
-function toYMD(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -97,21 +94,13 @@ export default function ReportsClient({
   ]
 
   function switchPeriod(p: PeriodType) {
-    // Use Intl to get today's date in the app timezone
-    const parts = new Intl.DateTimeFormat('en-CA', {
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-    }).formatToParts(new Date())
-    const get = (t: string) => parseInt(parts.find(x => x.type === t)?.value ?? '0')
-    const year = get('year'), month = get('month') - 1, day = get('day')
-    const now = new Date(year, month, day)
-    const dow = now.getDay()
-    const monday = new Date(now)
-    monday.setDate(day - (dow === 0 ? 6 : dow - 1))
+    // Same defaults as getDefaultStart() in reports/page.tsx, app-timezone aware
+    const today = localYMD()
+    const [year, month] = today.split('-').map(Number)
     const defaults: Record<PeriodType, string> = {
-      week:    toYMD(monday),
-      month:   toYMD(new Date(year, month, 1)),
-      quarter: toYMD(new Date(year, Math.floor(month / 3) * 3, 1)),
+      week:    getMondayOfLocalWeek(today),
+      month:   `${today.slice(0, 7)}-01`,
+      quarter: `${year}-${String(Math.floor((month - 1) / 3) * 3 + 1).padStart(2, '0')}-01`,
       year:    `${year}-01-01`,
     }
     router.replace(`/reports?period=${p}&start=${defaults[p]}`, { scroll: false })

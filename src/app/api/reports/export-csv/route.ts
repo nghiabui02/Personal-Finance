@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth } from '@/lib/server/route'
+import { toYMD } from '@/lib/utils/date'
 
 function esc(v: string | number | null | undefined): string {
   const s = String(v ?? '')
@@ -14,10 +15,6 @@ function row(...cells: (string | number | null | undefined)[]): string {
 
 function fmt(n: number): string {
   return n.toLocaleString('vi-VN')
-}
-
-function toYMD(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function getDateRange(period: string, start: string): { startDate: string; endDate: string } {

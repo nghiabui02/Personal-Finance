@@ -58,9 +58,12 @@ export function CustomSelect({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  useEffect(() => {
-    if (!open) setQuery('')
-  }, [open])
+  // Closing the dropdown always clears the search query — every close path
+  // (select, escape, outside click, trigger toggle) goes through here.
+  function toggleOpen() {
+    if (open) setQuery('')
+    setOpen(!open)
+  }
 
   function handleSelect(val: string) {
     onChange(val)
@@ -93,7 +96,7 @@ export function CustomSelect({
         {/* Trigger button */}
         <button
           type="button"
-          onClick={() => setOpen(v => !v)}
+          onClick={toggleOpen}
           className={`w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors outline-none ${
             open
               ? 'border-blue-500 ring-2 ring-blue-500/20'
@@ -204,7 +207,7 @@ export function CustomSelect({
 
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={toggleOpen}
         className={`w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors outline-none ${
           open
             ? 'border-blue-500 ring-2 ring-blue-500/20'

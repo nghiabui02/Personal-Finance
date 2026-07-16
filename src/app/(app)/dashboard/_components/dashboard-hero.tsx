@@ -1,6 +1,7 @@
 'use client'
 
 import { formatVND } from '@/lib/utils/currency'
+import { localYM } from '@/lib/utils/date'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -46,9 +47,7 @@ export function DashboardHero({
 }: DashboardHeroProps) {
   const router = useRouter()
 
-  const now = new Date()
-  const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const isCurrentMonth = month === currentYM
+  const isCurrentMonth = month === localYM()
 
   function navigate(dir: -1 | 1) {
     const [year, monthNum] = month.split('-').map(Number)

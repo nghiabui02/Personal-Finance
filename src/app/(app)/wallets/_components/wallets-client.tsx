@@ -22,7 +22,6 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const [payingCreditId, setPayingCreditId] = useState<string | null>(null)
 
   const totalAssets = wallets.reduce((sum, w) => w.type === 'credit' ? sum : sum + Number(w.balance), 0)
-  const totalCreditDebt = wallets.reduce((sum, w) => w.type === 'credit' ? sum + Math.max(0, Number(w.credit_limit ?? 0) - Number(w.balance)) : sum, 0)
   const confirmWallet = wallets.find(w => w.id === confirmId)
 
   function openModal(wallet: Wallet | null = null) {

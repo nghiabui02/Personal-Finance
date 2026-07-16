@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { formatVND } from '@/lib/utils/currency'
+import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
 
 const WALLET_ICONS: Record<Wallet['type'], string> = {
@@ -15,13 +16,14 @@ const WALLET_ICONS: Record<Wallet['type'], string> = {
 }
 
 function formatDateHeader(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(today.getDate() - 1)
-  if (d.toDateString() === today.toDateString()) return 'Today'
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
-  return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined })
+  const today = localYMD()
+  if (dateStr === today) return 'Today'
+  if (dateStr === shiftLocalDate(today, -1)) return 'Yesterday'
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    year: dateStr.slice(0, 4) !== today.slice(0, 4) ? 'numeric' : undefined,
+  })
 }
 
 const TransferIcon = () => (

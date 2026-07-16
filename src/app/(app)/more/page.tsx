@@ -96,6 +96,7 @@ export default async function MorePage() {
         className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
       >
         {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
           <img src={avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 shrink-0" />
         ) : (
           <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-gray-200 flex items-center justify-center text-white dark:text-gray-900 text-lg font-semibold shrink-0">
