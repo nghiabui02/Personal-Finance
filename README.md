@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Finance
+
+A personal finance app for a single user. Income/expense tracking, wallets, budgets, debts, savings goals, reports, and AI-powered spending analysis.
+
+## Tech Stack
+
+- **Next.js 16** (App Router) + **Tailwind CSS v4**
+- **Supabase** (PostgreSQL + Auth) — every query goes through a client bound to the user's session, protected by Row Level Security on every table
+- **Groq** (`openai/gpt-oss-120b`) for AI spending analysis
+- **pnpm**, deployed on Vercel + Supabase
+
+## Features
+
+- Sign up / sign in, change password, change email
+- Wallets: cash, bank, e-wallet, investment, **credit card** (credit limit, statement day, due day)
+- Income/expense transactions, transfers between wallets, bank fee for international transactions
+- Custom categories (icon, color)
+- Monthly budgets with over/under tracking
+- Recurring transactions (daily/weekly/monthly/yearly), auto-run nightly via `pg_cron` — transactions get created without opening the app
+- Debts (lend / borrow) with partial payment history
+- Savings goals
+- Dashboard: income/expense/net worth overview, spending-by-category chart, budget alerts
+- Reports: view by week/month/quarter/year, income vs expense chart, net worth history, CSV export
+- **AI Insights**: spending analysis, comparison with the previous period, budget and balance-sheet health (emergency fund runway, credit utilization), adapts scoring per period type (a week isn't scored as a deficit just because salary hasn't landed yet)
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/          # login, register, forgot/reset password
+│   ├── (app)/           # dashboard, transactions, budgets, wallets,
+│   │                    # debts, recurring, reports, saving-goals, settings
+│   ├── api/             # API routes, each wrapped by withAuth/withRoute
+│   └── auth/callback/   # Supabase OAuth/recovery code exchange
+├── components/ui/       # shared components (modal, select, date picker...)
+└── lib/
+    ├── supabase/        # client.ts (browser), server.ts (server/RLS-scoped)
+    ├── server/          # route.ts (auth wrapper), rate-limit.ts, net-worth.ts...
+    ├── api/             # per-domain fetch wrappers (wallets, debts...)
+    └── utils/           # date.ts (timezone-aware), currency.ts, credit.ts
+```
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create `.env.local`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_TIMEZONE=Asia/Ho_Chi_Minh
+GROQ_API_KEY=
+```
 
-## Learn More
+`NEXT_PUBLIC_TIMEZONE` is the app's "ledger timezone" — every transaction date, budget cycle, and the recurring-transaction cron all compute dates in this timezone regardless of where the app is running, so data never shifts by a day when the timezone changes.
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Run the dev server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000).
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Command | Description |
+|---|---|
+| `pnpm dev` | Dev server (Webpack) |
+| `pnpm dev:turbo` | Dev server (Turbopack) |
+| `pnpm build` | Production build |
+| `pnpm start` | Run the production build |
+| `pnpm lint` | ESLint |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Security
+
+- **RLS enabled on every table**, every policy scoped to `auth.uid() = user_id` — even if an API route forgets to filter by user, the database still blocks cross-account access.
+- No code path uses the Supabase Service Role Key — every query goes through the session-bound client, so RLS is always enforced.
+- IP-based rate limiting on `sign-in`, `sign-up`, `forgot-password`.
+- Security headers (CSP, X-Frame-Options, HSTS...) configured in `next.config.ts`.
+- Consider also enabling **Leaked Password Protection** in Supabase Dashboard → Authentication → Passwords.
