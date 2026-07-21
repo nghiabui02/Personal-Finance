@@ -18,6 +18,7 @@ export const badRequest = (message: string) => jsonError(400, message)
 export const unauthorized = () => jsonError(401, 'Unauthorized')
 export const notFound = (message = 'Not found.') => jsonError(404, message)
 export const conflict = (message: string) => jsonError(409, message)
+export const tooManyRequests = (message = 'Too many attempts. Please try again later.') => jsonError(429, message)
 
 // For Supabase/PostgREST errors that reach the response: log for debugging,
 // surface the message so the client can display it.

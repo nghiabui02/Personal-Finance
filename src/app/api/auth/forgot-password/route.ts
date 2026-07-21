@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { withRoute, badRequest } from '@/lib/server/route'
+import { withRoute, badRequest, tooManyRequests } from '@/lib/server/route'
+import { isRateLimited } from '@/lib/server/rate-limit'
 
 export const POST = withRoute(async (request) => {
+  if (isRateLimited(request, { key: 'forgot-password', limit: 5, windowMs: 60 * 60 * 1000 })) {
+    return tooManyRequests()
+  }
+
   const { email } = await request.json()
 
   if (!email) {
