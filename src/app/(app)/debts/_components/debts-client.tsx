@@ -15,6 +15,7 @@ import { type Debt, debtsApi } from '@/lib/api/debts'
 import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { AdditionModal } from './addition-modal'
 
 const PENCIL = (
   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -159,16 +160,19 @@ function PaymentModal({
   const [error, setError] = useState<string | null>(null)
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
   const [date, setDate] = useState(localYMD())
+  const [amount, setAmount] = useState(0)
 
   const walletOptions = [
     { value: '', label: 'No wallet' },
     ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
   ]
 
+  const overpaying = amount > debt.remaining_amount
+  const remainingAfter = Math.max(0, debt.remaining_amount - amount)
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const amount = Number((form.elements.namedItem('amount') as HTMLInputElement).value)
     const note = (form.elements.namedItem('note') as HTMLInputElement).value
 
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
@@ -188,13 +192,25 @@ function PaymentModal({
 
   return (
     <Modal title="Record payment" onClose={onClose}>
-      <div className="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-sm">
-        <p className="text-xs text-gray-400 mb-0.5">Remaining</p>
-        <p className="font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{formatVND(debt.remaining_amount)}</p>
+      <div className="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-sm flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs text-gray-400 mb-0.5">Remaining</p>
+          <p className="font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{formatVND(debt.remaining_amount)}</p>
+        </div>
+        {amount > 0 && (
+          <div className="text-right">
+            <p className="text-xs text-gray-400 mb-0.5">After this payment</p>
+            <p className={`font-semibold tabular-nums ${
+              overpaying ? 'text-rose-600 dark:text-rose-400' : remainingAfter === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100'
+            }`}>
+              {overpaying ? 'Exceeds remaining' : formatVND(remainingAfter)}
+            </p>
+          </div>
+        )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <AmountInput label="Payment amount" name="amount" required />
+          <AmountInput label="Payment amount" name="amount" required onValueChange={setAmount} />
           <CustomSelect
             label={debt.type === 'lend' ? 'Receive to wallet' : 'Pay from wallet'}
             name="wallet_id"
@@ -223,11 +239,13 @@ function DebtCard({
   onEdit,
   onDelete,
   onPay,
+  onAddMore,
 }: {
   debt: Debt
   onEdit: () => void
   onDelete: () => void
   onPay: () => void
+  onAddMore: () => void
 }) {
   const paidAmount = debt.amount - debt.remaining_amount
   const pct = debt.amount > 0 ? Math.min((paidAmount / debt.amount) * 100, 100) : 0
@@ -278,12 +296,20 @@ function DebtCard({
 
         <div className="flex gap-0.5 shrink-0">
           {!isCompleted && (
-            <button onClick={onPay} title="Record payment"
-              className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33" />
-              </svg>
-            </button>
+            <>
+              <button onClick={onAddMore} title={debt.type === 'lend' ? 'Lend more' : 'Borrow more'}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </button>
+              <button onClick={onPay} title="Record payment"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33" />
+                </svg>
+              </button>
+            </>
           )}
           <button onClick={onEdit} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{PENCIL}</button>
           <button onClick={onDelete} className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">{TRASH}</button>
@@ -312,6 +338,7 @@ function DebtSection({
   onEdit,
   onDelete,
   onPay,
+  onAddMore,
   onAdd,
 }: {
   title: string
@@ -321,6 +348,7 @@ function DebtSection({
   onEdit: (d: Debt) => void
   onDelete: (id: string) => void
   onPay: (d: Debt) => void
+  onAddMore: (d: Debt) => void
   onAdd: () => void
 }) {
   const colorCls = color === 'indigo'
@@ -349,7 +377,7 @@ function DebtSection({
           {debts.map((d, idx) => (
             <div key={d.id} className="animate-fade-up" style={{ animationDelay: `${idx * 50}ms` }}>
               <DebtCard debt={d}
-                onEdit={() => onEdit(d)} onDelete={() => onDelete(d.id)} onPay={() => onPay(d)} />
+                onEdit={() => onEdit(d)} onDelete={() => onDelete(d.id)} onPay={() => onPay(d)} onAddMore={() => onAddMore(d)} />
             </div>
           ))}
         </div>
@@ -373,6 +401,7 @@ export default function DebtsClient({
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null)
   const [defaultType, setDefaultType] = useState<'lend' | 'borrow'>('lend')
   const [payingDebt, setPayingDebt] = useState<Debt | null>(null)
+  const [addingDebt, setAddingDebt] = useState<Debt | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   const [tab, setTab] = useState<'active' | 'completed'>('active')
@@ -432,6 +461,7 @@ export default function DebtsClient({
           onEdit={d => { setEditingDebt(d); setModalOpen(true) }}
           onDelete={id => setConfirmId(id)}
           onPay={d => setPayingDebt(d)}
+          onAddMore={d => setAddingDebt(d)}
           onAdd={() => openNew('lend')}
         />
         <DebtSection
@@ -442,6 +472,7 @@ export default function DebtsClient({
           onEdit={d => { setEditingDebt(d); setModalOpen(true) }}
           onDelete={id => setConfirmId(id)}
           onPay={d => setPayingDebt(d)}
+          onAddMore={d => setAddingDebt(d)}
           onAdd={() => openNew('borrow')}
         />
       </div>
@@ -457,6 +488,9 @@ export default function DebtsClient({
       )}
       {payingDebt && (
         <PaymentModal debt={payingDebt} wallets={wallets} onClose={() => setPayingDebt(null)} />
+      )}
+      {addingDebt && (
+        <AdditionModal debt={addingDebt} wallets={wallets} onClose={() => setAddingDebt(null)} />
       )}
       {confirmId && (
         <ConfirmModal
