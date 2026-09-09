@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PeriodNav } from '@/components/ui/period-nav'
+import { TabGroup } from '@/components/ui/tab-group'
 import { formatVND } from '@/lib/utils/currency'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
 import { type Category } from '@/lib/api/categories'
@@ -37,8 +38,9 @@ function BudgetCard({
   onEdit: () => void
   onDelete: () => void
 }) {
-  const pct = budget.amount > 0 ? Math.min((budget.spent / budget.amount) * 100, 100) : 0
-  const isOver = budget.spent > budget.amount
+  const limit = budget.effectiveAmount
+  const pct = limit > 0 ? Math.min((budget.spent / limit) * 100, 100) : 0
+  const isOver = budget.spent > limit
   const isWarning = !isOver && pct >= 80
 
   const barColor = isOver
@@ -54,7 +56,7 @@ function BudgetCard({
     : 'text-gray-400 dark:text-gray-500'
 
   const cat = budget.categories
-  const remaining = budget.amount - budget.spent
+  const remaining = limit - budget.spent
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
@@ -72,9 +74,14 @@ function BudgetCard({
             </p>
             <p className={`text-xs ${statusColor}`}>
               {isOver
-                ? `Over by ${formatVND(budget.spent - budget.amount)}`
+                ? `Over by ${formatVND(budget.spent - limit)}`
                 : `${formatVND(remaining)} left`}
             </p>
+            {budget.rollover && budget.rolloverCarry !== 0 && (
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                {budget.rolloverCarry > 0 ? '+' : '−'}{formatVND(Math.abs(budget.rolloverCarry))} rollover
+              </p>
+            )}
           </div>
         </div>
 
@@ -93,7 +100,7 @@ function BudgetCard({
 
       <div className="flex justify-between text-xs text-gray-400 tabular-nums">
         <span>{formatVND(budget.spent)} spent</span>
-        <span>{Math.round(pct)}% of {formatVND(budget.amount)}</span>
+        <span>{Math.round(pct)}% of {formatVND(limit)}</span>
       </div>
     </div>
   )
@@ -105,10 +112,15 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
   const [modalOpen, setModalOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [tab, setTab] = useState<'active' | 'inactive'>('active')
 
-  const totalBudget = budgets.reduce((s, b) => s + Number(b.amount), 0)
-  const totalSpent = budgets.reduce((s, b) => s + Number(b.spent), 0)
-  const overCount = budgets.filter(b => b.spent > b.amount).length
+  const activeBudgets = budgets.filter(b => b.active)
+  const inactiveBudgets = budgets.filter(b => !b.active)
+  const visibleBudgets = tab === 'active' ? activeBudgets : inactiveBudgets
+
+  const totalBudget = activeBudgets.reduce((s, b) => s + Number(b.effectiveAmount), 0)
+  const totalSpent = activeBudgets.reduce((s, b) => s + Number(b.spent), 0)
+  const overCount = activeBudgets.filter(b => b.spent > b.effectiveAmount).length
   const existingCategoryIds = budgets.map(b => b.category_id).filter(Boolean) as string[]
   const spentPct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0
 
@@ -146,8 +158,20 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
         </Button>
       </div>
 
+      {inactiveBudgets.length > 0 && (
+        <TabGroup
+          tabs={[
+            { key: 'active', label: `Active (${activeBudgets.length})` },
+            { key: 'inactive', label: `Inactive (${inactiveBudgets.length})` },
+          ]}
+          value={tab}
+          onChange={setTab}
+          className="w-fit mb-5"
+        />
+      )}
+
       {/* Hero panel */}
-      {budgets.length > 0 && (
+      {tab === 'active' && activeBudgets.length > 0 && (
         <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 mb-5">
           <div className="flex items-start justify-between mb-2">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
@@ -188,14 +212,14 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
         </div>
       )}
 
-      {budgets.length === 0 ? (
+      {visibleBudgets.length === 0 ? (
         <EmptyState
-          message="No budgets for this month."
-          action={{ label: 'Create your first budget', onClick: () => { setEditingBudget(null); setModalOpen(true) } }}
+          message={tab === 'active' ? 'No budgets for this month.' : 'No inactive budgets.'}
+          action={tab === 'active' ? { label: 'Create your first budget', onClick: () => { setEditingBudget(null); setModalOpen(true) } } : undefined}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {budgets.map((b, idx) => (
+          {visibleBudgets.map((b, idx) => (
             <div key={b.id} className="animate-fade-up" style={{ animationDelay: `${idx * 60}ms` }}>
               <BudgetCard
                 budget={b}

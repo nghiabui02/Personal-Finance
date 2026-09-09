@@ -4,12 +4,16 @@ import { withAuth, badRequest, noContent, supabaseError } from '@/lib/server/rou
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
 
-  const { amount } = await request.json()
-  if (!amount || Number(amount) <= 0) return badRequest('Amount is required.')
+  const { amount, rollover, active } = await request.json()
+  if (amount !== undefined && (!amount || Number(amount) <= 0)) return badRequest('Amount is required.')
 
   const { data, error } = await supabase
     .from('budgets')
-    .update({ amount: Number(amount) })
+    .update({
+      amount: amount !== undefined ? Number(amount) : undefined,
+      rollover: rollover !== undefined ? !!rollover : undefined,
+      active: active !== undefined ? !!active : undefined,
+    })
     .eq('id', id)
     .eq('user_id', user.id)
     .select('*, categories(id, name, icon, color)')

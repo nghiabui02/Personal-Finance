@@ -186,10 +186,19 @@ function RecurringCard({
   onEdit: () => void
   onDelete: () => void
 }) {
+  const router = useRouter()
+  const [skipping, setSkipping] = useState(false)
   const cat = item.categories
   const today = localYMD()
   const isOverdue = item.next_run_date && item.next_run_date <= today
   const isExpired = item.end_date && item.end_date < today
+
+  async function handleSkip() {
+    setSkipping(true)
+    try { await recurringApi.skip(item.id); router.refresh() }
+    catch { /* toast later */ }
+    finally { setSkipping(false) }
+  }
 
   function formatDate(d: string) {
     const [y, m, day] = d.split('-')
@@ -239,6 +248,14 @@ function RecurringCard({
             {item.type === 'income' ? '+' : '−'}{formatVND(item.amount)}
           </span>
           <div className="flex gap-0.5">
+            {!isExpired && item.next_run_date && (
+              <button onClick={handleSkip} disabled={skipping} title="Skip next occurrence"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 transition-colors disabled:opacity-40">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.25v13.5l9-6.75-9-6.75Zm10.5 0v13.5" />
+                </svg>
+              </button>
+            )}
             <button onClick={onEdit} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />

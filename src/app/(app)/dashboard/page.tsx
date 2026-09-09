@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
+import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import type { CategoryRef } from '@/lib/types'
 import { formatVND } from '@/lib/utils/currency'
 import { localYM, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
@@ -33,23 +34,27 @@ export default async function DashboardPage({
   if (!user) return null
 
   const [
-    { data: incomeRows },
-    { data: recentRows },
-    { data: expenseCatRows },
-    { data: budgetRows },
-    { data: debtRows },
-    { data: walletRows },
-    { data: snapshotRows },
-    { data: categoryRows },
+    [
+      { data: incomeRows },
+      { data: recentRows },
+      { data: expenseCatRows },
+      { data: debtRows },
+      { data: walletRows },
+      { data: snapshotRows },
+      { data: categoryRows },
+    ],
+    budgetsWithRollover,
   ] = await Promise.all([
-    supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate),
-    supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
-    supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
-    supabase.from('budgets').select('id, amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('month', startDate),
-    supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
-    supabase.from('wallets').select('id, name, type, balance, credit_limit, color, icon, is_default, user_id').eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
-    supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
-    supabase.from('categories').select('id, user_id, name, icon, color, type, is_default, parent_id').order('is_default', { ascending: false }).order('name'),
+    Promise.all([
+      supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate),
+      supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
+      supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
+      supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
+      supabase.from('wallets').select('id, name, type, balance, credit_limit, color, icon, is_default, user_id').eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
+      supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
+      supabase.from('categories').select('id, user_id, name, icon, color, type, is_default, parent_id').order('is_default', { ascending: false }).order('name'),
+    ]),
+    getBudgetsForMonth(supabase, user.id, month).then(rows => rows.filter(b => b.active)),
   ])
 
   const { netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed } =
@@ -70,10 +75,9 @@ export default async function DashboardPage({
   }
   const expenseByCategory = [...catMap.values()].sort((a, b) => b.amount - a.amount)
 
-  const budgets = (budgetRows ?? []).map(b => {
-    const cat = b.categories as unknown as CategoryRef | null
-    return { id: b.id, amount: Number(b.amount), spent: cat ? (catMap.get(cat.id)?.amount ?? 0) : 0, category: cat }
-  })
+  const budgets = budgetsWithRollover.map(b => ({
+    id: b.id, amount: b.effectiveAmount, spent: b.spent, category: b.categories,
+  }))
 
   // Alerts
   const alerts: Alert[] = []

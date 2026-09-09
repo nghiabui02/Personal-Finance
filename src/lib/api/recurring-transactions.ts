@@ -58,4 +58,8 @@ export const recurringApi = {
   delete(id: string): Promise<null> {
     return apiFetch(`/api/recurring-transactions/${id}`, { method: 'DELETE' })
   },
+
+  skip(id: string): Promise<RecurringTransaction> {
+    return apiFetch(`/api/recurring-transactions/${id}`, { method: 'PATCH', body: JSON.stringify({ skip: true }) })
+  },
 }

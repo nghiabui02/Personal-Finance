@@ -55,6 +55,8 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
     editing ? editing.month.slice(0, 7) : month
   )
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
+  const [rollover, setRollover] = useState(editing?.rollover ?? false)
+  const [active, setActive] = useState(editing?.active ?? true)
 
   const editingCategoryId = editing?.category_id
   const excludedIds = existingCategoryIds.filter(id => id !== editingCategoryId)
@@ -68,12 +70,14 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
     startTransition(async () => {
       try {
         if (editing) {
-          await budgetsApi.update(editing.id, amount)
+          await budgetsApi.update(editing.id, { amount, rollover, active })
         } else {
           await budgetsApi.create({
             category_id: categoryId || undefined,
             amount,
             month: `${selectedMonth}-01`,
+            rollover,
+            active,
           })
         }
         router.refresh()
@@ -109,6 +113,38 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
         )}
 
         <AmountInput label="Budget amount" name="amount" defaultValue={editing?.amount} required />
+
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={rollover}
+            onChange={e => setRollover(e.target.checked)}
+            className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            Roll over
+            <span className="block text-xs text-gray-400 dark:text-gray-500">
+              Unused amount carries into next month; overspend is deducted from it.
+            </span>
+          </span>
+        </label>
+
+        {editing && (
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={e => setActive(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Active
+              <span className="block text-xs text-gray-400 dark:text-gray-500">
+                Inactive: hidden from totals/alerts this month, doesn&apos;t break rollover chain when reactivated later — it just resets.
+              </span>
+            </span>
+          </label>
+        )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 

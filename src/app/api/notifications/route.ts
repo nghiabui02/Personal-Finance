@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { badRequest, noContent, withAuth } from '@/lib/server/route'
+import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { formatVND } from '@/lib/utils/currency'
-import { localYM, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
+import { localYM, localYMD, shiftLocalDate } from '@/lib/utils/date'
 
 export type NotificationSeverity = 'alert' | 'warning' | 'info' | 'success'
 
@@ -33,27 +34,19 @@ function shortDate(ymd: string): string {
 
 export const GET = withAuth(async (_request, { supabase, user }) => {
   const today = localYMD()
-  const { startDate, endDate } = monthRange(localYM())
   const debtHorizon = shiftLocalDate(today, 7)
   const recurringHorizon = shiftLocalDate(today, 3)
   const goalHorizon = shiftLocalDate(today, 14)
 
   const [
-    { data: budgetRows },
-    { data: expenseRows },
+    budgetRows,
     { data: debtRows },
     { data: recurringRows },
     { data: goalRows },
     { data: creditWallets },
     { data: stateRows },
   ] = await Promise.all([
-    supabase.from('budgets')
-      .select('id, amount, category_id, categories(name, icon)')
-      .eq('user_id', user.id).eq('month', startDate),
-    supabase.from('transactions')
-      .select('category_id, amount')
-      .eq('user_id', user.id).eq('type', 'expense')
-      .gte('transaction_date', startDate).lt('transaction_date', endDate),
+    getBudgetsForMonth(supabase, user.id, localYM()).then(rows => rows.filter(b => b.active)),
     supabase.from('debts')
       .select('id, type, person_name, remaining_amount, due_date')
       .eq('user_id', user.id).eq('status', 'active'),
@@ -75,17 +68,13 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
 
   const notifications: Omit<AppNotification, 'read'>[] = []
 
-  // Budgets: over / nearly full (this month)
-  const spentByCategory: Record<string, number> = {}
-  for (const tx of expenseRows ?? []) {
-    if (!tx.category_id) continue
-    spentByCategory[tx.category_id] = (spentByCategory[tx.category_id] ?? 0) + Number(tx.amount)
-  }
-  for (const b of budgetRows ?? []) {
-    const cat = b.categories as unknown as CategoryRef
+  // Budgets: over / nearly full (this month) — effectiveAmount already
+  // includes rollover carry, inactive rows already filtered out
+  for (const b of budgetRows) {
+    const cat = b.categories
     if (!cat || !b.category_id) continue
-    const amount = Number(b.amount)
-    const spent = spentByCategory[b.category_id] ?? 0
+    const amount = b.effectiveAmount
+    const spent = b.spent
     const pct = amount > 0 ? spent / amount : 0
     const label = `${cat.icon ?? ''} ${cat.name}`.trim()
     if (spent > amount) {
