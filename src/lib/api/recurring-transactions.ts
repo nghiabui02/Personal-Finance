@@ -13,6 +13,7 @@ export type RecurringTransaction = {
   end_date: string | null
   next_run_date: string | null
   bank_fee: number | null
+  active: boolean
   categories: { id: string; name: string; icon: string | null; color: string | null } | null
   wallets: { id: string; name: string } | null
 }
@@ -61,5 +62,9 @@ export const recurringApi = {
 
   skip(id: string): Promise<RecurringTransaction> {
     return apiFetch(`/api/recurring-transactions/${id}`, { method: 'PATCH', body: JSON.stringify({ skip: true }) })
+  },
+
+  setActive(id: string, active: boolean): Promise<RecurringTransaction> {
+    return apiFetch(`/api/recurring-transactions/${id}`, { method: 'PATCH', body: JSON.stringify({ active }) })
   },
 }

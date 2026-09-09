@@ -188,6 +188,7 @@ function RecurringCard({
 }) {
   const router = useRouter()
   const [skipping, setSkipping] = useState(false)
+  const [togglingActive, setTogglingActive] = useState(false)
   const cat = item.categories
   const today = localYMD()
   const isOverdue = item.next_run_date && item.next_run_date <= today
@@ -200,13 +201,20 @@ function RecurringCard({
     finally { setSkipping(false) }
   }
 
+  async function handleToggleActive() {
+    setTogglingActive(true)
+    try { await recurringApi.setActive(item.id, !item.active); router.refresh() }
+    catch { /* toast later */ }
+    finally { setTogglingActive(false) }
+  }
+
   function formatDate(d: string) {
     const [y, m, day] = d.split('-')
     return `${day}-${m}-${y}`
   }
 
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-xl border p-4 ${isExpired ? 'opacity-60' : ''} border-gray-200 dark:border-gray-800`}>
+    <div className={`bg-white dark:bg-gray-900 rounded-xl border p-4 ${isExpired || !item.active ? 'opacity-60' : ''} border-gray-200 dark:border-gray-800`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
@@ -226,6 +234,11 @@ function RecurringCard({
                 {FREQUENCY_LABELS[item.frequency]}
               </span>
               {isExpired && <span className="text-xs text-gray-400">Ended</span>}
+              {!isExpired && !item.active && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium shrink-0">
+                  Paused
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400 flex-wrap">
               {item.wallets && <span>{item.wallets.name}</span>}
@@ -248,7 +261,22 @@ function RecurringCard({
             {item.type === 'income' ? '+' : '−'}{formatVND(item.amount)}
           </span>
           <div className="flex gap-0.5">
-            {!isExpired && item.next_run_date && (
+            {!isExpired && (
+              <button onClick={handleToggleActive} disabled={togglingActive}
+                title={item.active ? 'Pause' : 'Resume'}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors disabled:opacity-40">
+                {item.active ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.25v13.5l13.5-6.75-13.5-6.75Z" />
+                  </svg>
+                )}
+              </button>
+            )}
+            {!isExpired && item.active && item.next_run_date && (
               <button onClick={handleSkip} disabled={skipping} title="Skip next occurrence"
                 className="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 transition-colors disabled:opacity-40">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
