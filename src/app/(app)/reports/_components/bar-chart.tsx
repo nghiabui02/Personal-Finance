@@ -4,7 +4,7 @@ import { formatVND, formatCompactVND } from '@/lib/utils/currency'
 import { useTheme } from 'next-themes'
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { ChartPoint } from './types'
-import type { PeriodType } from './reports-client'
+import type { PeriodType } from '@/lib/utils/period'
 
 interface BarChartProps {
   data: ChartPoint[]

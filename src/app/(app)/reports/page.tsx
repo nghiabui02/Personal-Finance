@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
-import { getMondayOfLocalWeek, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
+import { getDateRange, getPeriodSummary } from '@/lib/server/period-summary'
+import { getMondayOfLocalWeek, localYMD, shiftLocalDate } from '@/lib/utils/date'
+import type { PeriodType } from '@/lib/utils/period'
 import type { CategoryRef, NetWorthSnapshot } from '@/lib/types'
-import ReportsClient, { type PeriodType } from './_components/reports-client'
+import ReportsClient from './_components/reports-client'
 import type { ChartPoint, CategoryData } from './_components/types'
 
 export const metadata: Metadata = { title: 'Reports' }
@@ -16,23 +18,6 @@ function getDefaultStart(period: PeriodType): string {
   if (period === 'month')   return `${y}-${String(m).padStart(2, '0')}-01`
   if (period === 'quarter') return `${y}-${String(Math.floor((m - 1) / 3) * 3 + 1).padStart(2, '0')}-01`
   return `${y}-01-01`
-}
-
-function getDateRange(period: PeriodType, start: string): { startDate: string; endDate: string } {
-  if (period === 'week') {
-    return { startDate: start, endDate: shiftLocalDate(start, 7) }
-  }
-  if (period === 'month') {
-    return monthRange(start.slice(0, 7))
-  }
-  if (period === 'quarter') {
-    const [y, m] = start.split('-').map(Number)
-    const endM = m + 3
-    const endY = endM > 12 ? y + 1 : y
-    return { startDate: start, endDate: `${endY}-${String(endM > 12 ? endM - 12 : endM).padStart(2, '0')}-01` }
-  }
-  const y = parseInt(start)
-  return { startDate: `${y}-01-01`, endDate: `${y + 1}-01-01` }
 }
 
 // Start of the period immediately before the given one — for AI trend comparison
@@ -107,7 +92,6 @@ export default async function ReportsPage({
   const start  = params.start ?? getDefaultStart(period)
   const { startDate, endDate } = getDateRange(period, start)
   const prevStart = getPrevStart(period, start)
-  const { startDate: prevStartDate, endDate: prevEndDate } = getDateRange(period, prevStart)
 
   const ninetyDaysAgo = shiftLocalDate(localYMD(), -90)
 
@@ -120,7 +104,7 @@ export default async function ReportsPage({
     { data: walletRows },
     { data: debtRows },
     { data: snapshotRows },
-    { data: prevRows },
+    prevSummary,
     { data: budgetRows },
   ] = await Promise.all([
     supabase
@@ -138,12 +122,7 @@ export default async function ReportsPage({
       .gte('recorded_date', ninetyDaysAgo)
       .order('recorded_date', { ascending: true }),
     // Previous period — lets the AI compare trends with real data
-    supabase
-      .from('transactions')
-      .select('type, amount, categories(name)')
-      .eq('user_id', user.id)
-      .gte('transaction_date', prevStartDate)
-      .lt('transaction_date', prevEndDate),
+    getPeriodSummary(supabase, user.id, period, prevStart),
     // Budgets only make sense for the month view (they are monthly)
     period === 'month'
       ? supabase
@@ -171,18 +150,6 @@ export default async function ReportsPage({
     if (!cat) continue
     const prev = catMap.get(cat.id)
     catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + amt })
-  }
-
-  // --- Extra context for the AI analysis ---
-  let prevIncome = 0
-  let prevExpense = 0
-  const prevCatMap = new Map<string, number>()
-  for (const row of prevRows ?? []) {
-    const amt = Number(row.amount)
-    if (row.type === 'income') { prevIncome += amt; continue }
-    prevExpense += amt
-    const name = (row.categories as unknown as { name: string } | null)?.name
-    if (name) prevCatMap.set(name, (prevCatMap.get(name) ?? 0) + amt)
   }
 
   const topTransactions = (rows ?? [])
@@ -223,14 +190,7 @@ export default async function ReportsPage({
       byCategory={[...catMap.values()].sort((a, b) => b.amount - a.amount).slice(0, 8)}
       totalIncome={totalIncome}
       totalExpense={totalExpense}
-      aiPrevious={{
-        totalIncome: prevIncome,
-        totalExpense: prevExpense,
-        categories: [...prevCatMap.entries()]
-          .map(([name, amount]) => ({ name, amount }))
-          .sort((a, b) => b.amount - a.amount)
-          .slice(0, 8),
-      }}
+      aiPrevious={prevSummary}
       aiTopTransactions={topTransactions}
       aiBudgets={aiBudgets}
       aiNetWorth={aiNetWorth}
