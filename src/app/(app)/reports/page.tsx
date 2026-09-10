@@ -166,7 +166,7 @@ export default async function ReportsPage({
     }))
 
   const aiBudgets = (budgetRows ?? []).map(b => ({
-    name: (b.categories as unknown as { name: string } | null)?.name ?? 'Khác',
+    name: (b.categories as unknown as { name: string } | null)?.name ?? 'Other',
     budgeted: Number(b.amount),
     spent: b.category_id ? (catMap.get(b.category_id)?.amount ?? 0) : 0,
   }))

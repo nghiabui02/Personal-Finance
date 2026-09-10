@@ -40,7 +40,7 @@ interface WalletModalProps {
 function DaySelect({ label, name, defaultValue }: { label: string; name: string; defaultValue?: number | null }) {
   const options = Array.from({ length: 28 }, (_, i) => ({
     value: String(i + 1),
-    label: `Ngày ${i + 1}`,
+    label: `Day ${i + 1}`,
   }))
   return (
     <div>
@@ -139,7 +139,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
               <DaySelect label="Payment Due Day" name="payment_due_day" defaultValue={editing?.payment_due_day ?? 10} />
             </div>
             <p className="text-xs text-gray-400 dark:text-gray-500 -mt-1">
-              Ví dụ: sao kê ngày 26, thanh toán ngày 10 tháng sau
+              Example: statement on the 26th, payment due on the 10th of the next month
             </p>
           </>
         ) : (

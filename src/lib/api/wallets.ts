@@ -29,6 +29,7 @@ export type WalletTransaction = {
   type: 'income' | 'expense'
   amount: number
   note: string | null
+  bank_fee: number | null
   transaction_date: string
   category_id: string | null
   transfer_pair_id: string | null

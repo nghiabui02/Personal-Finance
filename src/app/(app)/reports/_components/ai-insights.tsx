@@ -181,14 +181,14 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
           disabled={compareLoading}
           className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1 disabled:opacity-50"
         >
-          So sánh: {compareLoading ? 'Đang tải…' : getPeriodLabel(period, navigatePeriod(period, start, -compareOffset))}
+          Compare with: {compareLoading ? 'Loading…' : getPeriodLabel(period, navigatePeriod(period, start, -compareOffset))}
           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
           </svg>
         </button>
         {!compareLoading && comparisonEmpty && (
           <p className="text-[11px] text-amber-500/80 mt-1">
-            Kỳ này không có giao dịch — phân tích sẽ bỏ phần so sánh.
+            No transactions in that period — the analysis will skip the comparison.
           </p>
         )}
         {pickerOpen && (
@@ -202,7 +202,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
                 }`}
               >
                 {getPeriodLabel(period, navigatePeriod(period, start, -offset))}
-                {offset === 1 && <span className="text-slate-600"> · kỳ trước</span>}
+                {offset === 1 && <span className="text-slate-600"> · previous</span>}
               </button>
             ))}
           </div>
@@ -212,12 +212,12 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
       {/* Idle — prompt to analyze */}
       {state === 'idle' && (
         <div className="flex flex-col items-center gap-3 py-4 text-center">
-          <p className="text-sm text-slate-400">Nhận phân tích chi tiêu AI cho {periodLabel}</p>
+          <p className="text-sm text-slate-400">Get an AI spending analysis for {periodLabel}</p>
           <button
             onClick={() => analyze()}
             className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium px-4 py-2 rounded-xl transition-colors active:scale-[0.97]"
           >
-            <span>✨</span> Phân tích ngay
+            <span>✨</span> Analyze now
           </button>
         </div>
       )}
@@ -254,7 +254,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
             <div className="flex items-center gap-2 bg-slate-800/60 rounded-xl px-3 py-2.5">
               <span className="text-base shrink-0">🏆</span>
               <div className="min-w-0">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Chi nhiều nhất</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Top spending</p>
                 <p className="text-sm text-slate-200">{analysis.topSpend}</p>
               </div>
             </div>
@@ -263,7 +263,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
             <div className="flex items-center gap-2 bg-slate-800/60 rounded-xl px-3 py-2.5">
               <span className="text-base shrink-0">💼</span>
               <div className="min-w-0">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Tài sản hiện tại</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Current assets</p>
                 <p className="text-sm text-slate-200">{analysis.assets}</p>
               </div>
             </div>
@@ -286,7 +286,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
       {/* Rate limit */}
       {state === 'rate_limit' && (
         <div className="text-center py-3">
-          <p className="text-sm text-slate-400 mb-1">API đang bận, thử lại sau</p>
+          <p className="text-sm text-slate-400 mb-1">API is busy, try again shortly</p>
           <p className="text-2xl font-bold tabular-nums text-slate-300">{retryIn}s</p>
         </div>
       )}
@@ -294,9 +294,9 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
       {/* Error */}
       {state === 'error' && (
         <div className="text-center py-3">
-          <p className="text-sm text-slate-500 mb-2">Không thể tải phân tích.</p>
+          <p className="text-sm text-slate-500 mb-2">Could not load the analysis.</p>
           <button onClick={() => analyze()} className="text-xs text-slate-400 hover:text-slate-200 transition-colors underline">
-            Thử lại
+            Retry
           </button>
         </div>
       )}

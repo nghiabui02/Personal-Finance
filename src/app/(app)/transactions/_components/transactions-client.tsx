@@ -89,11 +89,18 @@ function TransactionRow({
         </p>
       </div>
 
-      <span className={`text-sm font-semibold tabular-nums shrink-0 ${
-        tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-      }`}>
-        {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
-      </span>
+      <div className="text-right shrink-0">
+        <span className={`text-sm font-semibold tabular-nums ${
+          tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+        }`}>
+          {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
+        </span>
+        {Number(tx.bank_fee) > 0 && (
+          <span className="block text-[10px] text-gray-400 tabular-nums">
+            incl. {formatVND(tx.bank_fee!)} fee
+          </span>
+        )}
+      </div>
 
       <div className="flex gap-0.5">
         {!tx.transfer_pair_id && (

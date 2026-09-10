@@ -90,7 +90,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   // Category breakdown
   const catMap = new Map<string, { amount: number; count: number }>()
   for (const t of flowTxs.filter(t => t.type === 'expense')) {
-    const name = t.categories?.name ?? 'Không danh mục'
+    const name = t.categories?.name ?? 'Uncategorized'
     const prev = catMap.get(name) ?? { amount: 0, count: 0 }
     catMap.set(name, { amount: prev.amount + Number(t.amount), count: prev.count + 1 })
   }
@@ -108,7 +108,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     else timeMap.set(key, { ...prev, expense: prev.expense + Number(t.amount) })
   }
   const timeList = [...timeMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  const timeLabel = (period === 'quarter' || period === 'year') ? 'Tháng' : 'Ngày'
+  const timeLabel = (period === 'quarter' || period === 'year') ? 'Month' : 'Date'
 
   // Budget comparison
   const budgets = (budgetRows ?? []) as unknown as { amount: number; categories: { name: string } | null }[]
@@ -116,25 +116,25 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const lines: string[] = []
 
   // ── SECTION 1: SUMMARY ─────────────────────────────────────────
-  lines.push('=== BÁO CÁO TÀI CHÍNH CÁ NHÂN ===')
-  lines.push(row('Kỳ báo cáo', `${period.toUpperCase()}: ${startDate} → ${endDate}`))
-  lines.push(row('Xuất lúc', new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })))
+  lines.push('=== PERSONAL FINANCE REPORT ===')
+  lines.push(row('Report period', `${period.toUpperCase()}: ${startDate} → ${endDate}`))
+  lines.push(row('Exported at', new Date().toLocaleString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })))
   lines.push('')
-  lines.push('=== TỔNG QUAN ===')
-  lines.push(row('Chỉ số', 'Giá trị'))
-  lines.push(row('Tổng thu nhập', `${fmt(totalIncome)}đ`))
-  lines.push(row('Tổng chi tiêu', `${fmt(totalExpense)}đ`))
-  lines.push(row('Chênh lệch (thu - chi)', `${net >= 0 ? '+' : ''}${fmt(net)}đ`))
-  lines.push(row('Tỷ lệ tiết kiệm', `${savingsRate}%`))
-  lines.push(row('Số giao dịch', txs.length))
-  lines.push(row('Số giao dịch thu', txs.filter(t => t.type === 'income').length))
-  lines.push(row('Số giao dịch chi', txs.filter(t => t.type === 'expense').length))
+  lines.push('=== SUMMARY ===')
+  lines.push(row('Metric', 'Value'))
+  lines.push(row('Total income', `${fmt(totalIncome)}đ`))
+  lines.push(row('Total expense', `${fmt(totalExpense)}đ`))
+  lines.push(row('Net (income - expense)', `${net >= 0 ? '+' : ''}${fmt(net)}đ`))
+  lines.push(row('Savings rate', `${savingsRate}%`))
+  lines.push(row('Transactions (incl. transfers)', txs.length))
+  lines.push(row('Income transactions', flowTxs.filter(t => t.type === 'income').length))
+  lines.push(row('Expense transactions', flowTxs.filter(t => t.type === 'expense').length))
   lines.push('')
 
   // ── SECTION 2: WALLETS ─────────────────────────────────────────
   if (walletRows?.length) {
-    lines.push('=== SỐ DƯ VÍ / TÀI KHOẢN ===')
-    lines.push(row('Tên ví', 'Loại', 'Số dư'))
+    lines.push('=== WALLET BALANCES ===')
+    lines.push(row('Wallet', 'Type', 'Balance'))
     for (const w of walletRows as { name: string; balance: number; type: string }[]) {
       lines.push(row(w.name, w.type, `${fmt(Number(w.balance))}đ`))
     }
@@ -142,8 +142,8 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   }
 
   // ── SECTION 3: CATEGORY BREAKDOWN ─────────────────────────────
-  lines.push('=== CHI TIÊU THEO DANH MỤC ===')
-  lines.push(row('Danh mục', 'Tổng chi', '% / Tổng chi', 'Số giao dịch', 'Trung bình/GD', 'Ngân sách', 'Còn lại'))
+  lines.push('=== SPENDING BY CATEGORY ===')
+  lines.push(row('Category', 'Total spent', '% of spending', 'Transactions', 'Avg / transaction', 'Budget', 'Remaining'))
   for (const [name, { amount, count }] of catList) {
     const pct = totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) + '%' : '0%'
     const avg = count > 0 ? Math.round(amount / count) : 0
@@ -156,28 +156,28 @@ export const GET = withAuth(async (request, { supabase, user }) => {
       pct,
       count,
       `${fmt(avg)}đ`,
-      budgetAmt !== null ? `${fmt(budgetAmt)}đ` : 'Chưa đặt',
+      budgetAmt !== null ? `${fmt(budgetAmt)}đ` : 'Not set',
       remaining !== null ? `${remaining >= 0 ? '+' : ''}${fmt(remaining)}đ` : '-',
     ))
   }
   lines.push('')
 
   // ── SECTION 4: TIME BREAKDOWN ─────────────────────────────────
-  lines.push(`=== CHI TIÊU THEO ${timeLabel.toUpperCase()} ===`)
-  lines.push(row(timeLabel, 'Thu nhập', 'Chi tiêu', 'Chênh lệch'))
+  lines.push(`=== SPENDING BY ${timeLabel.toUpperCase()} ===`)
+  lines.push(row(timeLabel, 'Income', 'Expense', 'Net'))
   for (const [key, { income, expense }] of timeList) {
     lines.push(row(key, `${fmt(income)}đ`, `${fmt(expense)}đ`, `${income - expense >= 0 ? '+' : ''}${fmt(income - expense)}đ`))
   }
   lines.push('')
 
   // ── SECTION 5: ALL TRANSACTIONS ───────────────────────────────
-  lines.push('=== DANH SÁCH GIAO DỊCH CHI TIẾT ===')
-  lines.push(row('Ngày', 'Loại', 'Danh mục', 'Số tiền', 'Ví', 'Phương thức TT', 'Ghi chú'))
+  lines.push('=== ALL TRANSACTIONS ===')
+  lines.push(row('Date', 'Type', 'Category', 'Amount', 'Wallet', 'Payment method', 'Note'))
   for (const t of txs) {
     lines.push(row(
       t.transaction_date,
-      t.type === 'income' ? 'Thu nhập' : 'Chi tiêu',
-      t.categories?.name ?? 'Không danh mục',
+      t.type === 'income' ? 'Income' : 'Expense',
+      t.categories?.name ?? 'Uncategorized',
       `${fmt(Number(t.amount))}đ`,
       t.wallets?.name ?? '-',
       t.payment_method ?? '-',
@@ -186,7 +186,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   }
 
   const csv = lines.join('\n')
-  const filename = `bao-cao-tai-chinh_${period}_${startDate}.csv`
+  const filename = `finance-report_${period}_${startDate}.csv`
 
   return new NextResponse(csv, {
     headers: {

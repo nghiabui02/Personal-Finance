@@ -31,16 +31,23 @@ function CenteredAmountInput({
   name,
   defaultValue,
   txType,
+  onValueChange,
 }: {
   name: string
   defaultValue?: number
   txType: 'income' | 'expense'
+  onValueChange?: (value: number) => void
 }) {
   const [display, setDisplay] = useState(
     defaultValue ? formatWithDots(String(defaultValue)) : ''
   )
   const rawValue = display.replace(/\./g, '')
   const isExpense = txType === 'expense'
+
+  function handleChange(next: string) {
+    setDisplay(next)
+    onValueChange?.(Number(next.replace(/\./g, '')) || 0)
+  }
 
   return (
     <div className="text-center">
@@ -51,7 +58,7 @@ function CenteredAmountInput({
           type="text"
           inputMode="numeric"
           value={display}
-          onChange={e => setDisplay(formatWithDots(e.target.value))}
+          onChange={e => handleChange(formatWithDots(e.target.value))}
           placeholder="0"
           size={1}
           style={{ width: `${Math.max(display.length, 1)}ch` }}
@@ -77,7 +84,11 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
   const [date, setDate] = useState(
     editing?.transaction_date ?? defaultDate ?? localYMD()
   )
-  const [showFee, setShowFee] = useState(false)
+  const [showFee, setShowFee] = useState(Number(editing?.bank_fee) > 0)
+  const [amountValue, setAmountValue] = useState(
+    editing ? Number(editing.amount) - Number(editing.bank_fee ?? 0) : 0
+  )
+  const [feeValue, setFeeValue] = useState(Number(editing?.bank_fee) || 0)
   const [selectedDebtId, setSelectedDebtId] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
 
@@ -99,10 +110,10 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
     : []
 
   const debtOptions = [
-    { value: '', label: 'Không liên kết' },
+    { value: '', label: 'Not linked' },
     ...relevantDebts.map(d => ({
       value: d.id,
-      label: `${d.person_name} — ${formatVND(d.remaining_amount)} còn lại`,
+      label: `${d.person_name} — ${formatVND(d.remaining_amount)} remaining`,
     })),
   ]
 
@@ -147,7 +158,10 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           category_id: categoryId || undefined,
           wallet_id: walletId || undefined,
           transaction_date: date,
-          note: note || (selectedDebt ? `Trả nợ: ${selectedDebt.person_name}` : undefined),
+          note: note || (selectedDebt ? `Repayment to ${selectedDebt.person_name}` : undefined),
+          // Folded into this one transaction — the server stores amount + fee
+          // as the total, so the list shows a single row, not a separate fee row.
+          bank_fee: fee > 0 ? fee : undefined,
         }
 
         if (editing) {
@@ -165,16 +179,6 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           }
         } else {
           await transactionsApi.create(base)
-
-          if (fee > 0 && walletId) {
-            await transactionsApi.create({
-              type: 'expense',
-              amount: fee,
-              wallet_id: walletId,
-              transaction_date: date,
-              note: `Bank fee${note ? ` (${note})` : ''}`,
-            })
-          }
         }
 
         router.refresh()
@@ -185,7 +189,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
     })
   }
 
-  const canAddFee = !editing && txType === 'expense' && !!walletId && !showDebtSelector
+  const canAddFee = txType === 'expense' && !!walletId && !showDebtSelector
 
   return (
     <Modal title={editing ? 'Edit transaction' : 'New transaction'} size="md" onClose={onClose}>
@@ -203,7 +207,8 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           <CenteredAmountInput
             key={`${txType}-${selectedDebtId || 'no-debt'}`}
             name="amount"
-            defaultValue={editing?.amount ?? selectedDebt?.remaining_amount}
+            defaultValue={editing ? Number(editing.amount) - Number(editing.bank_fee ?? 0) : selectedDebt?.remaining_amount}
+            onValueChange={setAmountValue}
             txType={txType}
           />
         </div>
@@ -274,20 +279,20 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           <DatePicker label="Date" name="transaction_date" value={date} onChange={setDate} required />
         </div>
 
-        {/* Debt selector — shown when category is Trả nợ / Thu nợ */}
+        {/* Debt selector — shown when category is Repay Debt / Collect Debt */}
         {showDebtSelector && (
           <div className="space-y-1.5">
             <CustomSelect
-              label={isRepay ? 'Liên kết khoản nợ (borrow)' : 'Liên kết khoản nợ (lend)'}
+              label={isRepay ? 'Link to debt (borrowed)' : 'Link to debt (lent)'}
               name="debt_id"
               options={debtOptions}
               value={selectedDebtId}
               onChange={setSelectedDebtId}
-              placeholder="Không liên kết"
+              placeholder="Not linked"
             />
             {selectedDebt && (
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Còn lại: {formatVND(selectedDebt.remaining_amount)} · Linking sẽ cập nhật debt record tự động
+                Remaining: {formatVND(selectedDebt.remaining_amount)} · Linking updates the debt record automatically
               </p>
             )}
           </div>
@@ -315,9 +320,12 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
                     Remove
                   </button>
                 </div>
-                <AmountInput label="" name="fee" defaultValue={0} />
+                <AmountInput label="" name="fee" defaultValue={Number(editing?.bank_fee) || 0} onValueChange={setFeeValue} />
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  A separate &quot;Bank fee&quot; expense transaction will be created automatically.
+                  Included in this transaction — total charged will be{' '}
+                  <span className="font-medium text-gray-600 dark:text-gray-300 tabular-nums">
+                    {formatVND(amountValue + feeValue)}
+                  </span>.
                 </p>
               </div>
             )}
@@ -326,7 +334,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
 
         {editing?.debt_payment_id && (
           <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
-            Giao dịch này liên kết với một khoản nợ. Chỉnh sửa sẽ không cập nhật số dư nợ.
+            This transaction is linked to a debt. Editing it will not update the debt balance.
           </p>
         )}
 

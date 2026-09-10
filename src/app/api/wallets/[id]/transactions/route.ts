@@ -14,7 +14,7 @@ export const GET = withAuth<{ id: string }>(async (request, { supabase, user, pa
 
   const { data, error } = await supabase
     .from('transactions')
-    .select('id, type, amount, note, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color)')
+    .select('id, type, amount, note, bank_fee, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color)')
     .eq('wallet_id', id)
     .eq('user_id', user.id)
     .order('transaction_date', { ascending: false })

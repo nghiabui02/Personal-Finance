@@ -137,8 +137,8 @@ function RecurringModal({
 
         <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="e.g. Netflix subscription" />
 
-        {/* Bank fee — same pattern as the transaction modal, but persisted so
-            every auto-created occurrence gets its own fee transaction */}
+        {/* Bank fee — persisted on the rule, then folded into every generated
+            transaction (amount + fee), same as the transaction modal */}
         {txType === 'expense' && !!walletId && (
           <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
             {!showFee ? (
@@ -160,7 +160,7 @@ function RecurringModal({
                 </div>
                 <AmountInput label="" name="fee" defaultValue={editing?.bank_fee ?? 0} />
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  A separate &quot;Bank fee&quot; expense transaction will be created with each occurrence.
+                  Included in each generated transaction — the total charged will be amount + fee.
                 </p>
               </div>
             )}

@@ -25,7 +25,7 @@ export default async function WalletDetailPage({
     // First page only — the rest is lazy-loaded client-side as the user scrolls
     supabase
       .from('transactions')
-      .select('id, type, amount, note, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color)')
+      .select('id, type, amount, note, bank_fee, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color)')
       .eq('wallet_id', id)
       .eq('user_id', user.id)
       .order('transaction_date', { ascending: false })

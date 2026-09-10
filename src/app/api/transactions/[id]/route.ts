@@ -5,11 +5,19 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   const { id } = params
 
   const body = await request.json()
-  const { type, amount, category_id, wallet_id, transaction_date, note } = body
+  const { type, amount, category_id, wallet_id, transaction_date, note, bank_fee } = body
 
   if (!type || !amount || !transaction_date) {
     return badRequest('Type, amount and date are required.')
   }
+  if (bank_fee !== undefined && bank_fee !== null && Number(bank_fee) < 0) {
+    return badRequest('Bank fee must be positive.')
+  }
+
+  // Same convention as POST: incoming `amount` is the base, stored amount is
+  // base + fee (the real total that hits the wallet).
+  const fee = Number(bank_fee) > 0 ? Number(bank_fee) : null
+  const total = Number(amount) + (fee ?? 0)
 
   // Fetch original to reverse its balance effect
   const { data: original } = await supabase
@@ -37,7 +45,8 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
     .from('transactions')
     .update({
       type,
-      amount: Number(amount),
+      amount: total,
+      bank_fee: fee,
       category_id: category_id || null,
       wallet_id: wallet_id || null,
       transaction_date,
@@ -52,7 +61,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
 
   // Apply new balance effect
   if (wallet_id) {
-    const newDelta = type === 'income' ? Number(amount) : -Number(amount)
+    const newDelta = type === 'income' ? total : -total
     const { error: balErr } = await supabase.rpc('adjust_wallet_balance', {
       p_wallet_id: wallet_id,
       p_delta: newDelta,

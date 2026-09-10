@@ -9,6 +9,9 @@ export type Transaction = {
   amount: number
   note: string | null
   transaction_date: string
+  /** Portion of `amount` that is a bank fee — display breakdown only;
+   *  `amount` is always the real total charged. */
+  bank_fee: number | null
   debt_payment_id: string | null
   transfer_pair_id: string | null
   categories: { id: string; name: string; icon: string | null; color: string | null } | null
@@ -22,6 +25,9 @@ export type TransactionPayload = {
   wallet_id?: string
   transaction_date: string
   note?: string
+  /** Bank fee to fold into this transaction. `amount` above stays the BASE
+   *  amount — the server stores amount + bank_fee as the total. */
+  bank_fee?: number
 }
 
 export const transactionsApi = {

@@ -183,13 +183,20 @@ export default function WalletDetailClient({
                       </div>
 
                       {/* Amount */}
-                      <p className={`text-sm font-semibold tabular-nums shrink-0 ${
-                        tx.type === 'income'
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
-                      </p>
+                      <div className="text-right shrink-0">
+                        <p className={`text-sm font-semibold tabular-nums ${
+                          tx.type === 'income'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
+                        </p>
+                        {Number(tx.bank_fee) > 0 && (
+                          <p className="text-[10px] text-gray-400 tabular-nums">
+                            incl. {formatVND(tx.bank_fee!)} fee
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )
                 })}
