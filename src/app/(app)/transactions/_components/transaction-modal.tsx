@@ -26,14 +26,6 @@ interface TransactionModalProps {
   onClose: () => void
 }
 
-// Debt category names as defined in debt-categories.ts
-const REPAY_NAMES = ['trả nợ', 'repay debt']
-const COLLECT_NAMES = ['thu nợ', 'collect debt']
-
-function isDebtCategory(name: string, list: string[]) {
-  return list.some(n => name.toLowerCase().includes(n))
-}
-
 /** Big centered amount display, tinted by transaction type */
 function CenteredAmountInput({
   name,
@@ -94,10 +86,11 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
     ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
   ]
 
-  // Detect if selected category is a debt-related one
+  // Detect if selected category is a debt-related one — by system_key, not
+  // display name, so renaming a category (or i18n) never breaks this.
   const selectedCat = categories.find(c => c.id === categoryId)
-  const isRepay   = selectedCat ? isDebtCategory(selectedCat.name, REPAY_NAMES) : false
-  const isCollect = selectedCat ? isDebtCategory(selectedCat.name, COLLECT_NAMES) : false
+  const isRepay   = selectedCat?.system_key === 'repay_debt'
+  const isCollect = selectedCat?.system_key === 'collect_debt'
   const showDebtSelector = (isRepay || isCollect) && !editing
 
   // Filter debts by direction: repay=borrow debts, collect=lend debts

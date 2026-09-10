@@ -107,10 +107,12 @@ export default async function ReportsPage({
     prevSummary,
     { data: budgetRows },
   ] = await Promise.all([
+    // Transfer legs excluded — see getPeriodSummary() for the rationale
     supabase
       .from('transactions')
       .select('type, amount, note, transaction_date, categories(id, name, icon, color)')
       .eq('user_id', user.id)
+      .is('transfer_pair_id', null)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate),
     supabase.from('wallets').select('type, balance, credit_limit').eq('user_id', user.id),

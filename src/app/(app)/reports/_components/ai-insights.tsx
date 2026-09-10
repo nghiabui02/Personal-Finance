@@ -20,18 +20,22 @@ interface Analysis {
 
 type PreviousPeriod = { label: string; totalIncome: number; totalExpense: number; categories: { name: string; amount: number }[] }
 
+// Everything the single caller (Reports) always has is REQUIRED on purpose:
+// these were optional once and a missing `start` silently disabled the whole
+// compare-period picker without tsc noticing. Only truly-absent data (no
+// budgets for non-month periods) stays optional.
 interface AIInsightsProps {
   periodLabel: string
-  period?: PeriodType
-  start?: string // current period's start date — enables the "compare with" picker
+  period: PeriodType
+  start: string // current period's start date — drives the "compare with" picker
   totalIncome: number
   totalExpense: number
   categories: { name: string; icon: string | null; amount: number }[]
+  previous: PreviousPeriod
+  topTransactions: { note: string | null; category: string | null; amount: number; date: string }[]
+  timeline: { label: string; income: number; expense: number }[]
+  netWorthInfo: { current: number; changeAmount: number | null; changeDays: number | null }
   budgets?: { name: string; budgeted: number; spent: number }[]
-  previous?: PreviousPeriod
-  topTransactions?: { note: string | null; category: string | null; amount: number; date: string }[]
-  timeline?: { label: string; income: number; expense: number }[]
-  netWorthInfo?: { current: number; changeAmount: number | null; changeDays: number | null }
 }
 
 const COMPARE_OFFSETS = [1, 2, 3, 4, 5, 6]
@@ -45,7 +49,7 @@ const insightColors: Record<Insight['type'], string> = {
 // sessionStorage never notifies changes we don't make ourselves — subscribe is a no-op
 const emptySubscribe = () => () => {}
 
-export function AIInsights({ periodLabel, period = 'month', start, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo }: AIInsightsProps) {
+export function AIInsights({ periodLabel, period, start, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo }: AIInsightsProps) {
   const abortRef = useRef<AbortController | null>(null)
 
   // "Compare with" picker — offset 1 = the server-provided `previous` (free,
@@ -54,13 +58,30 @@ export function AIInsights({ periodLabel, period = 'month', start, totalIncome, 
   const [compareOffset, setCompareOffset] = useState(1)
   const [customPrevious, setCustomPrevious] = useState<PreviousPeriod | null>(null)
   const [compareLoading, setCompareLoading] = useState(false)
+
+  // Navigating to another period/granularity re-renders this component without
+  // remounting it, so a stale fetched comparison would keep being sent for the
+  // wrong period — reset the picker during render (state-adjust pattern).
+  const periodKey = `${period}::${start}`
+  const [prevPeriodKey, setPrevPeriodKey] = useState(periodKey)
+  if (prevPeriodKey !== periodKey) {
+    setPrevPeriodKey(periodKey)
+    setCompareOffset(1)
+    setCustomPrevious(null)
+    setPickerOpen(false)
+  }
+
   const effectivePrevious = compareOffset === 1 ? previous : (customPrevious ?? previous)
   const cacheKey = `ai-insights::v8::${periodLabel}::${totalIncome}::${totalExpense}::${effectivePrevious?.label ?? ''}`
+
+  // A period with no transactions is dropped from the prompt server-side, so
+  // say it here — otherwise the analysis silently omits the comparison.
+  const comparisonEmpty = effectivePrevious.totalIncome === 0 && effectivePrevious.totalExpense === 0
 
   async function selectCompareOffset(offset: number) {
     setCompareOffset(offset)
     setPickerOpen(false)
-    if (offset === 1 || !start) { setCustomPrevious(null); return }
+    if (offset === 1) { setCustomPrevious(null); return }
     setCompareLoading(true)
     try {
       const targetStart = navigatePeriod(period, start, -offset)
@@ -114,7 +135,7 @@ export function AIInsights({ periodLabel, period = 'month', start, totalIncome, 
       method: 'POST',
       signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ periodLabel, period, totalIncome, totalExpense, categories, budgets, previous: effectivePrevious, topTransactions, timeline, netWorthInfo, force }),
+      body: JSON.stringify({ periodLabel, period, start, totalIncome, totalExpense, categories, budgets, previous: effectivePrevious, topTransactions, timeline, netWorthInfo, force }),
     })
       .then(r => r.json().then(data => ({ status: r.status, data })))
       .then(({ status, data }) => {
@@ -153,37 +174,40 @@ export function AIInsights({ periodLabel, period = 'month', start, totalIncome, 
         )}
       </div>
 
-      {/* Compare-with picker — only when the caller supplies `start` (Reports) */}
-      {start && (
-        <div className="relative mb-3 -mt-1">
-          <button
-            onClick={() => setPickerOpen(o => !o)}
-            disabled={compareLoading}
-            className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1 disabled:opacity-50"
-          >
-            So sánh: {compareLoading ? 'Đang tải…' : getPeriodLabel(period, navigatePeriod(period, start, -compareOffset))}
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-          </button>
-          {pickerOpen && (
-            <div className="absolute z-10 mt-1 w-56 bg-slate-800 rounded-xl border border-slate-700 shadow-lg py-1 animate-dropdown-in">
-              {COMPARE_OFFSETS.map(offset => (
-                <button
-                  key={offset}
-                  onClick={() => selectCompareOffset(offset)}
-                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-700 ${
-                    offset === compareOffset ? 'text-white font-medium' : 'text-slate-400'
-                  }`}
-                >
-                  {getPeriodLabel(period, navigatePeriod(period, start, -offset))}
-                  {offset === 1 && <span className="text-slate-600"> · kỳ trước</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Compare-with picker */}
+      <div className="relative mb-3 -mt-1">
+        <button
+          onClick={() => setPickerOpen(o => !o)}
+          disabled={compareLoading}
+          className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1 disabled:opacity-50"
+        >
+          So sánh: {compareLoading ? 'Đang tải…' : getPeriodLabel(period, navigatePeriod(period, start, -compareOffset))}
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
+        {!compareLoading && comparisonEmpty && (
+          <p className="text-[11px] text-amber-500/80 mt-1">
+            Kỳ này không có giao dịch — phân tích sẽ bỏ phần so sánh.
+          </p>
+        )}
+        {pickerOpen && (
+          <div className="absolute z-10 mt-1 w-56 bg-slate-800 rounded-xl border border-slate-700 shadow-lg py-1 animate-dropdown-in">
+            {COMPARE_OFFSETS.map(offset => (
+              <button
+                key={offset}
+                onClick={() => selectCompareOffset(offset)}
+                className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-700 ${
+                  offset === compareOffset ? 'text-white font-medium' : 'text-slate-400'
+                }`}
+              >
+                {getPeriodLabel(period, navigatePeriod(period, start, -offset))}
+                {offset === 1 && <span className="text-slate-600"> · kỳ trước</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Idle — prompt to analyze */}
       {state === 'idle' && (

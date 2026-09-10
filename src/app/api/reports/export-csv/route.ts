@@ -44,7 +44,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const [{ data: txRows }, { data: budgetRows }, { data: walletRows }] = await Promise.all([
     supabase
       .from('transactions')
-      .select('id, type, amount, note, transaction_date, payment_method, categories(name, icon), wallets(name)')
+      .select('id, type, amount, note, transaction_date, payment_method, transfer_pair_id, categories(name, icon), wallets(name)')
       .eq('user_id', user.id)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate)
@@ -71,19 +71,25 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     note: string | null
     transaction_date: string
     payment_method: string | null
+    transfer_pair_id: string | null
     categories: { name: string; icon: string | null } | null
     wallets: { name: string } | null
   }
   const txs = (txRows ?? []) as unknown as TxRow[]
 
-  const totalIncome  = txs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
-  const totalExpense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+  // The detailed transaction list keeps transfers (the user wants to see them),
+  // but every aggregate excludes them: a transfer between own wallets is a
+  // paired income+expense that would inflate both totals and skew savings rate.
+  const flowTxs = txs.filter(t => !t.transfer_pair_id)
+
+  const totalIncome  = flowTxs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
+  const totalExpense = flowTxs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
   const net          = totalIncome - totalExpense
   const savingsRate  = totalIncome > 0 ? ((net / totalIncome) * 100).toFixed(1) : '0'
 
   // Category breakdown
   const catMap = new Map<string, { amount: number; count: number }>()
-  for (const t of txs.filter(t => t.type === 'expense')) {
+  for (const t of flowTxs.filter(t => t.type === 'expense')) {
     const name = t.categories?.name ?? 'Không danh mục'
     const prev = catMap.get(name) ?? { amount: 0, count: 0 }
     catMap.set(name, { amount: prev.amount + Number(t.amount), count: prev.count + 1 })
@@ -95,7 +101,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     (period === 'quarter' || period === 'year') ? date.slice(0, 7) : date
 
   const timeMap = new Map<string, { income: number; expense: number }>()
-  for (const t of txs) {
+  for (const t of flowTxs) {
     const key = groupKey(t.transaction_date)
     const prev = timeMap.get(key) ?? { income: 0, expense: 0 }
     if (t.type === 'income') timeMap.set(key, { ...prev, income: prev.income + Number(t.amount) })

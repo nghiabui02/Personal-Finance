@@ -73,7 +73,7 @@ export default async function TransactionsPage({
           .order('created_at', { ascending: false }),
     supabase
       .from('categories')
-      .select('id, user_id, name, icon, color, type, is_default, parent_id')
+      .select('id, user_id, name, icon, color, type, is_default, parent_id, system_key')
       .order('is_default', { ascending: false })
       .order('name'),
     supabase

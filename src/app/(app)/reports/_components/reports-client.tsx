@@ -3,7 +3,7 @@
 import { formatVND } from '@/lib/utils/currency'
 import { useRouter } from 'next/navigation'
 import { TabGroup } from '@/components/ui/tab-group'
-import { AIInsights } from '@/app/(app)/dashboard/_components/ai-insights'
+import { AIInsights } from './ai-insights'
 import { NetWorthChart } from '@/app/(app)/dashboard/_components/net-worth-chart'
 import { CategoryChart } from './category-chart'
 import { BarChart } from './bar-chart'
@@ -212,6 +212,7 @@ export default function ReportsClient({
       <AIInsights
         periodLabel={getPeriodLabel(period, start)}
         period={period}
+        start={start}
         totalIncome={totalIncome}
         totalExpense={totalExpense}
         categories={byCategory.map(c => ({ name: c.name, icon: c.icon, amount: c.amount }))}

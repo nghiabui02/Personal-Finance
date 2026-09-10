@@ -35,7 +35,7 @@ export default async function BudgetsPage({
       .lt('transaction_date', endDate),
     supabase
       .from('categories')
-      .select('id, user_id, name, icon, color, type, is_default, parent_id')
+      .select('id, user_id, name, icon, color, type, is_default, parent_id, system_key')
       .eq('type', 'expense')
       .order('is_default', { ascending: false })
       .order('name'),

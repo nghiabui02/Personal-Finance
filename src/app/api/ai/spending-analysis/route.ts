@@ -1,20 +1,36 @@
 import Groq from 'groq-sdk'
 import { NextResponse } from 'next/server'
 import { withAuth, jsonError } from '@/lib/server/route'
-import { localYMD } from '@/lib/utils/date'
+import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+
+// Days actually covered by a period starting at `start` — used for the
+// per-day average. Months/quarters vary in length, so 30/91 constants would
+// be off by up to 7%.
+function periodLengthInDays(periodType: 'week' | 'month' | 'quarter' | 'year', start: string): number {
+  if (periodType === 'week') return 7
+  const [y, m] = start.split('-').map(Number)
+  if (periodType === 'month') return new Date(y, m, 0).getDate()
+  if (periodType === 'quarter') {
+    return [0, 1, 2].reduce((sum, i) => {
+      const mm = m + i
+      return sum + new Date(mm > 12 ? y + 1 : y, mm > 12 ? mm - 12 : mm, 0).getDate()
+    }, 0)
+  }
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 366 : 365
+}
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) return jsonError(500, 'Groq not configured')
 
-  const { periodLabel, period, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo, force } = await request.json()
+  const { periodLabel, period, start, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo, force } = await request.json()
   const periodType: 'week' | 'month' | 'quarter' | 'year' = period ?? 'month'
 
   // Balance-sheet snapshot fetched server-side — the client only knows the
   // period's in/out flows, but sound advice needs the current position too
-  const [{ data: walletRows }, { data: debtRows }, { data: goalRows }] = await Promise.all([
+  const [{ data: walletRows }, { data: debtRows }, { data: goalRows }, { data: recentExpenseRows }] = await Promise.all([
     supabase.from('wallets')
       .select('name, type, balance, credit_limit')
       .eq('user_id', user.id),
@@ -24,6 +40,15 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     supabase.from('saving_goals')
       .select('name, target_amount, current_amount')
       .eq('user_id', user.id).eq('status', 'active'),
+    // Last 90 days of real spending — the emergency-fund run rate must come
+    // from a stable trailing average, NOT from extrapolating the viewed period
+    // (one heavy shopping week × 4.33 would fake a run rate and wreck the score).
+    supabase.from('transactions')
+      .select('amount')
+      .eq('user_id', user.id).eq('type', 'expense')
+      .is('transfer_pair_id', null)
+      .gte('transaction_date', shiftLocalDate(localYMD(), -90))
+      .lt('transaction_date', localYMD()),
   ])
 
   const wallets = walletRows ?? []
@@ -84,8 +109,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const savingsRate = totalIncome > 0 ? (((totalIncome - totalExpense) / totalIncome) * 100).toFixed(1) : '0'
 
   // Pre-compute derived stats so the model never does arithmetic itself
-  const periodDays: Record<typeof periodType, number> = { week: 7, month: 30, quarter: 91, year: 365 }
-  const avgPerDay = Math.round(totalExpense / periodDays[periodType])
+  const periodDays = periodLengthInDays(periodType, typeof start === 'string' ? start : localYMD())
+  const avgPerDay = Math.round(totalExpense / periodDays)
   const topCat = cats[0]
   const topCatPct = topCat && totalExpense > 0 ? Math.round((topCat.amount / totalExpense) * 100) : 0
   const cutSuggestions = cats
@@ -96,9 +121,10 @@ export const POST = withAuth(async (request, { supabase, user }) => {
 
   // --- Balance-sheet metrics (all pre-computed, standard personal-finance ratios) ---
 
-  // Normalize the period's expense to a monthly figure for runway math
-  const monthlyExpenseFactor: Record<typeof periodType, number> = { week: 4.33, month: 1, quarter: 1 / 3, year: 1 / 12 }
-  const monthlyExpense = Math.round(totalExpense * monthlyExpenseFactor[periodType])
+  // Monthly run rate from the trailing 90 days of real spending, so the
+  // emergency-fund figure stays stable no matter which period is being viewed.
+  const last90Expense = (recentExpenseRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
+  const monthlyExpense = Math.round(last90Expense / 3)
   const runwayMonths = monthlyExpense > 0 ? liquidAssets / monthlyExpense : null
   const creditUtilPct = creditLimitTotal > 0 ? Math.round((creditUsed / creditLimitTotal) * 100) : null
 
@@ -126,8 +152,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     `Net worth (available + lent − credit debt − borrowed): ${fmt(netWorth)}đ`,
     netWorthChangeLine,
     runwayMonths !== null
-      ? `Emergency fund: available cash covers ${runwayMonths.toFixed(1)} months of spending (~${fmt(monthlyExpense)}đ/month run rate)`
-      : 'Emergency fund not calculable yet (no spending this period).',
+      ? `Emergency fund: available cash covers ${runwayMonths.toFixed(1)} months of spending (~${fmt(monthlyExpense)}đ/month run rate, averaged over the last 90 days — not this period alone)`
+      : 'Emergency fund not calculable yet (no spending in the last 90 days).',
     goalPct !== null ? `Savings goals: ${fmt(goalCurrent)}đ / ${fmt(goalTarget)}đ (${goalPct}%) contributed across ${goals.length} goal(s)` : '',
     '',
     'Personal-finance reference standards (use to judge, do NOT recompute):',
@@ -142,7 +168,18 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const prev = previous as { label?: string; totalIncome: number; totalExpense: number; categories?: { name: string; amount: number }[] } | undefined
   let suggestedScore: number
   if (periodType === 'week') {
-    const prevExpense = Number(prev?.totalExpense ?? 0)
+    // Always the IMMEDIATELY preceding week, never the user-picked comparison
+    // period — otherwise the score would jump around as they browse comparisons.
+    const weekStart = typeof start === 'string' ? start : localYMD()
+    const prevWeekStart = shiftLocalDate(weekStart, -7)
+    const { data: prevWeekRows } = await supabase
+      .from('transactions')
+      .select('amount')
+      .eq('user_id', user.id).eq('type', 'expense')
+      .is('transfer_pair_id', null)
+      .gte('transaction_date', prevWeekStart)
+      .lt('transaction_date', weekStart)
+    const prevExpense = (prevWeekRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
     const expenseChange = prevExpense > 0 ? (totalExpense - prevExpense) / prevExpense : null
     suggestedScore =
       expenseChange === null ? 60 :

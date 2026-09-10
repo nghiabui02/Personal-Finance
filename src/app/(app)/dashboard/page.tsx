@@ -46,13 +46,16 @@ export default async function DashboardPage({
     budgetsWithRollover,
   ] = await Promise.all([
     Promise.all([
-      supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate),
+      // Income/expense totals exclude transfer legs (money moved between own
+      // wallets) — see getPeriodSummary(). The recent-transactions list keeps
+      // them, since the user does want to see transfers in their history.
+      supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').is('transfer_pair_id', null).gte('transaction_date', startDate).lt('transaction_date', endDate),
       supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
-      supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate),
+      supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').is('transfer_pair_id', null).gte('transaction_date', startDate).lt('transaction_date', endDate),
       supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
       supabase.from('wallets').select('id, name, type, balance, credit_limit, color, icon, is_default, user_id').eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
       supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
-      supabase.from('categories').select('id, user_id, name, icon, color, type, is_default, parent_id').order('is_default', { ascending: false }).order('name'),
+      supabase.from('categories').select('id, user_id, name, icon, color, type, is_default, parent_id, system_key').order('is_default', { ascending: false }).order('name'),
     ]),
     getBudgetsForMonth(supabase, user.id, month).then(rows => rows.filter(b => b.active)),
   ])

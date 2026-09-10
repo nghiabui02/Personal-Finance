@@ -35,10 +35,14 @@ export async function getPeriodSummary(
 ): Promise<PeriodSummary> {
   const { startDate, endDate } = getDateRange(period, start)
 
+  // Transfer legs are excluded: moving money between your own wallets creates
+  // a paired income+expense row, which would inflate both totals equally and
+  // distort the savings rate. Debt-linked rows stay — those are real cash flow.
   const { data: rows } = await supabase
     .from('transactions')
     .select('type, amount, categories(name)')
     .eq('user_id', userId)
+    .is('transfer_pair_id', null)
     .gte('transaction_date', startDate)
     .lt('transaction_date', endDate)
 

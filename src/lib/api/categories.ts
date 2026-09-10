@@ -9,6 +9,7 @@ export type Category = {
   type: 'income' | 'expense'
   is_default: boolean
   parent_id: string | null
+  system_key: 'lend_out' | 'borrow_in' | 'collect_debt' | 'repay_debt' | null
 }
 
 export const categoriesApi = {
