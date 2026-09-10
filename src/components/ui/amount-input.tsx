@@ -2,8 +2,12 @@
 
 import { useState } from 'react'
 
+/** Hard cap on how many digits an amount may have: 999.999.999.999đ.
+ *  Anything longer is a typo, and unbounded input breaks the layout. */
+export const MAX_AMOUNT_DIGITS = 12
+
 export function formatWithDots(value: string): string {
-  const digits = value.replace(/\D/g, '')
+  const digits = value.replace(/\D/g, '').slice(0, MAX_AMOUNT_DIGITS)
   if (!digits) return ''
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }

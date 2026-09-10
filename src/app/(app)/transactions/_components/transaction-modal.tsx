@@ -51,11 +51,18 @@ function CenteredAmountInput({
     onValueChange?.(Number(next.replace(/\./g, '')) || 0)
   }
 
+  // The field grows with its content, so long amounts have to shrink instead
+  // of pushing the modal open. Digits are already capped by formatWithDots.
+  const sizeClass =
+    display.length > 13 ? 'text-2xl'
+    : display.length > 10 ? 'text-3xl'
+    : 'text-4xl'
+
   return (
     <div className="text-center">
       <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-1.5">Amount</p>
       <input type="hidden" name={name} value={rawValue} />
-      <div className={`inline-flex items-baseline gap-1.5 ${isExpense ? 'text-red-500' : 'text-emerald-500'}`}>
+      <div className={`inline-flex items-baseline gap-1.5 max-w-full ${isExpense ? 'text-red-500' : 'text-emerald-500'}`}>
         <input
           type="text"
           inputMode="numeric"
@@ -64,10 +71,10 @@ function CenteredAmountInput({
           placeholder="0"
           autoFocus={autoFocus}
           size={1}
-          style={{ width: `${Math.max(display.length, 1)}ch` }}
-          className="bg-transparent text-4xl font-bold tabular-nums text-center outline-none placeholder:text-current caret-current"
+          style={{ width: `${Math.max(display.length, 1)}ch`, maxWidth: '100%' }}
+          className={`bg-transparent ${sizeClass} font-bold tabular-nums text-center outline-none placeholder:text-current caret-current min-w-0`}
         />
-        <span className="text-xl font-semibold">đ</span>
+        <span className="text-xl font-semibold shrink-0">đ</span>
       </div>
       <div className={`mx-auto mt-2 h-0.5 w-36 rounded-full ${isExpense ? 'bg-red-400' : 'bg-emerald-400'}`} />
     </div>
