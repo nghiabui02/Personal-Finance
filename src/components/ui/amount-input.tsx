@@ -18,9 +18,12 @@ interface AmountInputProps {
   // (e.g. "remaining after this payment") without switching the field
   // to a fully controlled input.
   onValueChange?: (value: number) => void
+  /** Focus on mount — for fields revealed by a toggle, so the user can type
+   *  straight after clicking (e.g. "Add bank fee"). */
+  autoFocus?: boolean
 }
 
-export function AmountInput({ label, name, defaultValue, required, placeholder = '0', onValueChange }: AmountInputProps) {
+export function AmountInput({ label, name, defaultValue, required, placeholder = '0', onValueChange, autoFocus }: AmountInputProps) {
   const [display, setDisplay] = useState(
     defaultValue ? formatWithDots(String(defaultValue)) : ''
   )
@@ -46,6 +49,7 @@ export function AmountInput({ label, name, defaultValue, required, placeholder =
           onChange={e => handleChange(formatWithDots(e.target.value))}
           placeholder={placeholder}
           required={required}
+          autoFocus={autoFocus}
           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2.5 pr-14 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">

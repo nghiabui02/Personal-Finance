@@ -158,7 +158,7 @@ function RecurringModal({
                     Remove
                   </button>
                 </div>
-                <AmountInput label="" name="fee" defaultValue={editing?.bank_fee ?? 0} />
+                <AmountInput label="" name="fee" defaultValue={editing?.bank_fee ?? 0} autoFocus />
                 <p className="text-xs text-gray-400 dark:text-gray-500">
                   Included in each generated transaction — the total charged will be amount + fee.
                 </p>

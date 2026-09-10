@@ -32,11 +32,13 @@ function CenteredAmountInput({
   defaultValue,
   txType,
   onValueChange,
+  autoFocus,
 }: {
   name: string
   defaultValue?: number
   txType: 'income' | 'expense'
   onValueChange?: (value: number) => void
+  autoFocus?: boolean
 }) {
   const [display, setDisplay] = useState(
     defaultValue ? formatWithDots(String(defaultValue)) : ''
@@ -60,6 +62,7 @@ function CenteredAmountInput({
           value={display}
           onChange={e => handleChange(formatWithDots(e.target.value))}
           placeholder="0"
+          autoFocus={autoFocus}
           size={1}
           style={{ width: `${Math.max(display.length, 1)}ch` }}
           className="bg-transparent text-4xl font-bold tabular-nums text-center outline-none placeholder:text-current caret-current"
@@ -209,6 +212,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
             name="amount"
             defaultValue={editing ? Number(editing.amount) - Number(editing.bank_fee ?? 0) : selectedDebt?.remaining_amount}
             onValueChange={setAmountValue}
+            autoFocus={!editing}
             txType={txType}
           />
         </div>
@@ -320,7 +324,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
                     Remove
                   </button>
                 </div>
-                <AmountInput label="" name="fee" defaultValue={Number(editing?.bank_fee) || 0} onValueChange={setFeeValue} />
+                <AmountInput label="" name="fee" defaultValue={Number(editing?.bank_fee) || 0} onValueChange={setFeeValue} autoFocus />
                 <p className="text-xs text-gray-400 dark:text-gray-500">
                   Included in this transaction — total charged will be{' '}
                   <span className="font-medium text-gray-600 dark:text-gray-300 tabular-nums">
