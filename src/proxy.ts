@@ -1,6 +1,16 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Reachable without a session. Everything else requires one.
+const PUBLIC_ROUTES = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/auth',   // Supabase callback (email confirm, password recovery, OAuth)
+  '/api',    // guards itself via withAuth/withRoute and returns JSON, not redirects
+]
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -28,22 +38,21 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const isProtectedRoute =
-    pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/transactions') ||
-    pathname.startsWith('/budgets') ||
-    pathname.startsWith('/wallets') ||
-    pathname.startsWith('/debts') ||
-    pathname.startsWith('/reports') ||
-    pathname.startsWith('/settings')
+  // Allow-list instead of a list of protected paths: a new screen is private
+  // by default, so adding one can't accidentally skip the redirect.
+  // `/` is public because src/app/page.tsx already routes by auth state.
+  const isPublicRoute =
+    pathname === '/' ||
+    PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'))
 
-  const isAuthRoute = pathname === '/login' || pathname === '/register'
+  // Landing on a sign-in page while already signed in — send them inside
+  const isAuthEntryRoute = pathname === '/login' || pathname === '/register'
 
-  if (isProtectedRoute && !user) {
+  if (!isPublicRoute && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (isAuthRoute && user) {
+  if (isAuthEntryRoute && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
