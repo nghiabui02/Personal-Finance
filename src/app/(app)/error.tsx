@@ -9,7 +9,7 @@ export default function Error({
 }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 text-center px-4">
-      <p className="text-sm font-semibold text-red-500 uppercase tracking-widest mb-3">500</p>
+      <p className="text-sm font-semibold text-rose-500 uppercase tracking-widest mb-3">500</p>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Something went wrong</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
         {error.message || 'An unexpected error occurred.'}

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { BRAND_HEX, MONEY_IN } from '@/lib/utils/colors'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -117,7 +118,7 @@ export default function DebtDetailClient({
   const isOverdue = debt.due_date && !isCompleted && new Date(debt.due_date) < new Date()
   const paidAmount = debt.amount - debt.remaining_amount
   const pct = debt.amount > 0 ? Math.min((paidAmount / debt.amount) * 100, 100) : 0
-  const barColor = isCompleted ? '#10b981' : isLend ? '#6366f1' : '#f97316'
+  const barColor = isCompleted ? MONEY_IN : isLend ? BRAND_HEX : '#f97316'
 
   const events = [...debt.debt_payments].sort(
     (a, b) => new Date(a.paid_at).getTime() - new Date(b.paid_at).getTime()

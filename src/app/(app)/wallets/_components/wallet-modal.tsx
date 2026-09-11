@@ -6,7 +6,7 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
-import { type Wallet, WALLET_TYPE_LABELS, walletsApi } from '@/lib/api/wallets'
+import { type Wallet, WALLET_TYPE_ICONS, WALLET_TYPE_LABELS, walletsApi } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
@@ -15,21 +15,12 @@ const PRESET_COLORS = [
   '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#14b8a6',
 ]
 
-const TYPE_ICONS: Record<Wallet['type'], string> = {
-  cash: '💵',
-  bank: '🏦',
-  e_wallet: '📱',
-  investment: '📈',
-  other: '💼',
-  credit: '💳',
-}
-
 const TYPE_ORDER: Wallet['type'][] = ['cash', 'bank', 'credit', 'e_wallet', 'investment', 'other']
 
 const TYPE_OPTIONS = TYPE_ORDER.map(value => ({
   value,
   label: WALLET_TYPE_LABELS[value],
-  icon: TYPE_ICONS[value],
+  icon: WALLET_TYPE_ICONS[value],
 }))
 
 interface WalletModalProps {
@@ -183,7 +174,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
           <span className="text-sm text-gray-700 dark:text-gray-300">Set as default wallet</span>
         </label>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>

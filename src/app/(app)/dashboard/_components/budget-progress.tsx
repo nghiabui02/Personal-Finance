@@ -1,4 +1,5 @@
 import { formatVND } from '@/lib/utils/currency'
+import { BRAND_HEX, MONEY_OUT, WARNING } from '@/lib/utils/colors'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
 
 type BudgetItem = {
@@ -18,7 +19,7 @@ export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
           {budgets.map((b, idx) => {
             const pct = b.amount > 0 ? Math.min((b.spent / b.amount) * 100, 100) : 0
             const isOver = b.spent > b.amount
-            const barColor = isOver ? '#ef4444' : pct >= 80 ? '#f59e0b' : (b.category?.color ?? '#6366f1')
+            const barColor = isOver ? MONEY_OUT : pct >= 80 ? WARNING : (b.category?.color ?? BRAND_HEX)
 
             return (
               <li key={b.id} className="animate-fade-up" style={{ animationDelay: `${idx * 60}ms` }}>

@@ -1,6 +1,7 @@
 'use client'
 
 import { AmountInput, formatWithDots } from '@/components/ui/amount-input'
+import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
 import { Button } from '@/components/ui/button'
 import { CategorySelect } from '@/components/ui/category-select'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -62,7 +63,7 @@ function CenteredAmountInput({
     <div className="text-center">
       <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-1.5">Amount</p>
       <input type="hidden" name={name} value={rawValue} />
-      <div className={`inline-flex items-baseline gap-1.5 max-w-full ${isExpense ? 'text-red-500' : 'text-emerald-500'}`}>
+      <div className={`inline-flex items-baseline gap-1.5 max-w-full ${isExpense ? 'text-rose-500' : 'text-emerald-500'}`}>
         <input
           type="text"
           inputMode="numeric"
@@ -76,7 +77,7 @@ function CenteredAmountInput({
         />
         <span className="text-xl font-semibold shrink-0">đ</span>
       </div>
-      <div className={`mx-auto mt-2 h-0.5 w-36 rounded-full ${isExpense ? 'bg-red-400' : 'bg-emerald-400'}`} />
+      <div className={`mx-auto mt-2 h-0.5 w-36 rounded-full ${isExpense ? 'bg-rose-400' : 'bg-emerald-400'}`} />
     </div>
   )
 }
@@ -209,7 +210,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           tabs={[{ key: 'expense', label: '− Expense' }, { key: 'income', label: '+ Income' }]}
           value={txType}
           onChange={handleTypeChange}
-          activeTextColors={{ expense: '#ef4444', income: '#10b981' }}
+          activeTextColors={{ expense: MONEY_OUT, income: MONEY_IN }}
           size="lg"
         />
 
@@ -238,7 +239,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
                   className={`flex flex-col items-center gap-1.5 rounded-xl border px-1 py-3 transition-colors ${
                     active
                       ? txType === 'expense'
-                        ? 'border-red-400 bg-red-50 dark:border-red-500/60 dark:bg-red-950/30'
+                        ? 'border-rose-400 bg-rose-50 dark:border-rose-500/60 dark:bg-rose-950/30'
                         : 'border-emerald-400 bg-emerald-50 dark:border-emerald-500/60 dark:bg-emerald-950/30'
                       : 'border-gray-200 bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:border-gray-600'
                   }`}
@@ -256,7 +257,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
               className={`flex flex-col items-center gap-1.5 rounded-xl border px-1 py-3 transition-colors ${
                 overflowSelected
                   ? txType === 'expense'
-                    ? 'border-red-400 bg-red-50 dark:border-red-500/60 dark:bg-red-950/30'
+                    ? 'border-rose-400 bg-rose-50 dark:border-rose-500/60 dark:bg-rose-950/30'
                     : 'border-emerald-400 bg-emerald-50 dark:border-emerald-500/60 dark:bg-emerald-950/30'
                   : 'border-gray-200 bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:border-gray-600'
               }`}
@@ -327,7 +328,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Bank fee</p>
                   <button type="button" onClick={() => setShowFee(false)}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                    className="text-xs text-gray-400 hover:text-rose-500 transition-colors">
                     Remove
                   </button>
                 </div>
@@ -349,7 +350,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           </p>
         )}
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>

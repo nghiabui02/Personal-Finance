@@ -12,7 +12,7 @@ interface TabGroupProps<T extends string> {
   value: T
   onChange: (key: T) => void
   className?: string
-  /** Hex color per tab key for the active pill, e.g. { expense: '#ef4444', income: '#22c55e' } */
+  /** Hex color per tab key for the active pill, e.g. { expense: MONEY_OUT, income: MONEY_IN } */
   activeColors?: Partial<Record<T, string>>
   /** Hex text color per tab key for the active label — pill stays white, only the label is tinted */
   activeTextColors?: Partial<Record<T, string>>

@@ -63,7 +63,7 @@ export function TransactionCalendar({
   })
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 sm:p-4 lg:sticky">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-3 sm:p-4 lg:sticky">
       {/* Month header */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -136,8 +136,8 @@ export function TransactionCalendar({
                   ${isSelected
                     ? 'text-white/90'
                     : net! > 0
-                      ? 'text-green-500 dark:text-green-400'
-                      : 'text-red-500 dark:text-red-400'}
+                      ? 'text-emerald-500 dark:text-emerald-400'
+                      : 'text-rose-500 dark:text-rose-400'}
                 `}>
                   {formatNet(net!)}
                 </span>

@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { BRAND_HEX, MONEY_IN } from '@/lib/utils/colors'
+import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
@@ -17,16 +19,6 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { AdditionModal } from './addition-modal'
 
-const PENCIL = (
-  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
-  </svg>
-)
-const TRASH = (
-  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-  </svg>
-)
 
 // ── Debt Modal ────────────────────────────────────────────────────────────────
 
@@ -105,7 +97,7 @@ function DebtModal({
             tabs={[{ key: 'lend', label: '↑ I lent' }, { key: 'borrow', label: '↓ I borrowed' }]}
             value={type}
             onChange={setType}
-            activeColors={{ lend: '#6366f1', borrow: '#f97316' }}
+            activeColors={{ lend: BRAND_HEX, borrow: '#f97316' }}
           />
         )}
 
@@ -253,7 +245,7 @@ function DebtCard({
   const isLend = debt.type === 'lend'
   const isOverdue = debt.due_date && !isCompleted && new Date(debt.due_date) < new Date()
 
-  const barColor = isCompleted ? '#10b981' : isLend ? '#6366f1' : '#f97316'
+  const barColor = isCompleted ? MONEY_IN : isLend ? BRAND_HEX : '#f97316'
 
   return (
     <div className={`bg-white dark:bg-gray-900 rounded-2xl border p-4 transition-shadow hover:shadow-md ${isCompleted ? 'border-hairline opacity-70' : 'border-hairline'}`}>
@@ -311,8 +303,8 @@ function DebtCard({
               </button>
             </>
           )}
-          <button onClick={onEdit} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{PENCIL}</button>
-          <button onClick={onDelete} className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">{TRASH}</button>
+          <IconButton label="Edit debt" onClick={onEdit}>{EditIcon}</IconButton>
+          <IconButton label="Delete debt" onClick={onDelete} tone="danger">{TrashIcon}</IconButton>
         </div>
       </div>
 

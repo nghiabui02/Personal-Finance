@@ -51,7 +51,7 @@ export function Input({ label, error, id, clearable, className = '', defaultValu
           </button>
         )}
       </div>
-      {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-1 text-sm text-rose-600 dark:text-rose-400">{error}</p>}
     </div>
   )
 }

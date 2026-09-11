@@ -15,7 +15,7 @@ export default function DashboardLoading() {
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
         {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5">
             <div className="flex items-center justify-between mb-4">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="w-9 h-9 rounded-lg" />
@@ -27,7 +27,7 @@ export default function DashboardLoading() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5">
           <Skeleton className="h-4 w-40 mb-4" />
           <Skeleton className="h-52 w-52 rounded-full mx-auto" />
           <div className="mt-4 space-y-2">
@@ -40,7 +40,7 @@ export default function DashboardLoading() {
             ))}
           </div>
         </div>
-        <div className="lg:col-span-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div className="lg:col-span-3 bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5">
           <Skeleton className="h-4 w-40 mb-4" />
           <div className="divide-y divide-hairline">
             {[1, 2, 3, 4, 5, 6, 7].map(i => <SkeletonRow key={i} />)}
@@ -49,7 +49,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Budget */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5">
         <Skeleton className="h-4 w-24 mb-4" />
         <div className="space-y-4">
           {[1, 2, 3].map(i => (

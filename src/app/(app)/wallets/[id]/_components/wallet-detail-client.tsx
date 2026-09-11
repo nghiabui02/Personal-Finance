@@ -1,19 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { BRAND_HEX } from '@/lib/utils/colors'
 import { useEffect, useRef, useState } from 'react'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
-import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
-
-const WALLET_ICONS: Record<Wallet['type'], string> = {
-  cash: '💵',
-  bank: '🏦',
-  e_wallet: '📱',
-  investment: '📈',
-  other: '💼',
-  credit: '💳',
-}
+import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_ICONS, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
 
 function formatDateHeader(dateStr: string): string {
   const today = localYMD()
@@ -46,7 +38,7 @@ export default function WalletDetailClient({
   totalExpense: number
 }) {
   const bg = wallet.color ?? '#3b82f6'
-  const defaultIcon = WALLET_ICONS[wallet.type]
+  const defaultIcon = WALLET_TYPE_ICONS[wallet.type]
 
   const [transactions, setTransactions] = useState(initialTransactions)
   const [hasMore, setHasMore] = useState(initialHasMore)
@@ -164,9 +156,9 @@ export default function WalletDetailClient({
                         className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
                         style={{
                           backgroundColor: isTransfer
-                            ? '#6366f122'
+                            ? `${BRAND_HEX}22`
                             : cat?.color ? `${cat.color}22` : '#f3f4f6',
-                          color: isTransfer ? '#6366f1' : cat?.color ?? '#9ca3af',
+                          color: isTransfer ? BRAND_HEX : cat?.color ?? '#9ca3af',
                         }}
                       >
                         {isTransfer ? <TransferIcon /> : (cat?.icon ?? '•')}
@@ -186,8 +178,8 @@ export default function WalletDetailClient({
                       <div className="text-right shrink-0">
                         <p className={`text-sm font-semibold tabular-nums ${
                           tx.type === 'income'
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-rose-600 dark:text-rose-400'
                         }`}>
                           {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
                         </p>

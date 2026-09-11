@@ -109,11 +109,11 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between text-xs text-gray-500 dark:text-gray-400 gap-4">
             <div>
               <p className="font-medium text-gray-700 dark:text-gray-300 truncate">{fromWallet.icon} {fromWallet.name}</p>
-              <p className="mt-0.5 text-red-500">{formatVND(Number(fromWallet.balance) - amount)}</p>
+              <p className="mt-0.5 text-rose-500">{formatVND(Number(fromWallet.balance) - amount)}</p>
             </div>
             <div className="text-right">
               <p className="font-medium text-gray-700 dark:text-gray-300 truncate">{toWallet.icon} {toWallet.name}</p>
-              <p className="mt-0.5 text-green-600">{formatVND(Number(toWallet.balance) + amount)}</p>
+              <p className="mt-0.5 text-emerald-600">{formatVND(Number(toWallet.balance) + amount)}</p>
             </div>
           </div>
         )}
@@ -154,12 +154,12 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
         />
 
         {insufficient && (
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p className="text-sm text-rose-600 dark:text-rose-400">
             Insufficient balance. Available: {formatVND(Number(fromWallet!.balance))}
           </p>
         )}
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" className="flex-1" onClick={close}>Cancel</Button>

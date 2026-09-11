@@ -1,6 +1,7 @@
 'use client'
 
 import { AmountInput } from '@/components/ui/amount-input'
+import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
@@ -72,7 +73,7 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
           <DatePicker label="Deadline (optional)" name="deadline" value={deadline} onChange={setDeadline} />
         </div>
         <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="Why this goal?" />
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Save'}</Button>
@@ -122,7 +123,7 @@ function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => v
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <AmountInput label="Amount to add" name="amount" required />
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
           <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Add'}</Button>
@@ -153,7 +154,7 @@ function GoalCard({
     : null
 
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-xl border p-5 ${isCancelled ? 'opacity-60' : ''} border-gray-200 dark:border-gray-800`}>
+    <div className={`bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5 ${isCancelled ? 'opacity-60' : ''}`}>
       <div className="flex items-start justify-between gap-2 mb-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl shrink-0">
@@ -161,9 +162,9 @@ function GoalCard({
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{goal.name}</p>
-            {isCompleted && <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Completed</span>}
+            {isCompleted && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ Completed</span>}
             {!isCompleted && daysLeft !== null && (
-              <p className={`text-xs ${daysLeft < 0 ? 'text-red-500' : daysLeft < 30 ? 'text-yellow-500' : 'text-gray-400'}`}>
+              <p className={`text-xs ${daysLeft < 0 ? 'text-rose-500' : daysLeft < 30 ? 'text-yellow-500' : 'text-gray-400'}`}>
                 {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}
               </p>
             )}
@@ -172,22 +173,14 @@ function GoalCard({
 
         <div className="flex gap-0.5 shrink-0">
           {!isCompleted && !isCancelled && (
-            <button onClick={onContribute} className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/40 transition-colors" title="Add money">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <IconButton label="Add money" onClick={onContribute} tone="positive">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-            </button>
+            </IconButton>
           )}
-          <button onClick={onEdit} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
-            </svg>
-          </button>
-          <button onClick={onDelete} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-            </svg>
-          </button>
+          <IconButton label="Edit goal" onClick={onEdit}>{EditIcon}</IconButton>
+          <IconButton label="Delete goal" onClick={onDelete} tone="danger">{TrashIcon}</IconButton>
         </div>
       </div>
 
@@ -254,11 +247,11 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
 
       {active.length > 0 && (
         <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-hairline px-4 py-3">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-4 py-3">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total saved</p>
             <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatVND(totalSaved)}</p>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-hairline px-4 py-3">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-4 py-3">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total target</p>
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{formatVND(totalTarget)}</p>
           </div>

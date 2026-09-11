@@ -24,6 +24,16 @@ export const WALLET_TYPE_LABELS: Record<Wallet['type'], string> = {
   credit: 'Credit Card',
 }
 
+/** Fallback icon when a wallet has no custom one. */
+export const WALLET_TYPE_ICONS: Record<Wallet['type'], string> = {
+  cash: '💵',
+  bank: '🏦',
+  e_wallet: '📱',
+  investment: '📈',
+  other: '💼',
+  credit: '💳',
+}
+
 export type WalletTransaction = {
   id: string
   type: 'income' | 'expense'

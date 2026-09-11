@@ -24,7 +24,7 @@ export default function TransactionsLoading() {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3">
+          <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-4 py-3">
             <Skeleton className="h-3 w-14 mb-2" />
             <Skeleton className="h-4 w-24" />
           </div>
@@ -41,7 +41,7 @@ export default function TransactionsLoading() {
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-3 w-24" />
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 divide-y divide-hairline">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline divide-y divide-hairline">
             {[1, 2, 3, 4, 5].map(i => <SkeletonRow key={i} />)}
           </div>
         </div>

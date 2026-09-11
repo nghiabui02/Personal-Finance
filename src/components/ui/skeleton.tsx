@@ -19,7 +19,7 @@ export function SkeletonRow() {
 /** A card with shimmer */
 export function SkeletonCard({ className = '' }: { className?: string }) {
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 ${className}`}>
+    <div className={`bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5 ${className}`}>
       <Skeleton className="h-4 w-28 mb-4" />
       <div className="space-y-3">
         <Skeleton className="h-3.5 w-full" />
