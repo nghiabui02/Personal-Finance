@@ -1,6 +1,7 @@
 'use client'
 
 import { formatVND } from '@/lib/utils/currency'
+import { SectionCard, SectionEmpty } from './section-card'
 import { useState } from 'react'
 import { Pie as PieBase, PieChart, ResponsiveContainer, Sector } from 'recharts'
 
@@ -40,10 +41,9 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
 
   if (data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 flex flex-col flex-1">
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-5">Spending by Category</h2>
-        <div className="py-10 text-center text-sm text-gray-400">No expense data this month</div>
-      </div>
+      <SectionCard title="Spending by category" className="flex flex-col flex-1">
+        <SectionEmpty message="No spending this month" action={{ label: 'Record an expense', href: '/transactions' }} />
+      </SectionCard>
     )
   }
 
@@ -58,9 +58,11 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
     : null
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 flex flex-col flex-1">
-      <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-5">Spending by Category</h2>
-
+    <SectionCard
+      title="Spending by category"
+      action={{ label: 'Breakdown', href: '/reports' }}
+      className="flex flex-col flex-1"
+    >
       <div className="relative">
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
@@ -85,19 +87,18 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
           <div className="text-center px-2">
             {active ? (
               <>
-                <p className="text-base leading-tight">{active.icon ?? ''}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[90px]">
+                <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[104px]">
                   {active.name}
                 </p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
+                <p className="mt-1 text-lg font-semibold leading-none text-gray-900 dark:text-gray-100 tabular-nums">
                   {formatVND(active.amount)}
                 </p>
-                <p className="text-xs text-gray-400">{pct}%</p>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">{pct}% of spend</p>
               </>
             ) : (
               <>
-                <p className="text-xs text-gray-400 mb-0.5">Total</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <p className="text-xs text-gray-400 dark:text-gray-500">Total spent</p>
+                <p className="mt-1 text-lg font-semibold leading-none text-gray-900 dark:text-gray-100 tabular-nums">
                   {formatVND(totalExpense)}
                 </p>
               </>
@@ -115,18 +116,18 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
               key={d.id}
               className={`flex items-center gap-2 transition-opacity ${activeIndex !== null && !isActive ? 'opacity-40' : ''}`}
             >
-              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.fill }} />
+              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.fill }} />
               <span className="text-xs text-gray-500 dark:text-gray-400 flex-1 truncate">
                 {d.icon} {d.name}
               </span>
-              <span className="text-xs text-gray-400">{p}%</span>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 tabular-nums">
+              <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums w-9 text-right shrink-0">{p}%</span>
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 tabular-nums shrink-0">
                 {formatVND(d.amount)}
               </span>
             </li>
           )
         })}
       </ul>
-    </div>
+    </SectionCard>
   )
 }

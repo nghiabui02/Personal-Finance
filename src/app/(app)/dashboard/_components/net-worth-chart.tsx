@@ -34,12 +34,14 @@ export function NetWorthChart({ snapshots }: { snapshots: Snapshot[] }) {
   const min = Math.min(...values)
   const max = Math.max(...values)
   const allPositive = min >= 0
-  const strokeColor = allPositive ? '#6366f1' : min < 0 && max <= 0 ? '#f43f5e' : '#6366f1'
+  const strokeColor = allPositive ? '#4f46e5' : min < 0 && max <= 0 ? '#f43f5e' : '#4f46e5'
   const gradientId = 'nwGrad'
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm dark:border dark:border-gray-800 p-5">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Net Worth</h2>
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline dark:border-gray-800 p-5">
+      <h2 className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-4">
+        Net worth · last 90 days
+      </h2>
 
       <ResponsiveContainer width="100%" height={120}>
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>

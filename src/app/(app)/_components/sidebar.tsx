@@ -55,13 +55,15 @@ function NavItem({ item, active }: { item: (typeof MAIN_NAV)[number]; active: bo
   return (
     <Link
       href={item.href}
-      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+      aria-current={active ? 'page' : undefined}
+      className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
         active
-          ? 'bg-gray-900 text-white dark:bg-gray-800 dark:text-gray-100'
-          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+          ? 'bg-brand-soft text-brand font-semibold'
+          : 'text-gray-500 font-medium hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/70 dark:hover:text-gray-100'
       }`}
     >
-      <span className={active ? 'text-white dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}>
+      {/* Icon inherits the row colour — one weight, one state to reason about */}
+      <span className={active ? '' : 'text-gray-400 dark:text-gray-500 group-hover:text-current transition-colors'}>
         {item.icon}
       </span>
       {item.label}
@@ -84,13 +86,13 @@ export default function Sidebar({ user, onClose }: { user: User; onClose?: () =>
   return (
     <aside className="w-60 shrink-0 flex flex-col bg-white border-r border-gray-200 dark:bg-gray-900 dark:border-gray-800 h-full">
       {/* Brand */}
-      <div className="px-5 pt-5 pb-4 flex items-center gap-3 shrink-0">
-        <div className="w-10 h-10 rounded-xl bg-gray-900 dark:bg-gray-800 flex items-center justify-center shrink-0">
-          <span className="text-emerald-400 text-lg font-semibold leading-none">đ</span>
+      <div className="px-4 pt-5 pb-5 flex items-center gap-3 shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-gray-900 dark:bg-gray-800 flex items-center justify-center shrink-0">
+          <span className="text-brand text-base font-semibold leading-none">đ</span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight">Finance</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight">Personal money</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight tracking-tight">Finance</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight mt-0.5">Personal money</p>
         </div>
         {onClose && (
           <button
@@ -104,17 +106,17 @@ export default function Sidebar({ user, onClose }: { user: User; onClose?: () =>
         )}
       </div>
 
-      <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        <div className="space-y-1">
+      <nav className="flex-1 px-3 pb-2 overflow-y-auto">
+        <div className="space-y-0.5">
           {MAIN_NAV.map(item => (
             <NavItem key={item.href} item={item} active={isActive(item.href)} />
           ))}
         </div>
 
-        <p className="px-3.5 pt-6 pb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+        <p className="px-3 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">
           More
         </p>
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {MORE_NAV.map(item => (
             <NavItem key={item.href} item={item} active={isActive(item.href)} />
           ))}
@@ -122,7 +124,7 @@ export default function Sidebar({ user, onClose }: { user: User; onClose?: () =>
       </nav>
 
       {/* User */}
-      <div className="shrink-0 border-t border-gray-100 dark:border-gray-800 px-4 py-4 flex items-center gap-3">
+      <div className="shrink-0 border-t border-hairline px-4 py-4 flex items-center gap-3">
         {avatarUrl && !avatarErr ? (
           // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
           <img

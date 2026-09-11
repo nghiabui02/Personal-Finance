@@ -1,5 +1,5 @@
 import { formatVND } from '@/lib/utils/currency'
-import Link from 'next/link'
+import { SectionCard, SectionEmpty } from './section-card'
 
 type DebtItem = {
   type: 'lend' | 'borrow'
@@ -12,39 +12,37 @@ export function DebtSummary({ debts }: { debts: DebtItem[] }) {
   const totalLend = active.filter(d => d.type === 'lend').reduce((s, d) => s + Number(d.remaining_amount), 0)
   const totalBorrow = active.filter(d => d.type === 'borrow').reduce((s, d) => s + Number(d.remaining_amount), 0)
 
-  return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">Debts</h2>
-        <Link href="/debts" className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-          Manage →
-        </Link>
-      </div>
+  const net = totalLend - totalBorrow
 
+  return (
+    <SectionCard title="Debts" action={{ label: 'Manage', href: '/debts' }}>
       {active.length === 0 ? (
-        <div className="py-6 text-center">
-          <p className="text-sm text-gray-400">No active debts</p>
-          <Link href="/debts" className="mt-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2">
-            Add one
-          </Link>
-        </div>
+        <SectionEmpty message="No active debts" action={{ label: 'Track a debt', href: '/debts' }} />
       ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400">They owe me</span>
-            <span className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+        <dl className="space-y-3">
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-xs text-gray-400 dark:text-gray-500">They owe me</dt>
+            <dd className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
               {formatVND(totalLend)}
-            </span>
+            </dd>
           </div>
-          <div className="h-px bg-gray-100 dark:bg-gray-800" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400">I owe them</span>
-            <span className="text-sm font-semibold tabular-nums text-rose-500 dark:text-rose-400">
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-xs text-gray-400 dark:text-gray-500">I owe them</dt>
+            <dd className="text-sm font-semibold tabular-nums text-rose-500 dark:text-rose-400">
               {formatVND(totalBorrow)}
-            </span>
+            </dd>
           </div>
-        </div>
+          {/* The figure that actually answers "am I up or down on debt" */}
+          <div className="flex items-baseline justify-between gap-4 pt-3 border-t border-hairline dark:border-gray-800">
+            <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">Net position</dt>
+            <dd className={`text-sm font-semibold tabular-nums ${
+              net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'
+            }`}>
+              {net >= 0 ? '+' : '−'}{formatVND(Math.abs(net))}
+            </dd>
+          </div>
+        </dl>
       )}
-    </div>
+    </SectionCard>
   )
 }

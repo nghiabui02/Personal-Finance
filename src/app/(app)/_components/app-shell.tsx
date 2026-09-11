@@ -95,12 +95,12 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
               href={item.href}
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
                 active
-                  ? 'text-indigo-600 dark:text-indigo-400'
+                  ? 'text-brand'
                   : 'text-gray-400 dark:text-gray-500'
               }`}
             >
               <span className={active ? 'opacity-100' : 'opacity-60'}>{item.icon}</span>
-              <span className={`text-[9px] font-medium tracking-wide ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}>
+              <span className={`text-[9px] font-medium tracking-wide ${active ? 'text-brand' : 'text-gray-400 dark:text-gray-500'}`}>
                 {item.label}
               </span>
             </Link>

@@ -1,5 +1,5 @@
 import { formatVND } from '@/lib/utils/currency'
-import Link from 'next/link'
+import { SectionCard, SectionEmpty } from './section-card'
 
 type BudgetItem = {
   id: string
@@ -10,23 +10,11 @@ type BudgetItem = {
 
 export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">Budget</h2>
-        <Link href="/budgets" className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-          Manage →
-        </Link>
-      </div>
-
+    <SectionCard title="Budgets" action={{ label: 'Manage', href: '/budgets' }}>
       {budgets.length === 0 ? (
-        <div className="py-6 text-center">
-          <p className="text-sm text-gray-400">No budgets set</p>
-          <Link href="/budgets" className="mt-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2">
-            Create a budget
-          </Link>
-        </div>
+        <SectionEmpty message="No budgets set" action={{ label: 'Create a budget', href: '/budgets' }} />
       ) : (
-        <ul className="space-y-4">
+        <ul className="space-y-3.5">
           {budgets.map((b, idx) => {
             const pct = b.amount > 0 ? Math.min((b.spent / b.amount) * 100, 100) : 0
             const isOver = b.spent > b.amount
@@ -34,18 +22,21 @@ export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
 
             return (
               <li key={b.id} className="animate-fade-up" style={{ animationDelay: `${idx * 60}ms` }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-sm">{b.category?.icon ?? '📦'}</span>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-                      {b.category?.name ?? 'Unknown'}
+                <div className="flex items-baseline justify-between gap-3 mb-1.5">
+                  <div className="flex items-baseline gap-1.5 min-w-0">
+                    {b.category?.icon && <span className="text-sm leading-none shrink-0">{b.category.icon}</span>}
+                    <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300 truncate">
+                      {b.category?.name ?? 'Uncategorized'}
                     </span>
                   </div>
-                  <span className={`text-[11px] tabular-nums shrink-0 ml-2 ${isOver ? 'text-rose-500 dark:text-rose-400 font-semibold' : 'text-gray-400'}`}>
-                    {formatVND(b.spent)}<span className="text-gray-300 dark:text-gray-600"> / {formatVND(b.amount)}</span>
+                  <span className="text-[11px] tabular-nums shrink-0">
+                    <span className={isOver ? 'text-rose-500 dark:text-rose-400 font-semibold' : 'text-gray-600 dark:text-gray-300 font-medium'}>
+                      {formatVND(b.spent)}
+                    </span>
+                    <span className="text-gray-300 dark:text-gray-600"> / {formatVND(b.amount)}</span>
                   </span>
                 </div>
-                <div className="h-0.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full animate-bar-fill"
                     style={{ width: `${pct}%`, backgroundColor: barColor, animationDelay: `${idx * 60 + 80}ms` }}
@@ -56,6 +47,6 @@ export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
           })}
         </ul>
       )}
-    </div>
+    </SectionCard>
   )
 }

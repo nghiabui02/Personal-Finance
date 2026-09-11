@@ -1,5 +1,5 @@
 import { formatVND } from '@/lib/utils/currency'
-import Link from 'next/link'
+import { SectionCard, SectionEmpty } from './section-card'
 
 type Transaction = {
   id: string
@@ -16,23 +16,15 @@ function formatDate(dateStr: string) {
 
 export function RecentTransactions({ transactions }: { transactions: Transaction[] }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 flex flex-col flex-1">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">Recent Transactions</h2>
-        <Link href="/transactions" className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-          View all →
-        </Link>
-      </div>
-
+    <SectionCard
+      title="Recent activity"
+      action={{ label: 'View all', href: '/transactions' }}
+      className="flex flex-col flex-1"
+    >
       {transactions.length === 0 ? (
-        <div className="py-8 text-center">
-          <p className="text-sm text-gray-400">No transactions yet</p>
-          <Link href="/transactions" className="mt-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2">
-            Add your first one
-          </Link>
-        </div>
+        <SectionEmpty message="Nothing recorded yet" action={{ label: 'Add your first transaction', href: '/transactions' }} />
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-2.5">
           {transactions.map((tx, idx) => {
             const cat = tx.categories
             return (
@@ -48,10 +40,13 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-800 dark:text-gray-200 truncate font-medium">
+                  <p className="text-sm text-gray-800 dark:text-gray-200 truncate font-medium leading-snug">
                     {tx.note || cat?.name || 'Uncategorized'}
                   </p>
-                  <p className="text-[10px] text-gray-400">{formatDate(tx.transaction_date)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 leading-snug mt-0.5">
+                    {formatDate(tx.transaction_date)}
+                    {tx.note && cat?.name ? ` · ${cat.name}` : ''}
+                  </p>
                 </div>
                 <span className={`text-sm font-semibold tabular-nums shrink-0 ${
                   tx.type === 'income'
@@ -65,6 +60,6 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
           })}
         </ul>
       )}
-    </div>
+    </SectionCard>
   )
 }

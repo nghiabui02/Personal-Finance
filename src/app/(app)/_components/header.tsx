@@ -21,7 +21,7 @@ export default function Header({
   const [avatarErr, setAvatarErr] = useState(false)
 
   return (
-    <header className="shrink-0 pt-safe w-full bg-gray-50 dark:bg-gray-950 md:border-b md:border-gray-200 md:dark:border-gray-800">
+    <header className="shrink-0 pt-safe w-full bg-gray-50/90 dark:bg-gray-950/90 backdrop-blur-sm md:border-b md:border-gray-200 md:dark:border-gray-800">
       {/* md:pl offset = sidebar width (w-60) + content padding, since the fixed sidebar overlays the header */}
       <div className="h-14 md:h-16 flex items-center gap-3 px-4 md:pl-[calc(15rem+1.5rem)] md:pr-6">
 
@@ -30,7 +30,7 @@ export default function Header({
           <>
             <Link
               href={backHref}
-              className="md:hidden flex items-center gap-0.5 text-indigo-500 dark:text-indigo-400 -ml-1"
+              className="md:hidden flex items-center gap-0.5 text-brand -ml-1 rounded-lg"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -38,12 +38,12 @@ export default function Header({
               <span className="text-base font-semibold">{title ?? 'Back'}</span>
             </Link>
             {/* Desktop: plain title */}
-            <span className="hidden md:block text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1">
+            <span className="hidden md:block text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100 flex-1">
               {title ?? 'Finance'}
             </span>
           </>
         ) : (
-          <span className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1">
+          <span className="text-base md:text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100 flex-1">
             {title ?? 'Finance'}
           </span>
         )}
@@ -65,7 +65,7 @@ export default function Header({
               {initials}
             </div>
           )}
-          <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 max-w-36 truncate">
+          <span className="hidden sm:block text-sm font-medium text-gray-600 dark:text-gray-300 max-w-36 truncate">
             {displayName}
           </span>
         </div>
