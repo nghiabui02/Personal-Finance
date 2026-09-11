@@ -34,12 +34,12 @@ export function CustomSelect({
   const inputRef = useRef<HTMLInputElement>(null)
   const selected = options.find(o => o.value === value)
 
-  // Auto-focus search input the moment it mounts into the DOM
+  // Auto-focus the search input on mount — but not on touch devices, where
+  // it pops the on-screen keyboard over the very list you want to scroll.
   const searchCallbackRef = useCallback((node: HTMLInputElement | null) => {
-    if (node) {
-      inputRef.current = node
-      node.focus()
-    }
+    if (!node) return
+    inputRef.current = node
+    if (window.matchMedia('(pointer: fine)').matches) node.focus()
   }, [])
 
   const filtered = searchable && query.trim()
@@ -144,7 +144,7 @@ export function CustomSelect({
                   className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none"
                 />
                 {query && (
-                  <button type="button" onMouseDown={e => { e.preventDefault(); setQuery('') }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setQuery('')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
@@ -152,7 +152,7 @@ export function CustomSelect({
                 )}
               </div>
             </div>
-            <ul className="max-h-52 overflow-y-auto py-1">
+            <ul className="max-h-52 overflow-y-auto overscroll-contain py-1">
               {filtered.length === 0 ? (
                 <li className="px-3 py-4 text-center text-sm text-gray-400">No results</li>
               ) : filtered.map((opt, i) => {
@@ -162,7 +162,8 @@ export function CustomSelect({
                   <li key={opt.value}>
                     <button
                       type="button"
-                      onMouseDown={e => { e.preventDefault(); handleSelect(opt.value) }}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => handleSelect(opt.value)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${
                         isSelected
                           ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
@@ -238,7 +239,7 @@ export function CustomSelect({
 
       {open && (
         <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden animate-dropdown-in">
-          <ul className="max-h-52 overflow-y-auto py-1">
+          <ul className="max-h-52 overflow-y-auto overscroll-contain py-1">
             {options.map(opt => {
               const isSelected = opt.value === value
               return (

@@ -55,6 +55,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
   // "Compare with" picker — offset 1 = the server-provided `previous` (free,
   // no fetch); any other offset fetches that period's totals on demand.
   const [pickerOpen, setPickerOpen] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
   const [compareOffset, setCompareOffset] = useState(1)
   const [customPrevious, setCustomPrevious] = useState<PreviousPeriod | null>(null)
   const [compareLoading, setCompareLoading] = useState(false)
@@ -113,6 +114,23 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
   const requestStatus = request?.key === cacheKey ? request.status : null
   const state: 'idle' | 'loading' | 'done' | 'error' | 'rate_limit' =
     requestStatus ?? (analysis ? 'done' : 'idle')
+
+  // Close the compare picker on an outside click or Escape
+  useEffect(() => {
+    if (!pickerOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (!pickerRef.current?.contains(e.target as Node)) setPickerOpen(false)
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPickerOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [pickerOpen])
 
   // Countdown timer for rate limit retry
   useEffect(() => {
@@ -175,7 +193,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
       </div>
 
       {/* Compare-with picker */}
-      <div className="relative mb-3 -mt-1">
+      <div ref={pickerRef} className="relative mb-3 -mt-1">
         <button
           onClick={() => setPickerOpen(o => !o)}
           disabled={compareLoading}
