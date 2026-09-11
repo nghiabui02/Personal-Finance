@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/server/auth'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import type { CategoryRef } from '@/lib/types'
@@ -14,6 +14,8 @@ import { DebtSummary } from './_components/debt-summary'
 import { NetWorthChart } from './_components/net-worth-chart'
 import { RecentTransactions } from './_components/recent-transactions'
 import { SpendingChart } from './_components/spending-chart'
+import { CATEGORY_COLUMNS } from '@/lib/api/categories'
+import { WALLET_COLUMNS } from '@/lib/api/wallets'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,9 +31,7 @@ export default async function DashboardPage({
   const sevenDaysLater = shiftLocalDate(todayStr, 7)
   const { startDate, endDate } = monthRange(month)
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { supabase, user } = await requireUser()
 
   const [
     [
@@ -53,9 +53,9 @@ export default async function DashboardPage({
       supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
       supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').is('transfer_pair_id', null).gte('transaction_date', startDate).lt('transaction_date', endDate),
       supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
-      supabase.from('wallets').select('id, name, type, balance, credit_limit, color, icon, is_default, user_id').eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
+      supabase.from('wallets').select(WALLET_COLUMNS).eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
       supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
-      supabase.from('categories').select('id, user_id, name, icon, color, type, is_default, parent_id, system_key').order('is_default', { ascending: false }).order('name'),
+      supabase.from('categories').select(CATEGORY_COLUMNS).order('is_default', { ascending: false }).order('name'),
     ]),
     getBudgetsForMonth(supabase, user.id, month).then(rows => rows.filter(b => b.active)),
   ])

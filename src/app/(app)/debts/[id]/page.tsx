@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/server/auth'
 import DebtDetailClient from './_components/debt-detail-client'
 
 export const dynamic = 'force-dynamic'
@@ -10,9 +10,7 @@ export default async function DebtDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { supabase, user } = await requireUser()
 
   const [{ data: debt }, { data: wallets }] = await Promise.all([
     supabase

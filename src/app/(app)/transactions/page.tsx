@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/server/auth'
 import TransactionsClient from './_components/transactions-client'
 import type { ViewMode } from './_components/period-navigator'
 import { localYMD, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
+import { CATEGORY_COLUMNS } from '@/lib/api/categories'
+import { WALLET_COLUMNS } from '@/lib/api/wallets'
 
 export const metadata: Metadata = { title: 'Transactions' }
 export const dynamic = 'force-dynamic'
@@ -44,9 +46,7 @@ export default async function TransactionsPage({
 
   const { startDate, endDate, period } = getDateRange(view, params, today)
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { supabase, user } = await requireUser()
 
   const [
     { data: transactions },
@@ -73,12 +73,12 @@ export default async function TransactionsPage({
           .order('created_at', { ascending: false }),
     supabase
       .from('categories')
-      .select('id, user_id, name, icon, color, type, is_default, parent_id, system_key')
+      .select(CATEGORY_COLUMNS)
       .order('is_default', { ascending: false })
       .order('name'),
     supabase
       .from('wallets')
-      .select('id, name, type, balance, color, icon, is_default, user_id')
+      .select(WALLET_COLUMNS)
       .eq('user_id', user.id)
       .order('is_default', { ascending: false })
       .order('name'),

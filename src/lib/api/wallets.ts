@@ -36,6 +36,12 @@ export type WalletTransaction = {
   categories: CategoryRef | null
 }
 
+/** Columns a `Wallet` needs — keep in sync with the type above. */
+export const WALLET_COLUMNS = 'id, user_id, name, type, balance, color, icon, is_default, credit_limit, statement_day, payment_due_day'
+
+/** Columns a `WalletTransaction` needs. */
+export const WALLET_TX_COLUMNS = 'id, type, amount, note, bank_fee, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color)'
+
 export const WALLET_TX_PAGE_SIZE = 20
 
 type WalletPayload = {

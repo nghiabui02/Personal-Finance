@@ -1,15 +1,13 @@
 import type { Metadata } from 'next'
 import WalletsClient from './_components/wallets-client'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/server/auth'
 
 export const metadata: Metadata = { title: 'Wallets' }
 
 export const dynamic = 'force-dynamic'
 
 export default async function WalletsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { supabase, user } = await requireUser()
 
   const { data: wallets } = await supabase
     .from('wallets')

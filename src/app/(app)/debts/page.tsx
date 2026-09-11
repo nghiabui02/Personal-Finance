@@ -1,14 +1,12 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/server/auth'
 import DebtsClient from './_components/debts-client'
 
 export const metadata: Metadata = { title: 'Debts' }
 export const dynamic = 'force-dynamic'
 
 export default async function DebtsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { supabase, user } = await requireUser()
 
   const [{ data: debts }, { data: wallets }] = await Promise.all([
     supabase

@@ -1,14 +1,12 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/server/auth'
 import SavingGoalsClient from './_components/saving-goals-client'
 
 export const metadata: Metadata = { title: 'Saving Goals' }
 export const dynamic = 'force-dynamic'
 
 export default async function SavingGoalsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { supabase, user } = await requireUser()
 
   const { data: goals } = await supabase
     .from('saving_goals')

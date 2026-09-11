@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { WALLET_TX_PAGE_SIZE, type WalletTransaction } from '@/lib/api/wallets'
+import { requireUser } from '@/lib/server/auth'
+import { WALLET_TX_PAGE_SIZE, type WalletTransaction, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
 import WalletDetailClient from './_components/wallet-detail-client'
 
 export const dynamic = 'force-dynamic'
@@ -11,9 +11,7 @@ export default async function WalletDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { supabase, user } = await requireUser()
 
   const [{ data: wallet }, { data: transactions }, { data: amountRows }] = await Promise.all([
     supabase
@@ -25,7 +23,7 @@ export default async function WalletDetailPage({
     // First page only — the rest is lazy-loaded client-side as the user scrolls
     supabase
       .from('transactions')
-      .select('id, type, amount, note, bank_fee, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color)')
+      .select(WALLET_TX_COLUMNS)
       .eq('wallet_id', id)
       .eq('user_id', user.id)
       .order('transaction_date', { ascending: false })

@@ -12,6 +12,9 @@ export type Category = {
   system_key: 'lend_out' | 'borrow_in' | 'collect_debt' | 'repay_debt' | null
 }
 
+/** Columns a `Category` needs — keep in sync with the type above. */
+export const CATEGORY_COLUMNS = 'id, user_id, name, icon, color, type, is_default, parent_id, system_key'
+
 export const categoriesApi = {
   list(type?: 'income' | 'expense'): Promise<Category[]> {
     const qs = type ? `?type=${type}` : ''

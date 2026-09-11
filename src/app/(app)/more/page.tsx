@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/server/auth'
 import Link from 'next/link'
 
 const CHEVRON = (
@@ -79,12 +79,11 @@ const MORE_GROUPS = [
 ]
 
 export default async function MorePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await requireUser()
 
-  const meta = user?.user_metadata ?? {}
-  const displayName = (meta.full_name as string) || user?.email?.split('@')[0] || 'User'
-  const email = user?.email ?? ''
+  const meta = user.user_metadata ?? {}
+  const displayName = (meta.full_name as string) || user.email?.split('@')[0] || 'User'
+  const email = user.email ?? ''
   const avatarUrl = meta.avatar_url as string | undefined
   const initials = displayName[0]?.toUpperCase() ?? 'U'
 

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/server/auth'
 import { localYM, monthRange } from '@/lib/utils/date'
 import BudgetsClient from './_components/budgets-client'
+import { CATEGORY_COLUMNS } from '@/lib/api/categories'
 
 export const metadata: Metadata = { title: 'Budgets' }
 export const dynamic = 'force-dynamic'
@@ -15,9 +16,7 @@ export default async function BudgetsPage({
   const month = monthParam ?? localYM()
   const { startDate, endDate } = monthRange(month)
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { supabase, user } = await requireUser()
 
   const [{ data: budgets }, { data: expenses }, { data: categories }] = await Promise.all([
     supabase
@@ -35,7 +34,7 @@ export default async function BudgetsPage({
       .lt('transaction_date', endDate),
     supabase
       .from('categories')
-      .select('id, user_id, name, icon, color, type, is_default, parent_id, system_key')
+      .select(CATEGORY_COLUMNS)
       .eq('type', 'expense')
       .order('is_default', { ascending: false })
       .order('name'),
