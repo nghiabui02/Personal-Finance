@@ -1,6 +1,7 @@
 'use client'
 
 import { AmountInput } from '@/components/ui/amount-input'
+import { toastError } from '@/components/ui/toast'
 import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,9 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { CategorySelect } from '@/components/ui/category-select'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
+import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
+import { ScreenHeader } from '@/components/ui/screen-header'
+import { Dot, Em } from '@/components/ui/verdict'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
@@ -19,6 +23,14 @@ import { type Wallet } from '@/lib/api/wallets'
 import { type RecurringTransaction, FREQUENCY_LABELS, recurringApi } from '@/lib/api/recurring-transactions'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+
+/** Rough per-month value of a rule, for comparing rules on different clocks. */
+const MONTHLY_MULTIPLIER: Record<RecurringTransaction['frequency'], number> = {
+  daily: 30,
+  weekly: 52 / 12,
+  monthly: 1,
+  yearly: 1 / 12,
+}
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
@@ -200,14 +212,14 @@ function RecurringCard({
   async function handleSkip() {
     setSkipping(true)
     try { await recurringApi.skip(item.id); router.refresh() }
-    catch { /* toast later */ }
+    catch (err) { toastError(err, 'Could not skip the next occurrence.') }
     finally { setSkipping(false) }
   }
 
   async function handleToggleActive() {
     setTogglingActive(true)
     try { await recurringApi.setActive(item.id, !item.active); router.refresh() }
-    catch { /* toast later */ }
+    catch (err) { toastError(err, `Could not ${item.active ? 'pause' : 'resume'} this rule.`) }
     finally { setTogglingActive(false) }
   }
 
@@ -312,26 +324,55 @@ export default function RecurringClient({
   const active  = items.filter(i => !i.end_date || i.end_date >= localYMD())
   const expired = items.filter(i => i.end_date && i.end_date < localYMD())
 
+  // Rules repeat on different clocks; the only comparable figure is per month.
+  const running = active.filter(i => i.active)
+  const monthly = (item: RecurringTransaction) =>
+    (Number(item.amount) + Number(item.bank_fee ?? 0)) * MONTHLY_MULTIPLIER[item.frequency]
+  const monthlyOut = running.filter(i => i.type === 'expense').reduce((s, i) => s + monthly(i), 0)
+  const monthlyIn  = running.filter(i => i.type === 'income').reduce((s, i) => s + monthly(i), 0)
+  const pausedCount = active.length - running.length
+  const nextRun = running
+    .map(i => i.next_run_date)
+    .filter((d): d is string => !!d)
+    .sort()[0]
+
   function handleDeleteConfirmed() {
     if (!confirmId) return
     startTransition(async () => {
       try { await recurringApi.delete(confirmId); router.refresh() }
-      catch { /* toast later */ }
+      catch (err) { toastError(err, 'Could not delete the recurring rule.') }
       finally { setConfirmId(null) }
     })
   }
 
   return (
     <>
-      <button
-        onClick={() => { setEditingItem(null); setModalOpen(true) }}
-        className="fixed bottom-above-nav right-4 md:bottom-6 md:right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-[colors,transform] hover:scale-110 active:scale-95 flex items-center justify-center"
-        aria-label="New recurring transaction"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      </button>
+      <ScreenHeader
+        eyebrow="Money"
+        headline={
+          running.length === 0
+            ? <>No rules are running — add one for rent, a subscription, or your salary.</>
+            : monthlyIn > 0
+            ? <>Standing rules move <Em tone="bad">{formatVND(monthlyOut)}</Em> out and <Em tone="good">{formatVND(monthlyIn)}</Em> in every month.</>
+            : <>Standing rules move <Em tone="bad">{formatVND(monthlyOut)}</Em> out every month.</>
+        }
+        support={
+          <>
+            <span>{running.length} running</span>
+            {pausedCount > 0 && <><Dot /><span>{pausedCount} paused</span></>}
+            {nextRun && <><Dot /><span>next on {nextRun}</span></>}
+          </>
+        }
+        segments={MONEY_SEGMENTS}
+        action={
+          <Button onClick={() => { setEditingItem(null); setModalOpen(true) }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            New rule
+          </Button>
+        }
+      />
 
       {items.length === 0 ? (
         <EmptyState

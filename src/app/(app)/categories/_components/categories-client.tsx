@@ -1,7 +1,10 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { toastError } from '@/components/ui/toast'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ScreenHeader } from '@/components/ui/screen-header'
+import { Em } from '@/components/ui/verdict'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
 import { type Category, categoriesApi } from '@/lib/api/categories'
@@ -44,27 +47,38 @@ export default function CategoriesClient({
     if (!confirmId) return
     startTransition(async () => {
       try { await categoriesApi.delete(confirmId); router.refresh() }
-      catch { /* add toast later */ }
+      catch (err) { toastError(err, 'Could not delete the category.') }
       finally { setConfirmId(null) }
     })
   }
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <TabGroup
-          tabs={[{ key: 'expense', label: 'Expense' }, { key: 'income', label: 'Income' }]}
-          value={tab}
-          onChange={switchTab}
-          className="w-fit"
-        />
-        <Button onClick={() => openModal()} className="shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-          </svg>
-          New category
-        </Button>
-      </div>
+      <ScreenHeader
+        eyebrow="Account"
+        headline={
+          custom.length === 0
+            ? <>You&rsquo;re using the <Em>{filtered.length}</Em> built-in {tab} categories.</>
+            : <>You&rsquo;ve added <Em>{custom.length}</Em> {tab} categor{custom.length === 1 ? 'y' : 'ies'} of your own.</>
+        }
+        support={<span>{filtered.length} in total</span>}
+        controls={
+          <TabGroup
+            tabs={[{ key: 'expense', label: 'Expense' }, { key: 'income', label: 'Income' }]}
+            value={tab}
+            onChange={switchTab}
+            className="w-fit"
+          />
+        }
+        action={
+          <Button onClick={() => openModal()}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            New category
+          </Button>
+        }
+      />
 
       {filtered.length === 0 ? (
         <EmptyState

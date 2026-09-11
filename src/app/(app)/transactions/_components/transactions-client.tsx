@@ -1,9 +1,11 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { toastError } from '@/components/ui/toast'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Dot, Em, Verdict } from '@/components/ui/verdict'
 import { TabGroup } from '@/components/ui/tab-group'
 import { formatVND } from '@/lib/utils/currency'
 import { type Category } from '@/lib/api/categories'
@@ -357,6 +359,9 @@ export default function TransactionsClient({
   const totalIncome  = transactions.filter(tx => tx.type === 'income').reduce((s, tx) => s + Number(tx.amount), 0)
   const totalExpense = transactions.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0)
   const totalNet = totalIncome - totalExpense
+  const biggestExpense = transactions
+    .filter(tx => tx.type === 'expense')
+    .sort((a, b) => Number(b.amount) - Number(a.amount))[0]
 
   const displayedTransactions = selectedDate
     ? transactions.filter(tx => tx.transaction_date === selectedDate)
@@ -377,7 +382,7 @@ export default function TransactionsClient({
     if (!confirmId) return
     startTransition(async () => {
       try { await transactionsApi.delete(confirmId); router.refresh() }
-      catch { /* toast later */ }
+      catch (err) { toastError(err, 'Could not delete the transaction.') }
       finally { setConfirmId(null) }
     })
   }
@@ -386,18 +391,22 @@ export default function TransactionsClient({
     <div className="flex flex-col lg:h-full">
       {/* ── Header ─────────────────────────────────── */}
       <div className="shrink-0 pb-3 mb-1">
-        <div className="grid grid-cols-3 gap-2 mb-3">
-          {[
-            { label: 'Income',  value: totalIncome,  cls: 'text-emerald-600 dark:text-emerald-400' },
-            { label: 'Expense', value: totalExpense, cls: 'text-rose-600 dark:text-rose-400' },
-            { label: 'Net',     value: totalNet,     cls: totalNet >= 0 ? 'text-brand' : 'text-rose-600 dark:text-rose-400' },
-          ].map(item => (
-            <div key={item.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-3 py-2.5">
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-0.5">{item.label}</p>
-              <p className={`text-xs font-semibold tabular-nums ${item.cls}`}>{formatVND(item.value)}</p>
-            </div>
-          ))}
-        </div>
+        <Verdict
+          className="mb-3"
+          headline={
+            transactions.length === 0
+              ? <>Nothing recorded here yet.</>
+              : totalNet >= 0
+              ? <>You&rsquo;re up <Em tone="good">{formatVND(totalNet)}</Em> across {transactions.length} transaction{transactions.length === 1 ? '' : 's'}.</>
+              : <>You&rsquo;re down <Em tone="bad">{formatVND(-totalNet)}</Em> across {transactions.length} transaction{transactions.length === 1 ? '' : 's'}.</>
+          }
+          support={transactions.length > 0
+            ? <>
+                <span>{formatVND(totalIncome)} in</span><Dot /><span>{formatVND(totalExpense)} out</span>
+                {biggestExpense && <><Dot /><span>largest: {biggestExpense.categories?.name ?? 'Uncategorized'} {formatVND(biggestExpense.amount)}</span></>}
+              </>
+            : undefined}
+        />
 
         {/* Toolbar — search expands inline from the icon */}
         <div className="flex items-center gap-2 mb-3">

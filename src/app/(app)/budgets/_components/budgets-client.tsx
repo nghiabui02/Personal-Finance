@@ -1,11 +1,15 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { toastError } from '@/components/ui/toast'
 import { BRAND_HEX, MONEY_OUT, WARNING } from '@/lib/utils/colors'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PeriodNav } from '@/components/ui/period-nav'
+import { REPORT_SEGMENTS } from '@/components/ui/segment-nav'
+import { ScreenHeader } from '@/components/ui/screen-header'
+import { Dot, Em } from '@/components/ui/verdict'
 import { TabGroup } from '@/components/ui/tab-group'
 import { formatVND } from '@/lib/utils/currency'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
@@ -71,7 +75,9 @@ function BudgetCard({
             </p>
             {budget.rollover && budget.rolloverCarry !== 0 && (
               <p className="text-[11px] text-gray-400 dark:text-gray-500">
-                {budget.rolloverCarry > 0 ? '+' : '−'}{formatVND(Math.abs(budget.rolloverCarry))} rollover
+                {budget.rolloverCarry > 0
+                  ? `+${formatVND(budget.rolloverCarry)} carried from last month`
+                  : `−${formatVND(-budget.rolloverCarry)} overspend carried over`}
               </p>
             )}
           </div>
@@ -129,26 +135,47 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
     if (!confirmId) return
     startTransition(async () => {
       try { await budgetsApi.delete(confirmId); router.refresh() }
-      catch { /* toast later */ }
+      catch (err) { toastError(err, 'Could not delete the budget.') }
       finally { setConfirmId(null) }
     })
   }
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 mb-5">
-        <PeriodNav
-          label={monthLabel}
-          onPrev={() => navigate(-1)}
-          onNext={() => navigate(1)}
-        />
-        <Button onClick={() => { setEditingBudget(null); setModalOpen(true) }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          New budget
-        </Button>
-      </div>
+      <ScreenHeader
+        eyebrow={monthLabel}
+        headline={
+          activeBudgets.length === 0
+            ? <>No budgets set for this month — add one to give your spending a ceiling.</>
+            : overCount > 0
+            ? <><Em tone="bad">{overCount} of {activeBudgets.length}</Em> budget{overCount === 1 ? ' is' : 's are'} over the limit.</>
+            : totalBudget > 0 && spentPct >= 80
+            ? <>You&rsquo;ve used <Em tone="warn">{Math.round(spentPct)}%</Em> of what you budgeted this month.</>
+            : <>All <Em tone="good">{activeBudgets.length}</Em> budget{activeBudgets.length === 1 ? ' is' : 's are'} on track.</>
+        }
+        support={activeBudgets.length > 0
+          ? <>
+              <span>{formatVND(totalSpent)} of {formatVND(totalBudget)}</span><Dot />
+              <span>
+                {totalSpent > totalBudget
+                  ? `${formatVND(totalSpent - totalBudget)} over`
+                  : `${formatVND(totalBudget - totalSpent)} left`}
+              </span>
+            </>
+          : undefined}
+        segments={REPORT_SEGMENTS}
+        controls={
+          <PeriodNav label={monthLabel} onPrev={() => navigate(-1)} onNext={() => navigate(1)} />
+        }
+        action={
+          <Button onClick={() => { setEditingBudget(null); setModalOpen(true) }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            New budget
+          </Button>
+        }
+      />
 
       {inactiveBudgets.length > 0 && (
         <TabGroup
@@ -160,48 +187,6 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
           onChange={setTab}
           className="w-fit mb-5"
         />
-      )}
-
-      {/* Hero panel */}
-      {tab === 'active' && activeBudgets.length > 0 && (
-        <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl p-5 mb-5">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/45">
-              Budget Overview
-            </p>
-            {overCount > 0 && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400">
-                {overCount} over budget
-              </span>
-            )}
-          </div>
-
-          <p className={`text-[2.5rem] font-bold tabular-nums tracking-tight leading-none ${
-            totalSpent > totalBudget ? 'text-rose-400' : 'text-white'
-          }`}>
-            {formatVND(totalSpent)}
-          </p>
-          <p className="text-sm text-white/45 mt-1">of {formatVND(totalBudget)} budgeted</p>
-
-          {totalBudget > 0 && (
-            <div className="mt-4">
-              <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className={`h-full rounded-full animate-bar-fill ${totalSpent > totalBudget ? 'bg-rose-500' : 'bg-emerald-400'}`}
-                  style={{ width: `${spentPct}%` }}
-                />
-              </div>
-              <div className="flex justify-between mt-1.5">
-                <p className="text-[10px] text-white/35">{Math.round(spentPct)}% spent</p>
-                <p className="text-[10px] text-white/35">
-                  {totalSpent > totalBudget
-                    ? `${formatVND(totalSpent - totalBudget)} over`
-                    : `${formatVND(totalBudget - totalSpent)} left`}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
       )}
 
       {visibleBudgets.length === 0 ? (

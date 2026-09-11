@@ -1,4 +1,4 @@
-export type CreditCycle = {
+type CreditCycle = {
   start: string   // YYYY-MM-DD — first day of cycle
   end: string     // YYYY-MM-DD — last day of cycle (day before statement_day)
   statementDate: string  // YYYY-MM-DD — statement date

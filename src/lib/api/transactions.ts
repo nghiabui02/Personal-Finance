@@ -18,7 +18,7 @@ export type Transaction = {
   wallets: { id: string; name: string } | null
 }
 
-export type TransactionPayload = {
+type TransactionPayload = {
   type: 'income' | 'expense'
   amount: number
   category_id?: string

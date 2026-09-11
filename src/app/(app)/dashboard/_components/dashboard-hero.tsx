@@ -2,6 +2,8 @@
 
 import { formatVND } from '@/lib/utils/currency'
 import { localYM } from '@/lib/utils/date'
+import { Dot, Em, Verdict } from '@/components/ui/verdict'
+import type { SpendingPace } from '@/lib/server/spending-pace'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -21,10 +23,38 @@ interface DashboardHeroProps {
   totalCreditDebt: number
   totalBorrowed: number
   alerts: Alert[]
+  pace: SpendingPace
+  /** Unspent amount across active budgets, or null when none are set. */
+  budgetHeadroom: number | null
+}
+
+/**
+ * The opening sentence. A total on its own cannot tell the user whether to
+ * change anything — the comparison against their own recent months can.
+ */
+function paceHeadline(pace: SpendingPace, isCurrentMonth: boolean) {
+  if (pace.deltaPct === null) {
+    return isCurrentMonth
+      ? <>You&rsquo;ve spent <Em>{formatVND(pace.actual)}</Em> so far. No earlier months to compare against yet.</>
+      : <>You spent <Em>{formatVND(pace.actual)}</Em> this month. No earlier months to compare against.</>
+  }
+
+  const pct = Math.abs(Math.round(pace.deltaPct * 100))
+  if (pct < 5) {
+    return isCurrentMonth
+      ? <>You&rsquo;re spending <Em>in line</Em> with your 3-month average.</>
+      : <>You spent <Em>in line</Em> with your 3-month average.</>
+  }
+
+  const faster = pace.deltaPct > 0
+  const rate = <Em tone={faster ? 'bad' : 'good'}>{pct}% {faster ? 'faster' : 'slower'}</Em>
+  return isCurrentMonth
+    ? <>You&rsquo;re spending {rate} than your 3-month average.</>
+    : <>You spent {rate} than your 3-month average.</>
 }
 
 const PREV_ICON = (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
   </svg>
 )
@@ -36,7 +66,7 @@ const ALERT_ICON = (
 )
 
 const NEXT_ICON = (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
   </svg>
 )
@@ -51,6 +81,8 @@ export function DashboardHero({
   totalCreditDebt,
   totalBorrowed,
   alerts,
+  pace,
+  budgetHeadroom,
 }: DashboardHeroProps) {
   const router = useRouter()
 
@@ -75,27 +107,47 @@ export function DashboardHero({
 
   return (
     <div className="space-y-4">
-      {/* Month nav — the month is the subject; the arrows are plumbing */}
-      <div className="flex items-center gap-1">
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 mr-2">
-          {monthLabel}
-        </h1>
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Previous month"
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          {PREV_ICON}
-        </button>
-        <button
-          onClick={() => navigate(1)}
-          aria-label="Next month"
-          disabled={isCurrentMonth}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-25 disabled:pointer-events-none"
-        >
-          {NEXT_ICON}
-        </button>
-      </div>
+      <Verdict
+        eyebrow={
+          <span className="flex items-center gap-0.5">
+            {monthLabel}
+            <button
+              onClick={() => navigate(-1)}
+              aria-label="Previous month"
+              className="ml-1 w-6 h-6 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              {PREV_ICON}
+            </button>
+            <button
+              onClick={() => navigate(1)}
+              aria-label="Next month"
+              disabled={isCurrentMonth}
+              className="w-6 h-6 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            >
+              {NEXT_ICON}
+            </button>
+          </span>
+        }
+        headline={paceHeadline(pace, isCurrentMonth)}
+        support={
+          <>
+            {isCurrentMonth && pace.daysLeft > 0 && (
+              <><span>{pace.daysLeft} days left</span><Dot /></>
+            )}
+            {budgetHeadroom !== null && (
+              <>
+                <span>
+                  {budgetHeadroom >= 0
+                    ? `${formatVND(budgetHeadroom)} of budget left`
+                    : `${formatVND(-budgetHeadroom)} over budget`}
+                </span>
+                <Dot />
+              </>
+            )}
+            <span>{formatVND(pace.actual)} out</span>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
         {/* Net cash flow */}
@@ -162,6 +214,9 @@ export function DashboardHero({
               </div>
             )}
           </dl>
+          <p className="mt-3 text-[11px] leading-relaxed text-white/40">
+            What you own on paper. Money you&rsquo;ve lent counts here even though it isn&rsquo;t in a wallet yet.
+          </p>
         </div>
       </div>
 

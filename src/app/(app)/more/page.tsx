@@ -7,9 +7,9 @@ const CHEVRON = (
   </svg>
 )
 
-const MORE_GROUPS = [
+const ACCOUNT_GROUPS = [
   [
-    {
+{
       href: '/categories',
       label: 'Categories',
       icon: (
@@ -19,47 +19,7 @@ const MORE_GROUPS = [
         </svg>
       ),
     },
-    {
-      href: '/budgets',
-      label: 'Budgets',
-      icon: (
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/>
-        </svg>
-      ),
-    },
-  ],
-  [
-    {
-      href: '/debts',
-      label: 'Debts',
-      icon: (
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-        </svg>
-      ),
-    },
-    {
-      href: '/saving-goals',
-      label: 'Saving Goals',
-      icon: (
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"/>
-        </svg>
-      ),
-    },
-    {
-      href: '/recurring',
-      label: 'Recurring',
-      icon: (
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
-        </svg>
-      ),
-    },
-  ],
-  [
-    {
+{
       href: '/settings',
       label: 'Settings',
       icon: (
@@ -104,7 +64,7 @@ export default async function MorePage() {
       </Link>
 
       {/* Nav groups */}
-      {MORE_GROUPS.map((group, gi) => (
+      {ACCOUNT_GROUPS.map((group, gi) => (
         <div key={gi} className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline overflow-hidden">
           {group.map((item, ii) => (
             <div key={item.href}>

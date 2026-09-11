@@ -1,6 +1,11 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
+import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
+import { ScreenHeader } from '@/components/ui/screen-header'
+import { Dot, Em } from '@/components/ui/verdict'
+import { toastError } from '@/components/ui/toast'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatVND } from '@/lib/utils/currency'
 import { type Wallet, walletsApi } from '@/lib/api/wallets'
@@ -21,7 +26,13 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const [transferFromId, setTransferFromId] = useState<string | undefined>(undefined)
   const [payingCreditId, setPayingCreditId] = useState<string | null>(null)
 
-  const totalAssets = wallets.reduce((sum, w) => w.type === 'credit' ? sum : sum + Number(w.balance), 0)
+  const spendable = wallets.filter(w => w.type !== 'credit')
+  const totalAssets = spendable.reduce((sum, w) => sum + Number(w.balance), 0)
+  // Credit balances are money owed, so they are stated separately rather than
+  // netted into the headline — the two numbers answer different questions.
+  const creditOwed = wallets
+    .filter(w => w.type === 'credit')
+    .reduce((sum, w) => sum + Math.abs(Number(w.balance)), 0)
   const confirmWallet = wallets.find(w => w.id === confirmId)
 
   function openModal(wallet: Wallet | null = null) {
@@ -33,44 +44,35 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
     if (!confirmId) return
     startTransition(async () => {
       try { await walletsApi.delete(confirmId); router.refresh() }
-      catch { /* toast later */ }
+      catch (err) { toastError(err, 'Could not delete the wallet.') }
       finally { setConfirmId(null) }
     })
   }
 
   return (
     <>
-      {/* Total balance hero */}
-      {wallets.length > 0 && (
-        <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl px-5 py-5 mb-4">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Total Balance</p>
-          <p className="text-3xl sm:text-4xl font-light tabular-nums leading-none text-white">
-            {formatVND(totalAssets)}
-          </p>
-          {wallets.length > 0 && (
-            <p className="text-xs tabular-nums text-white/30 mt-2">
-              {wallets.filter(w => w.type !== 'credit').length} wallet{wallets.filter(w => w.type !== 'credit').length !== 1 ? 's' : ''}
-            </p>
-          )}
-        </div>
-      )}
+      <ScreenHeader
+        eyebrow="Money"
+        headline={
+          wallets.length === 0
+            ? <>No wallets yet — add one to start tracking where your money sits.</>
+            : <>You hold <Em>{formatVND(totalAssets)}</Em> across {spendable.length} wallet{spendable.length === 1 ? '' : 's'}.</>
+        }
+        support={creditOwed > 0
+          ? <><span className="text-rose-600 dark:text-rose-400">{formatVND(creditOwed)} owed on cards</span><Dot /><span>{wallets.length} accounts total</span></>
+          : undefined}
+        segments={MONEY_SEGMENTS}
+        action={
+          <Button onClick={() => openModal()}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            New wallet
+          </Button>
+        }
+      />
 
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
-          {wallets.length > 0 ? `${wallets.length} wallet${wallets.length > 1 ? 's' : ''}` : ''}
-        </p>
-        <button
-          onClick={() => openModal()}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-          </svg>
-          New wallet
-        </button>
-      </div>
-
+      <div>
       {wallets.length === 0 ? (
         <EmptyState
           message="No wallets yet."
@@ -91,6 +93,8 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
           ))}
         </div>
       )}
+
+      </div>
 
       {modalOpen && (
         <WalletModal

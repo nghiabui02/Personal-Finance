@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-export type SelectOption = {
+type SelectOption = {
   value: string
   label: string | null
   icon?: string | null

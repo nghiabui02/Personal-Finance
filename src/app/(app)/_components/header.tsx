@@ -50,13 +50,15 @@ export default function Header({
 
         <div className="flex items-center gap-1.5 ml-auto">
         <NotificationBell />
-        {/* Mobile only — on desktop the user block lives at the bottom of the sidebar */}
-        <div className="flex md:hidden items-center gap-2">
+        {/* Mobile only — on desktop the user block lives at the bottom of the sidebar.
+            It is also the way into Categories and Settings now that the bottom
+            nav spends its slots on the four daily screens. */}
+        <Link href="/more" aria-label="Account" className="flex md:hidden items-center gap-2 rounded-full">
           {avatarUrl && !avatarErr ? (
             // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
             <img
               src={avatarUrl}
-              alt="Avatar"
+              alt=""
               className="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 shrink-0"
               onError={() => setAvatarErr(true)}
             />
@@ -68,7 +70,7 @@ export default function Header({
           <span className="hidden sm:block text-sm font-medium text-gray-600 dark:text-gray-300 max-w-36 truncate">
             {displayName}
           </span>
-        </div>
+        </Link>
         </div>
       </div>
     </header>

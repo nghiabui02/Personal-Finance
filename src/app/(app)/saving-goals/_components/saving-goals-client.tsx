@@ -1,6 +1,7 @@
 'use client'
 
 import { AmountInput } from '@/components/ui/amount-input'
+import { toastError } from '@/components/ui/toast'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -10,6 +11,9 @@ import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { TabGroup } from '@/components/ui/tab-group'
+import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
+import { ScreenHeader } from '@/components/ui/screen-header'
+import { Dot, Em } from '@/components/ui/verdict'
 import { formatVND } from '@/lib/utils/currency'
 import { type SavingGoal, savingGoalsApi } from '@/lib/api/saving-goals'
 import { useRouter } from 'next/navigation'
@@ -223,49 +227,49 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
 
   const totalSaved = active.reduce((s, g) => s + Number(g.current_amount), 0)
   const totalTarget = active.reduce((s, g) => s + Number(g.target_amount), 0)
+  const savedPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0
 
   function handleDeleteConfirmed() {
     if (!confirmId) return
     startTransition(async () => {
       try { await savingGoalsApi.delete(confirmId); router.refresh() }
-      catch { /* toast later */ }
+      catch (err) { toastError(err, 'Could not delete the goal.') }
       finally { setConfirmId(null) }
     })
   }
 
   return (
     <>
-      <button
-        onClick={() => { setEditingGoal(null); setModalOpen(true) }}
-        className="fixed bottom-above-nav right-4 md:bottom-6 md:right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-[colors,transform] hover:scale-110 active:scale-95 flex items-center justify-center"
-        aria-label="New saving goal"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      </button>
-
-      {active.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-4 py-3">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total saved</p>
-            <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatVND(totalSaved)}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-4 py-3">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total target</p>
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{formatVND(totalTarget)}</p>
-          </div>
-        </div>
-      )}
-
-      <TabGroup
-        tabs={[
-          { key: 'active', label: `Active (${active.length})` },
-          { key: 'completed', label: `Completed (${completed.length})` },
-        ]}
-        value={tab}
-        onChange={setTab}
-        className="w-fit mb-5"
+      <ScreenHeader
+        eyebrow="Money"
+        headline={
+          active.length === 0
+            ? <>No goals running — set one and every contribution has somewhere to go.</>
+            : <>You&rsquo;ve saved <Em tone="good">{savedPct}%</Em> of what your {active.length} goal{active.length === 1 ? '' : 's'} need{active.length === 1 ? 's' : ''}.</>
+        }
+        support={active.length > 0
+          ? <><span>{formatVND(totalSaved)} of {formatVND(totalTarget)}</span><Dot /><span>{formatVND(totalTarget - totalSaved)} to go</span></>
+          : undefined}
+        segments={MONEY_SEGMENTS}
+        controls={
+          <TabGroup
+            tabs={[
+              { key: 'active', label: `Active (${active.length})` },
+              { key: 'completed', label: `Completed (${completed.length})` },
+            ]}
+            value={tab}
+            onChange={setTab}
+            className="w-fit"
+          />
+        }
+        action={
+          <Button onClick={() => { setEditingGoal(null); setModalOpen(true) }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            New goal
+          </Button>
+        }
       />
 
       {displayed.length === 0 ? (

@@ -6,6 +6,8 @@ import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import Header from './header'
 import Sidebar from './sidebar'
+import { QuickAddButton, type QuickAddData } from './quick-add-button'
+import { Toaster } from '@/components/ui/toast'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -21,63 +23,60 @@ const PAGE_TITLES: Record<string, string> = {
   '/more': 'More',
 }
 
-// Paths that make the "More" tab active
-const MORE_PATHS = ['/more', '/categories', '/budgets', '/debts', '/saving-goals', '/recurring', '/settings']
+// Sub-pages of the account hub that show a back button on mobile
+const ACCOUNT_SUB_PATHS = ['/categories', '/settings']
 
-// Sub-pages of More that should show a back button on mobile
-const MORE_SUB_PATHS = ['/categories', '/budgets', '/debts', '/saving-goals', '/recurring', '/settings']
+const OVERVIEW_ICON = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+  </svg>
+)
+const TRANSACTIONS_ICON = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/>
+  </svg>
+)
+const PLAN_ICON = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/>
+  </svg>
+)
+const MONEY_ICON = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3"/>
+  </svg>
+)
 
+/**
+ * Four tabs, not five, and no "More" drawer: every screen is one tap from a
+ * tab. Reports/Budgets and Wallets/Debts/Goals/Recurring each collapse into one
+ * tab and switch with a SegmentNav inside the screen.
+ */
 const BOTTOM_NAV = [
-  {
-    href: '/dashboard',
-    label: 'Overview',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"/>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"/>
-      </svg>
-    ),
-  },
-  {
-    href: '/transactions',
-    label: 'Transactions',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
-      </svg>
-    ),
-  },
-  {
-    href: '/reports',
-    label: 'Reports',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/>
-      </svg>
-    ),
-  },
-  {
-    href: '/wallets',
-    label: 'Wallets',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3"/>
-      </svg>
-    ),
-  },
-  {
-    href: '/more',
-    label: 'More',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/>
-      </svg>
-    ),
-  },
+  { href: '/dashboard',   label: 'Overview',     icon: OVERVIEW_ICON,     group: ['/dashboard'] },
+  { href: '/transactions', label: 'Transactions', icon: TRANSACTIONS_ICON, group: ['/transactions'] },
+  { href: '/reports',     label: 'Plan',         icon: PLAN_ICON,         group: ['/reports', '/budgets'] },
+  { href: '/wallets',     label: 'Money',        icon: MONEY_ICON,        group: ['/wallets', '/debts', '/saving-goals', '/recurring'] },
 ]
 
-function MobileBottomNav({ pathname }: { pathname: string }) {
-  const isMoreActive = MORE_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
+function MobileBottomNav({ pathname, quickAdd }: { pathname: string; quickAdd: QuickAddData }) {
+  const tab = (item: (typeof BOTTOM_NAV)[number]) => {
+    const active = item.group.some(p => pathname === p || pathname.startsWith(p + '/'))
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        aria-current={active ? 'page' : undefined}
+        className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
+          active ? 'text-brand' : 'text-gray-400 dark:text-gray-500'
+        }`}
+      >
+        <span className={active ? 'opacity-100' : 'opacity-60'}>{item.icon}</span>
+        <span className="text-[9px] font-medium tracking-wide">{item.label}</span>
+      </Link>
+    )
+  }
 
   return (
     <nav
@@ -85,27 +84,13 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-stretch h-14">
-        {BOTTOM_NAV.map(item => {
-          const active = item.href === '/more'
-            ? isMoreActive
-            : pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                active
-                  ? 'text-brand'
-                  : 'text-gray-400 dark:text-gray-500'
-              }`}
-            >
-              <span className={active ? 'opacity-100' : 'opacity-60'}>{item.icon}</span>
-              <span className={`text-[9px] font-medium tracking-wide ${active ? 'text-brand' : 'text-gray-400 dark:text-gray-500'}`}>
-                {item.label}
-              </span>
-            </Link>
-          )
-        })}
+        {BOTTOM_NAV.slice(0, 2).map(tab)}
+        {/* Logging a transaction is the one thing done every day — it gets the
+            centre slot instead of a floating button that overlaps content. */}
+        <div className="w-16 shrink-0 flex items-start justify-center">
+          <QuickAddButton data={quickAdd} variant="nav" />
+        </div>
+        {BOTTOM_NAV.slice(2).map(tab)}
       </div>
     </nav>
   )
@@ -114,14 +99,16 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
 export default function AppShell({
   children,
   user,
+  quickAdd,
 }: {
   children: ReactNode
   user: User
+  quickAdd: QuickAddData
 }) {
   const pathname = usePathname()
 
   const title = PAGE_TITLES[pathname] ?? Object.entries(PAGE_TITLES).find(([k]) => pathname.startsWith(k + '/'))?.at(1) ?? 'Finance'
-  const isMoreSubPage = MORE_SUB_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
+  const isAccountSubPage = ACCOUNT_SUB_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
 
   return (
     <div className="bg-gray-50 dark:bg-gray-950 md:h-dvh md:overflow-hidden md:flex md:flex-col">
@@ -129,7 +116,7 @@ export default function AppShell({
       <Header
         user={user}
         title={title}
-        backHref={isMoreSubPage ? '/more' : undefined}
+        backHref={isAccountSubPage ? '/more' : undefined}
       />
 
       {/* Desktop sidebar — fixed, full height, above the header */}
@@ -141,7 +128,9 @@ export default function AppShell({
         {children}
       </main>
 
-      <MobileBottomNav pathname={pathname} />
+      <MobileBottomNav pathname={pathname} quickAdd={quickAdd} />
+      <QuickAddButton data={quickAdd} variant="fab" />
+      <Toaster />
     </div>
   )
 }

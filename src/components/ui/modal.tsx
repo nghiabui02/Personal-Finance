@@ -27,11 +27,6 @@ export function useModalClose(): () => void {
   }, [])
 }
 
-export function ModalClose({ children }: { children: React.ReactElement<{ onClick?: () => void }> }) {
-  const close = useModalClose()
-  return React.cloneElement(children, { onClick: close })
-}
-
 interface ModalProps {
   title?: string
   size?: 'sm' | 'md'

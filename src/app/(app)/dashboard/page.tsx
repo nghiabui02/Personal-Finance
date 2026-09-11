@@ -2,19 +2,18 @@ import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
+import { getSpendingPace } from '@/lib/server/spending-pace'
 import type { CategoryRef } from '@/lib/types'
 import { formatVND } from '@/lib/utils/currency'
 import { localYM, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 import { DashboardHero, type Alert } from './_components/dashboard-hero'
-import { DashboardAddButton } from './_components/dashboard-add-button'
 import { BudgetProgress } from './_components/budget-progress'
 import { DebtSummary } from './_components/debt-summary'
 import { NetWorthChart } from './_components/net-worth-chart'
 import { RecentTransactions } from './_components/recent-transactions'
 import { SpendingChart } from './_components/spending-chart'
-import { CATEGORY_COLUMNS } from '@/lib/api/categories'
 import { WALLET_COLUMNS } from '@/lib/api/wallets'
 
 export const dynamic = 'force-dynamic'
@@ -41,7 +40,6 @@ export default async function DashboardPage({
       { data: debtRows },
       { data: walletRows },
       { data: snapshotRows },
-      { data: categoryRows },
     ],
     budgetsWithRollover,
   ] = await Promise.all([
@@ -55,7 +53,6 @@ export default async function DashboardPage({
       supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
       supabase.from('wallets').select(WALLET_COLUMNS).eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
       supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
-      supabase.from('categories').select(CATEGORY_COLUMNS).order('is_default', { ascending: false }).order('name'),
     ]),
     getBudgetsForMonth(supabase, user.id, month).then(rows => rows.filter(b => b.active)),
   ])
@@ -81,6 +78,12 @@ export default async function DashboardPage({
   const budgets = budgetsWithRollover.map(b => ({
     id: b.id, amount: b.effectiveAmount, spent: b.spent, category: b.categories,
   }))
+
+  // The opening sentence needs a comparison, so it waits on the month's own total
+  const pace = await getSpendingPace(supabase, user.id, month, totalExpense)
+  const budgetHeadroom = budgets.length > 0
+    ? budgets.reduce((s, b) => s + (b.amount - b.spent), 0)
+    : null
 
   // Alerts
   const alerts: Alert[] = []
@@ -119,9 +122,6 @@ export default async function DashboardPage({
     }
   }
 
-  const activeDebtsForModal = (debtRows ?? [])
-    .filter(d => d.status === 'active' && Number(d.remaining_amount) > 0)
-    .map(d => ({ id: d.id, type: d.type as 'lend' | 'borrow', person_name: d.person_name, remaining_amount: Number(d.remaining_amount) }))
 
   return (
     <div className="space-y-4 pb-2">
@@ -135,6 +135,8 @@ export default async function DashboardPage({
         totalCreditDebt={totalCreditDebt}
         totalBorrowed={totalBorrowed}
         alerts={alerts.slice(0, 5)}
+        pace={pace}
+        budgetHeadroom={budgetHeadroom}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-stretch">
@@ -153,11 +155,6 @@ export default async function DashboardPage({
 
       <NetWorthChart snapshots={(snapshotRows ?? []) as { recorded_date: string; net_worth: number }[]} />
 
-      <DashboardAddButton
-        categories={categoryRows ?? []}
-        wallets={(walletRows ?? []) as unknown as Parameters<typeof DashboardAddButton>[0]['wallets']}
-        debts={activeDebtsForModal}
-      />
     </div>
   )
 }

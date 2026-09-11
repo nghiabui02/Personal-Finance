@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>
 
-export type AuthedContext<P> = {
+type AuthedContext<P> = {
   supabase: ServerClient
   user: User
   params: P
@@ -15,7 +15,7 @@ export function jsonError(status: number, message: string): NextResponse {
 }
 
 export const badRequest = (message: string) => jsonError(400, message)
-export const unauthorized = () => jsonError(401, 'Unauthorized')
+const unauthorized = () => jsonError(401, 'Unauthorized')
 export const notFound = (message = 'Not found.') => jsonError(404, message)
 export const conflict = (message: string) => jsonError(409, message)
 export const tooManyRequests = (message = 'Too many attempts. Please try again later.') => jsonError(429, message)

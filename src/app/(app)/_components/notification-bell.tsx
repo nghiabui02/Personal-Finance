@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { toastError } from '@/components/ui/toast'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
@@ -33,7 +34,7 @@ export function NotificationBell() {
     let cancelled = false
     apiFetch<AppNotification[]>('/api/notifications')
       .then(data => { if (!cancelled) setItems(data) })
-      .catch(() => {})
+      .catch(() => { /* the bell is ambient; a failed poll retries on next navigation */ })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [pathname])
@@ -43,7 +44,7 @@ export function NotificationBell() {
   const openPanel = () => {
     setOpen(true)
     const unreadIds = items.filter(i => !i.read).map(i => i.id)
-    if (unreadIds.length > 0) patchNotifications('read', unreadIds).catch(() => {})
+    if (unreadIds.length > 0) patchNotifications('read', unreadIds).catch(() => { /* read marks re-send next time the panel opens */ })
   }
 
   const closePanel = () => {
@@ -52,8 +53,14 @@ export function NotificationBell() {
   }
 
   const dismiss = (id: string) => {
+    const removed = items.find(i => i.id === id)
     setItems(prev => prev.filter(i => i.id !== id))
-    patchNotifications('dismiss', [id]).catch(() => {})
+    // Put it back if the server refused — otherwise it silently returns on the
+    // next load and the user cannot tell why.
+    patchNotifications('dismiss', [id]).catch(err => {
+      if (removed) setItems(prev => prev.some(i => i.id === id) ? prev : [...prev, removed])
+      toastError(err, 'Could not dismiss the notification.')
+    })
   }
 
   // Close on outside click / Escape

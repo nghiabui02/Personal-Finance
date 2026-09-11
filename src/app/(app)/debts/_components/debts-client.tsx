@@ -1,11 +1,15 @@
 'use client'
 
 import Link from 'next/link'
+import { toastError } from '@/components/ui/toast'
 import { BRAND_HEX, MONEY_IN } from '@/lib/utils/colors'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
+import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
+import { ScreenHeader } from '@/components/ui/screen-header'
+import { Dot, Em } from '@/components/ui/verdict'
 import { AmountInput } from '@/components/ui/amount-input'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -406,6 +410,10 @@ export default function DebtsClient({
 
   const totalLent = debts.filter(d => d.type === 'lend' && d.status !== 'completed').reduce((s, d) => s + d.remaining_amount, 0)
   const totalBorrowed = debts.filter(d => d.type === 'borrow' && d.status !== 'completed').reduce((s, d) => s + d.remaining_amount, 0)
+  const netPosition = totalLent - totalBorrowed
+  const nextDue = debts
+    .filter(d => d.status !== 'completed' && d.due_date)
+    .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))[0]
 
   function openNew(type: 'lend' | 'borrow') {
     setDefaultType(type)
@@ -417,31 +425,51 @@ export default function DebtsClient({
     if (!confirmId) return
     startTransition(async () => {
       try { await debtsApi.delete(confirmId); router.refresh() }
-      catch { /* toast later */ }
+      catch (err) { toastError(err, 'Could not delete the debt.') }
       finally { setConfirmId(null) }
     })
   }
 
   return (
     <>
-      <button
-        onClick={() => openNew('lend')}
-        className="fixed bottom-above-nav right-4 md:bottom-6 md:right-6 z-40 w-12 h-12 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg hover:bg-gray-700 dark:hover:bg-gray-100 transition-[colors,transform] hover:scale-110 active:scale-95 flex items-center justify-center"
-        aria-label="New debt"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      </button>
-
-      <TabGroup
-        tabs={[
-          { key: 'active', label: `Active (${activeCount})` },
-          { key: 'completed', label: `Completed (${completedCount})` },
-        ]}
-        value={tab}
-        onChange={setTab}
-        className="w-fit mb-5"
+      <ScreenHeader
+        eyebrow="Money"
+        headline={
+          activeCount === 0
+            ? <>Nothing outstanding — no money lent out and none borrowed.</>
+            : netPosition === 0
+            ? <>Lending and borrowing cancel out at <Em>{formatVND(totalLent)}</Em> each way.</>
+            : netPosition > 0
+            ? <>You&rsquo;re owed <Em tone="good">{formatVND(netPosition)}</Em> more than you owe.</>
+            : <>You owe <Em tone="bad">{formatVND(-netPosition)}</Em> more than you&rsquo;re owed.</>
+        }
+        support={activeCount > 0
+          ? <>
+              <span>{formatVND(totalLent)} lent</span><Dot />
+              <span>{formatVND(totalBorrowed)} borrowed</span>
+              {nextDue && <><Dot /><span>next due {nextDue.due_date}</span></>}
+            </>
+          : undefined}
+        segments={MONEY_SEGMENTS}
+        controls={
+          <TabGroup
+            tabs={[
+              { key: 'active', label: `Active (${activeCount})` },
+              { key: 'completed', label: `Completed (${completedCount})` },
+            ]}
+            value={tab}
+            onChange={setTab}
+            className="w-fit"
+          />
+        }
+        action={
+          <Button onClick={() => openNew('lend')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            New debt
+          </Button>
+        }
       />
 
       <div className="space-y-8">

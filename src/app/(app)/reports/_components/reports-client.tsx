@@ -3,6 +3,10 @@
 import { formatVND } from '@/lib/utils/currency'
 import { useRouter } from 'next/navigation'
 import { TabGroup } from '@/components/ui/tab-group'
+import { PeriodNav } from '@/components/ui/period-nav'
+import { REPORT_SEGMENTS } from '@/components/ui/segment-nav'
+import { ScreenHeader } from '@/components/ui/screen-header'
+import { Dot, Em } from '@/components/ui/verdict'
 import { AIInsights } from './ai-insights'
 import { NetWorthChart } from '@/app/(app)/dashboard/_components/net-worth-chart'
 import { CategoryChart } from './category-chart'
@@ -84,94 +88,72 @@ export default function ReportsClient({
 
   return (
     <div className="space-y-4">
-      {/* Period selector + navigator */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <TabGroup
-          tabs={PERIODS.map(p => ({ key: p.key, label: p.label }))}
-          value={period}
-          onChange={v => switchPeriod(v as PeriodType)}
-          className="w-full sm:w-auto"
-        />
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-        <button
-          onClick={exportCSV}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors shrink-0"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-          </svg>
-          Export CSV
-        </button>
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex-1 sm:flex-none sm:w-auto">
+      <ScreenHeader
+        eyebrow={getPeriodLabel(period, start)}
+        headline={
+          totalIncome === 0 && totalExpense === 0
+            ? <>Nothing recorded for this period yet.</>
+            : net >= 0
+            ? <>You kept <Em tone="good">{formatVND(net)}</Em> of what came in{totalIncome > 0 ? <> — <Em tone="good">{savingsRate}%</Em> of it</> : null}.</>
+            : <>You spent <Em tone="bad">{formatVND(-net)}</Em> more than you earned.</>
+        }
+        support={
+          (totalIncome > 0 || totalExpense > 0) && (
+            <><span>{formatVND(totalIncome)} in</span><Dot /><span>{formatVND(totalExpense)} out</span></>
+          )
+        }
+        segments={REPORT_SEGMENTS}
+        controls={
+          <>
+            <TabGroup
+              tabs={PERIODS.map(p => ({ key: p.key, label: p.label }))}
+              value={period}
+              onChange={v => switchPeriod(v as PeriodType)}
+              className="w-fit"
+            />
+            <PeriodNav label={getPeriodLabel(period, start)} onPrev={() => navigate(-1)} onNext={() => navigate(1)} />
+          </>
+        }
+        action={
           <button
-            onClick={() => navigate(-1)}
-            className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors shrink-0"
-            aria-label="Previous period"
+            onClick={exportCSV}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
+            Export CSV
           </button>
-          <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
-            {getPeriodLabel(period, start)}
-          </span>
-          <button
-            onClick={() => navigate(1)}
-            className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors shrink-0"
-            aria-label="Next period"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
-          </button>
-        </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Hero panel */}
-      <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl p-5 animate-fade-up">
-        <div className="flex items-start justify-between mb-2">
-          <p className="text-[10px] uppercase tracking-widest text-white/45 font-semibold">Net Cash Flow</p>
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-            isOverBudget
-              ? 'bg-rose-500/15 text-rose-400'
-              : 'bg-emerald-500/15 text-emerald-400'
-          }`}>
-            {isOverBudget ? 'over budget' : `${savingsRate}% saved`}
-          </span>
-        </div>
-
-        <p className={`text-[2.5rem] font-bold tabular-nums tracking-tight leading-none ${
-          net >= 0 ? 'text-emerald-400' : 'text-rose-400'
-        }`}>
-          {net >= 0 ? '+' : ''}{formatVND(net)}
-        </p>
-
-        <div className="flex gap-5 mt-4">
-          <div>
-            <p className="text-[10px] text-white/45 uppercase tracking-wider mb-0.5">Income</p>
-            <p className="text-sm font-semibold text-emerald-400 tabular-nums">{formatVND(totalIncome)}</p>
+      {/* How the period split between saving and spending */}
+      {totalIncome > 0 && (
+        <div>
+          <div className="flex h-1.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+            <div className="bg-emerald-500 animate-bar-fill" style={{ width: `${savingsPct}%` }} />
+            <div className="bg-rose-500 animate-bar-fill" style={{ width: `${expensePct}%`, animationDelay: '100ms' }} />
           </div>
-          <div className="w-px bg-white/10 self-stretch" />
-          <div>
-            <p className="text-[10px] text-white/45 uppercase tracking-wider mb-0.5">Expense</p>
-            <p className="text-sm font-semibold text-rose-400 tabular-nums">{formatVND(totalExpense)}</p>
+          <div className="flex justify-between mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">
+            <span>{isOverBudget ? 'over budget' : `${savingsRate}% saved`}</span>
+            <span>{Math.round(expensePct)}% spent</span>
           </div>
         </div>
+      )}
 
-        {totalIncome > 0 && (
-          <div className="mt-5">
-            <div className="flex h-1 rounded-full overflow-hidden bg-white/10">
-              <div className="bg-emerald-400 animate-bar-fill" style={{ width: `${savingsPct}%` }} />
-              <div className="bg-rose-500 animate-bar-fill" style={{ width: `${expensePct}%`, animationDelay: '100ms' }} />
-            </div>
-            <div className="flex justify-between mt-1.5">
-              <p className="text-[10px] text-white/35">← savings</p>
-              <p className="text-[10px] text-white/35">spending →</p>
-            </div>
-          </div>
-        )}
-      </div>
+      <AIInsights
+        periodLabel={getPeriodLabel(period, start)}
+        period={period}
+        start={start}
+        totalIncome={totalIncome}
+        totalExpense={totalExpense}
+        categories={byCategory.map(c => ({ name: c.name, icon: c.icon, amount: c.amount }))}
+        budgets={aiBudgets.length ? aiBudgets : undefined}
+        previous={{ label: getPeriodLabel(period, prevStart), ...aiPrevious }}
+        topTransactions={aiTopTransactions}
+        timeline={chartData}
+        netWorthInfo={aiNetWorth}
+      />
 
       {/* Bar chart */}
       <BarChart data={chartData} title={chartTitle[period]} period={period} />
@@ -209,19 +191,6 @@ export default function ReportsClient({
 
       <NetWorthChart snapshots={netWorthSnapshots} />
 
-      <AIInsights
-        periodLabel={getPeriodLabel(period, start)}
-        period={period}
-        start={start}
-        totalIncome={totalIncome}
-        totalExpense={totalExpense}
-        categories={byCategory.map(c => ({ name: c.name, icon: c.icon, amount: c.amount }))}
-        budgets={aiBudgets.length ? aiBudgets : undefined}
-        previous={{ label: getPeriodLabel(period, prevStart), ...aiPrevious }}
-        topTransactions={aiTopTransactions}
-        timeline={chartData}
-        netWorthInfo={aiNetWorth}
-      />
     </div>
   )
 }

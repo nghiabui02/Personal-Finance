@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { monthRange } from '@/lib/utils/date'
 import type { CategoryRef } from '@/lib/types'
 
-export type BudgetWithRollover = {
+type BudgetWithRollover = {
   id: string
   category_id: string | null
   amount: number

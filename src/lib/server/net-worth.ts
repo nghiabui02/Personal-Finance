@@ -2,19 +2,19 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { localYMD } from '@/lib/utils/date'
 
 // Minimal row shapes so callers can select only the columns they need.
-export type WalletBalanceRow = {
+type WalletBalanceRow = {
   type: string
   balance: number | string
   credit_limit: number | string | null
 }
 
-export type DebtBalanceRow = {
+type DebtBalanceRow = {
   type: string
   status: string
   remaining_amount: number | string
 }
 
-export type NetWorthBreakdown = {
+type NetWorthBreakdown = {
   totalWalletBalance: number
   totalCreditDebt: number
   totalLent: number
