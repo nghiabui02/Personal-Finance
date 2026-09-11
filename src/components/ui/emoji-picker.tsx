@@ -114,7 +114,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
         onClick={handleOpen}
         className={`w-full flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors outline-none ${
           open
-            ? 'border-blue-500 ring-2 ring-blue-500/20'
+            ? 'border-brand ring-2 ring-brand/20'
             : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
         } bg-white dark:bg-gray-800`}
       >
@@ -169,7 +169,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
 
           {/* Category tabs */}
           {!query && (
-            <div className="flex items-center gap-0.5 px-2 pb-1 border-b border-gray-100 dark:border-gray-800 shrink-0 overflow-x-auto">
+            <div className="flex items-center gap-0.5 px-2 pb-1 border-b border-hairline shrink-0 overflow-x-auto">
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.key}
@@ -178,7 +178,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
                   onClick={() => setActiveCategory(cat.key)}
                   className={`shrink-0 text-base w-8 h-7 rounded flex items-center justify-center transition-colors ${
                     activeCategory === cat.key
-                      ? 'bg-blue-50 dark:bg-blue-950/50'
+                      ? 'bg-brand-soft'
                       : 'hover:bg-gray-100 dark:hover:bg-gray-800 opacity-60 hover:opacity-100'
                   }`}
                 >
@@ -190,7 +190,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
 
           {/* Section label */}
           <div className="px-3 pt-2 pb-1 shrink-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{sectionLabel}</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">{sectionLabel}</p>
           </div>
 
           {/* Emoji grid */}
@@ -205,7 +205,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
                     type="button"
                     onClick={() => select(emoji)}
                     className={`text-xl p-1 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 aspect-square flex items-center justify-center ${
-                      value === emoji ? 'bg-blue-50 dark:bg-blue-950/60 ring-1 ring-blue-400' : ''
+                      value === emoji ? 'bg-brand-soft ring-1 ring-brand' : ''
                     }`}
                   >
                     {emoji}

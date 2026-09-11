@@ -2,6 +2,7 @@
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { DatePicker } from '@/components/ui/date-picker'
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
@@ -197,7 +198,7 @@ function GoalCard({
       </div>
       <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full animate-bar-fill ${isCompleted ? 'bg-green-500' : pct >= 80 ? 'bg-blue-500' : 'bg-blue-400'}`}
+          className={`h-full rounded-full animate-bar-fill ${isCompleted ? 'bg-emerald-500' : 'bg-emerald-400'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -253,11 +254,11 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
 
       {active.length > 0 && (
         <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-hairline px-4 py-3">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total saved</p>
-            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 tabular-nums">{formatVND(totalSaved)}</p>
+            <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatVND(totalSaved)}</p>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-hairline px-4 py-3">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total target</p>
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{formatVND(totalTarget)}</p>
           </div>
@@ -275,14 +276,10 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
       />
 
       {displayed.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-gray-400 text-sm">{tab === 'active' ? 'No active goals.' : 'No completed goals yet.'}</p>
-          {tab === 'active' && (
-            <button onClick={() => { setEditingGoal(null); setModalOpen(true) }} className="mt-2 text-sm text-blue-600 hover:underline">
-              Create your first goal
-            </button>
-          )}
-        </div>
+        <EmptyState
+          message={tab === 'active' ? 'No active goals.' : 'No completed goals yet.'}
+          action={tab === 'active' ? { label: 'Create your first goal', onClick: () => { setEditingGoal(null); setModalOpen(true) } } : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {displayed.map((g, idx) => (

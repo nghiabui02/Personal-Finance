@@ -160,7 +160,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
         onClick={handleOpen}
         className={`w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors outline-none bg-white dark:bg-gray-800 ${
           open
-            ? 'border-blue-500 ring-2 ring-blue-500/20'
+            ? 'border-brand ring-2 ring-brand/20'
             : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
         }`}
       >
@@ -240,9 +240,9 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
                   className={`
                     w-full aspect-square flex items-center justify-center text-xs rounded-lg transition-colors
                     ${isSelected
-                      ? 'bg-blue-600 text-white font-semibold'
+                      ? 'bg-brand-fill text-white font-semibold'
                       : isToday
-                      ? 'ring-2 ring-blue-500 text-blue-600 dark:text-blue-400 font-semibold'
+                      ? 'ring-2 ring-brand text-brand font-semibold'
                       : isCurrentMonth
                       ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                       : 'text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50'
@@ -257,9 +257,9 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
           {/* Today shortcut */}
           {value !== today && (
-            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 text-center">
+            <div className="mt-2 pt-2 border-t border-hairline text-center">
               <button type="button" onClick={() => { onChange(today); setOpen(false) }}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                className="text-xs text-brand hover:underline">
                 Today
               </button>
             </div>

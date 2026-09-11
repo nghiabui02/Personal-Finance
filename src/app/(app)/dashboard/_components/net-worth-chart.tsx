@@ -13,9 +13,9 @@ function formatDate(dateStr: string) {
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl px-3 py-2 shadow-sm">
+    <div className="bg-white dark:bg-gray-900 border border-hairline rounded-xl px-3 py-2 shadow-sm">
       <p className="text-[10px] text-gray-400 mb-0.5">{label}</p>
-      <p className={`text-sm font-semibold tabular-nums ${payload[0].value >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'}`}>
+      <p className={`text-sm font-semibold tabular-nums ${payload[0].value >= 0 ? 'text-brand' : 'text-rose-600 dark:text-rose-400'}`}>
         {formatVND(payload[0].value)}
       </p>
     </div>

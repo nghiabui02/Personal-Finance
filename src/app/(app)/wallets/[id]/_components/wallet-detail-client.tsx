@@ -121,11 +121,11 @@ export default function WalletDetailClient({
         </p>
         <div className="flex gap-5 mt-4 pt-4 border-t border-white/20">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest opacity-60 mb-0.5">In</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] opacity-60 mb-0.5">In</p>
             <p className="text-sm font-semibold tabular-nums">+{formatVND(totalIncome)}</p>
           </div>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest opacity-60 mb-0.5">Out</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] opacity-60 mb-0.5">Out</p>
             <p className="text-sm font-semibold tabular-nums">−{formatVND(totalExpense)}</p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export default function WalletDetailClient({
           {groups.map(([date, txs]) => (
             <div key={date}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
                   {formatDateHeader(date)}
                 </p>
                 <p className={`text-xs tabular-nums font-medium ${
@@ -153,7 +153,7 @@ export default function WalletDetailClient({
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline divide-y divide-hairline">
                 {txs.map(tx => {
                   const isTransfer = !!tx.transfer_pair_id
                   const cat = tx.categories

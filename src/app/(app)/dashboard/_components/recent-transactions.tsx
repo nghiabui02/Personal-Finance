@@ -1,5 +1,5 @@
 import { formatVND } from '@/lib/utils/currency'
-import { SectionCard, SectionEmpty } from './section-card'
+import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
 
 type Transaction = {
   id: string

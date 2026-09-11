@@ -313,10 +313,10 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           placeholder="e.g. Lunch with colleagues" />
 
         {canAddFee && (
-          <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
+          <div className="border-t border-hairline pt-3">
             {!showFee ? (
               <button type="button" onClick={() => setShowFee(true)}
-                className="text-xs text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+                className="text-xs text-gray-400 hover:text-brand transition-colors flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                 </svg>

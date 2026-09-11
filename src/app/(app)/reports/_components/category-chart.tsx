@@ -27,8 +27,8 @@ export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; to
   }, [ready])
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-5">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-5">
         Spending Breakdown
       </p>
 

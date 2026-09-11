@@ -2,6 +2,7 @@
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { CategorySelect } from '@/components/ui/category-select'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
@@ -140,10 +141,10 @@ function RecurringModal({
         {/* Bank fee — persisted on the rule, then folded into every generated
             transaction (amount + fee), same as the transaction modal */}
         {txType === 'expense' && !!walletId && (
-          <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
+          <div className="border-t border-hairline pt-3">
             {!showFee ? (
               <button type="button" onClick={() => setShowFee(true)}
-                className="text-xs text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+                className="text-xs text-gray-400 hover:text-brand transition-colors flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                 </svg>
@@ -264,7 +265,7 @@ function RecurringCard({
             {!isExpired && (
               <button onClick={handleToggleActive} disabled={togglingActive}
                 title={item.active ? 'Pause' : 'Resume'}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors disabled:opacity-40">
+                className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand-soft transition-colors disabled:opacity-40">
                 {item.active ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
@@ -341,17 +342,15 @@ export default function RecurringClient({
       </button>
 
       {items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-gray-400 text-sm">No recurring transactions yet.</p>
-          <button onClick={() => { setEditingItem(null); setModalOpen(true) }} className="mt-2 text-sm text-blue-600 hover:underline">
-            Add your first one
-          </button>
-        </div>
+        <EmptyState
+          message="No recurring transactions yet."
+          action={{ label: 'Add your first one', onClick: () => { setEditingItem(null); setModalOpen(true) } }}
+        />
       ) : (
         <div className="space-y-6">
           {active.length > 0 && (
             <section>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Active ({active.length})</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">Active ({active.length})</p>
               <div className="space-y-2">
                 {active.map(item => (
                   <RecurringCard key={item.id} item={item}
@@ -363,7 +362,7 @@ export default function RecurringClient({
           )}
           {expired.length > 0 && (
             <section>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Ended ({expired.length})</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">Ended ({expired.length})</p>
               <div className="space-y-2">
                 {expired.map(item => (
                   <RecurringCard key={item.id} item={item}

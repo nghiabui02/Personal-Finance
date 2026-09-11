@@ -137,12 +137,12 @@ export default function DebtDetailClient({
       </Link>
 
       {/* Hero */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 mb-5">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5 mb-5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0 ${
               isLend
-                ? 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
+                ? 'bg-brand-soft text-brand'
                 : 'bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400'
             }`}>
               {debt.person_name[0].toUpperCase()}
@@ -152,7 +152,7 @@ export default function DebtDetailClient({
                 <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{debt.person_name}</p>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   isLend
-                    ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
+                    ? 'bg-brand-soft text-brand'
                     : 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400'
                 }`}>
                   {isLend ? 'Lent' : 'Borrowed'}
@@ -201,7 +201,7 @@ export default function DebtDetailClient({
         </div>
 
         {debt.note && (
-          <p className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 text-sm text-gray-500 dark:text-gray-400">{debt.note}</p>
+          <p className="mt-3 pt-3 border-t border-hairline text-sm text-gray-500 dark:text-gray-400">{debt.note}</p>
         )}
         {debt.person_contact && (
           <p className="text-xs text-gray-400 mt-1">{debt.person_contact}</p>
@@ -209,7 +209,7 @@ export default function DebtDetailClient({
       </div>
 
       {/* Timeline */}
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">History</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">History</p>
 
       {events.length === 0 ? (
         <div className="py-10 text-center">
@@ -228,7 +228,7 @@ export default function DebtDetailClient({
                   {/* Dot */}
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 mt-0.5 ${
                     isAddition
-                      ? (isLend ? 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' : 'bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400')
+                      ? (isLend ? 'bg-brand-soft text-brand' : 'bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400')
                       : 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
                   }`}>
                     {isAddition ? (
@@ -244,7 +244,7 @@ export default function DebtDetailClient({
 
                   {/* Content */}
                   <div className="flex-1 pb-4">
-                    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 px-3 py-2.5 flex items-center justify-between gap-3">
+                    <div className="bg-white dark:bg-gray-900 rounded-xl border border-hairline px-3 py-2.5 flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                           {isAddition ? 'Added to debt' : 'Payment recorded'}
@@ -256,7 +256,7 @@ export default function DebtDetailClient({
                       </div>
                       <p className={`text-sm font-semibold tabular-nums shrink-0 ${
                         isAddition
-                          ? (isLend ? 'text-indigo-600 dark:text-indigo-400' : 'text-orange-600 dark:text-orange-400')
+                          ? (isLend ? 'text-brand' : 'text-orange-600 dark:text-orange-400')
                           : 'text-emerald-600 dark:text-emerald-400'
                       }`}>
                         {isAddition ? '+' : '−'}{formatVND(ev.amount)}

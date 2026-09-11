@@ -59,7 +59,7 @@ function LoginForm() {
       <div className="space-y-1">
         <Input label="Password" name="password" type="password" autoComplete="current-password" required placeholder="••••••••" />
         <div className="flex justify-end">
-          <Link href="/forgot-password" className="text-xs text-gray-400 hover:text-indigo-500 transition-colors">
+          <Link href="/forgot-password" className="text-xs text-gray-400 hover:text-brand transition-colors">
             Forgot password?
           </Link>
         </div>
@@ -74,13 +74,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm">
+    <div className="rounded-2xl overflow-hidden border border-hairline shadow-sm">
       {/* Brand header */}
-      <div className="bg-slate-900 px-6 py-5">
+      <div className="bg-panel px-6 py-5">
         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
           <span className="text-white font-bold text-base leading-none">₫</span>
         </div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Personal Finance</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">Personal Finance</p>
       </div>
 
       {/* Form */}
@@ -96,7 +96,7 @@ export default function LoginPage() {
 
         <p className="mt-5 text-center text-sm text-gray-400">
           No account?{' '}
-          <Link href="/register" className="font-medium text-indigo-500 hover:underline">
+          <Link href="/register" className="font-medium text-brand hover:underline">
             Sign up
           </Link>
         </p>

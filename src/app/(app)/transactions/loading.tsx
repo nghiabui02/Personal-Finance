@@ -41,7 +41,7 @@ export default function TransactionsLoading() {
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-3 w-24" />
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 divide-y divide-hairline">
             {[1, 2, 3, 4, 5].map(i => <SkeletonRow key={i} />)}
           </div>
         </div>

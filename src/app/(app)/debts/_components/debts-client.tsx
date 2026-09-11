@@ -256,12 +256,12 @@ function DebtCard({
   const barColor = isCompleted ? '#10b981' : isLend ? '#6366f1' : '#f97316'
 
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-2xl border p-4 transition-shadow hover:shadow-md ${isCompleted ? 'border-gray-100 dark:border-gray-800 opacity-70' : 'border-gray-100 dark:border-gray-800'}`}>
+    <div className={`bg-white dark:bg-gray-900 rounded-2xl border p-4 transition-shadow hover:shadow-md ${isCompleted ? 'border-hairline opacity-70' : 'border-hairline'}`}>
       <div className="flex items-start justify-between gap-2 mb-3">
         <Link href={`/debts/${debt.id}`} className="flex items-center gap-2.5 min-w-0 group">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
             isLend
-              ? 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
+              ? 'bg-brand-soft text-brand'
               : 'bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400'
           }`}>
             {debt.person_name[0].toUpperCase()}
@@ -271,7 +271,7 @@ function DebtCard({
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:underline underline-offset-2">{debt.person_name}</p>
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${
                 isLend
-                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
+                  ? 'bg-brand-soft text-brand'
                   : 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400'
               }`}>
                 {isLend ? 'Lent' : 'Borrowed'}
@@ -298,7 +298,7 @@ function DebtCard({
           {!isCompleted && (
             <>
               <button onClick={onAddMore} title={debt.type === 'lend' ? 'Lend more' : 'Borrow more'}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors">
+                className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand-soft transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
@@ -352,7 +352,7 @@ function DebtSection({
   onAdd: () => void
 }) {
   const colorCls = color === 'indigo'
-    ? { amount: 'text-indigo-600 dark:text-indigo-400', badge: 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400', toggle: 'text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300' }
+    ? { amount: 'text-brand', badge: 'bg-brand-soft text-brand', toggle: 'text-brand hover:text-brand-strong' }
     : { amount: 'text-orange-600 dark:text-orange-400', badge: 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400', toggle: 'text-orange-500 hover:text-orange-700 dark:hover:text-orange-300' }
 
   return (

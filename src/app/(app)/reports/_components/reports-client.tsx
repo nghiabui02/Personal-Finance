@@ -129,9 +129,9 @@ export default function ReportsClient({
       </div>
 
       {/* Hero panel */}
-      <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 animate-fade-up">
+      <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl p-5 animate-fade-up">
         <div className="flex items-start justify-between mb-2">
-          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Net Cash Flow</p>
+          <p className="text-[10px] uppercase tracking-widest text-white/45 font-semibold">Net Cash Flow</p>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
             isOverBudget
               ? 'bg-rose-500/15 text-rose-400'
@@ -149,25 +149,25 @@ export default function ReportsClient({
 
         <div className="flex gap-5 mt-4">
           <div>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Income</p>
+            <p className="text-[10px] text-white/45 uppercase tracking-wider mb-0.5">Income</p>
             <p className="text-sm font-semibold text-emerald-400 tabular-nums">{formatVND(totalIncome)}</p>
           </div>
-          <div className="w-px bg-slate-800 self-stretch" />
+          <div className="w-px bg-white/10 self-stretch" />
           <div>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Expense</p>
+            <p className="text-[10px] text-white/45 uppercase tracking-wider mb-0.5">Expense</p>
             <p className="text-sm font-semibold text-rose-400 tabular-nums">{formatVND(totalExpense)}</p>
           </div>
         </div>
 
         {totalIncome > 0 && (
           <div className="mt-5">
-            <div className="flex h-1 rounded-full overflow-hidden bg-slate-800">
+            <div className="flex h-1 rounded-full overflow-hidden bg-white/10">
               <div className="bg-emerald-400 animate-bar-fill" style={{ width: `${savingsPct}%` }} />
               <div className="bg-rose-500 animate-bar-fill" style={{ width: `${expensePct}%`, animationDelay: '100ms' }} />
             </div>
             <div className="flex justify-between mt-1.5">
-              <p className="text-[10px] text-slate-600">← savings</p>
-              <p className="text-[10px] text-slate-600">spending →</p>
+              <p className="text-[10px] text-white/35">← savings</p>
+              <p className="text-[10px] text-white/35">spending →</p>
             </div>
           </div>
         )}
@@ -180,7 +180,7 @@ export default function ReportsClient({
       <CategoryChart data={byCategory} totalExpense={totalExpense} />
 
       {/* Net Worth */}
-      <div className="bg-[#111111] dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl px-5 py-5">
+      <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl px-5 py-5">
         <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Net Worth</p>
         <p className={`text-3xl sm:text-4xl font-light tabular-nums leading-none ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
           {formatVND(netWorth)}

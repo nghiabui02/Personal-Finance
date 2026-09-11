@@ -42,7 +42,7 @@ export default function DashboardLoading() {
         </div>
         <div className="lg:col-span-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
           <Skeleton className="h-4 w-40 mb-4" />
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="divide-y divide-hairline">
             {[1, 2, 3, 4, 5, 6, 7].map(i => <SkeletonRow key={i} />)}
           </div>
         </div>

@@ -11,7 +11,7 @@ export function EmptyState({ message, action }: EmptyStateProps) {
         <button
           type="button"
           onClick={action.onClick}
-          className="mt-2 text-sm text-indigo-500 hover:underline"
+          className="mt-2 text-sm text-brand hover:underline"
         >
           {action.label}
         </button>

@@ -119,7 +119,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
             type="checkbox"
             checked={rollover}
             onChange={e => setRollover(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-fill focus:ring-brand"
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">
             Roll over
@@ -135,7 +135,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
               type="checkbox"
               checked={active}
               onChange={e => setActive(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-fill focus:ring-brand"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
               Active

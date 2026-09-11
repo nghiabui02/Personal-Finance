@@ -36,13 +36,13 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm">
+    <div className="rounded-2xl overflow-hidden border border-hairline shadow-sm">
       {/* Brand header */}
-      <div className="bg-slate-900 px-6 py-5">
+      <div className="bg-panel px-6 py-5">
         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
           <span className="text-white font-bold text-base leading-none">₫</span>
         </div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Personal Finance</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">Personal Finance</p>
       </div>
 
       <div className="bg-white dark:bg-gray-900 px-6 py-6">
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
             <p className="text-sm text-gray-400 mb-6">
               We sent a password reset link. Click it to set a new password.
             </p>
-            <Link href="/login" className="text-sm font-medium text-indigo-500 hover:underline">
+            <Link href="/login" className="text-sm font-medium text-brand hover:underline">
               Back to sign in
             </Link>
           </div>
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
             </form>
 
             <p className="mt-5 text-center text-sm text-gray-400">
-              <Link href="/login" className="font-medium text-indigo-500 hover:underline">
+              <Link href="/login" className="font-medium text-brand hover:underline">
                 Back to sign in
               </Link>
             </p>

@@ -132,7 +132,7 @@ export function DashboardHero({
         </div>
 
         {/* Net worth */}
-        <div className="rounded-2xl bg-[#1e2836] dark:bg-gray-900 dark:border dark:border-gray-800 p-5 sm:p-6 flex flex-col">
+        <div className="rounded-2xl bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 p-5 sm:p-6 flex flex-col">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/45">Net worth</p>
           <p className={`mt-2.5 text-[2rem] sm:text-[2.5rem] leading-none font-semibold tabular-nums tracking-tight ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
             {formatVND(netWorth)}

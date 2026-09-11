@@ -31,13 +31,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm">
+    <div className="rounded-2xl overflow-hidden border border-hairline shadow-sm">
       {/* Brand header */}
-      <div className="bg-slate-900 px-6 py-5">
+      <div className="bg-panel px-6 py-5">
         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
           <span className="text-white font-bold text-base leading-none">₫</span>
         </div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Personal Finance</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">Personal Finance</p>
       </div>
 
       {/* Form */}
@@ -56,7 +56,7 @@ export default function RegisterPage() {
 
         <p className="mt-5 text-center text-sm text-gray-400">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-indigo-500 hover:underline">
+          <Link href="/login" className="font-medium text-brand hover:underline">
             Sign in
           </Link>
         </p>

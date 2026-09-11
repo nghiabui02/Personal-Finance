@@ -233,10 +233,10 @@ function TransactionList({
           {[
             { label: 'Income',  value: income,  cls: 'text-emerald-600 dark:text-emerald-400' },
             { label: 'Expense', value: expense, cls: 'text-rose-600 dark:text-rose-400' },
-            { label: 'Net',     value: net,     cls: net >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400' },
+            { label: 'Net',     value: net,     cls: net >= 0 ? 'text-brand' : 'text-rose-600 dark:text-rose-400' },
           ].map(item => (
-            <div key={item.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-0.5">{item.label}</p>
+            <div key={item.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-3 py-2.5">
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-0.5">{item.label}</p>
               <p className={`text-xs font-semibold tabular-nums ${item.cls}`}>{formatVND(item.value)}</p>
             </div>
           ))}
@@ -272,7 +272,7 @@ function TransactionList({
             {groups.map(([date, txs], groupIdx) => (
               <div key={date} className="animate-fade-up" style={{ animationDelay: `${groupIdx * 40}ms` }}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
                     {formatDateHeader(date)}
                   </p>
                   <p className={`text-xs tabular-nums font-medium ${
@@ -284,7 +284,7 @@ function TransactionList({
                   </p>
                 </div>
 
-                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline divide-y divide-hairline">
                   {txs.map(tx => (
                     <TransactionRow
                       key={tx.id}
@@ -409,10 +409,10 @@ export default function TransactionsClient({
           {[
             { label: 'Income',  value: totalIncome,  cls: 'text-emerald-600 dark:text-emerald-400' },
             { label: 'Expense', value: totalExpense, cls: 'text-rose-600 dark:text-rose-400' },
-            { label: 'Net',     value: totalNet,     cls: totalNet >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400' },
+            { label: 'Net',     value: totalNet,     cls: totalNet >= 0 ? 'text-brand' : 'text-rose-600 dark:text-rose-400' },
           ].map(item => (
-            <div key={item.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-0.5">{item.label}</p>
+            <div key={item.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-3 py-2.5">
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-0.5">{item.label}</p>
               <p className={`text-xs font-semibold tabular-nums ${item.cls}`}>{formatVND(item.value)}</p>
             </div>
           ))}
@@ -422,15 +422,16 @@ export default function TransactionsClient({
         <div className="flex items-center gap-2 mb-3">
           {/* ViewSelector — collapses when search opens */}
           <div
+            className="grid shrink-0 overflow-hidden"
             style={{
-              maxWidth: searchOpen ? '0' : '300px',
+              gridTemplateColumns: searchOpen ? '0fr' : '1fr',
               opacity: searchOpen ? 0 : 1,
-              overflow: 'hidden',
-              flexShrink: 0,
-              transition: 'max-width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.18s ease',
+              transition: 'grid-template-columns 0.28s cubic-bezier(0.16,1,0.3,1), opacity 0.18s ease',
             }}
           >
-            <ViewSelector view={view} />
+            <div className="min-w-0 overflow-hidden">
+              <ViewSelector view={view} />
+            </div>
           </div>
 
           {/* Search input — slides in from right */}

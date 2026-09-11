@@ -100,7 +100,7 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
       ? {
           transform: 'translate(0,0) scale(1)',
           opacity: 1,
-          transition: 'transform 0.55s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease',
+          transition: 'transform 0.42s cubic-bezier(0.16,1,0.3,1), opacity 0.25s ease',
         }
       : {
           transform: `translate(${dx}px, ${dy}px) scale(0.05)`,

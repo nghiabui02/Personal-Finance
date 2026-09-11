@@ -13,6 +13,13 @@
   --brand-strong: #4338ca; /* indigo-700, hover */
   --brand-soft: #eef2ff;   /* indigo-50, selected nav row */
 
+  /* Solid brand fills keep one value in both themes — white label text has to
+     stay legible, and the dark-mode --brand is too light to sit under it. */
+  --brand-fill: #4f46e5;
+  --brand-fill-hover: #4338ca;
+
+  --panel: #1e2836;        /* dark panels on a light page (hero, summaries) */
+
   --hairline: #f3f4f6;     /* gray-100 — card borders, dividers */
   --scrollbar: #d1d5db;
 }
@@ -36,6 +43,9 @@
   --color-brand-strong: var(--brand-strong);
   --color-brand-soft: var(--brand-soft);
   --color-hairline: var(--hairline);
+  --color-brand-fill: var(--brand-fill);
+  --color-brand-fill-hover: var(--brand-fill-hover);
+  --color-panel: var(--panel);
 }
 
 body {

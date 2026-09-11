@@ -113,7 +113,7 @@ export function TransactionCalendar({
                 flex flex-col items-center justify-start pt-1.5 pb-1 px-0.5 rounded-lg min-h-11 sm:min-h-11.5
                 transition-all duration-150 ease-out active:scale-95
                 ${isSelected
-                  ? 'bg-blue-600 dark:bg-blue-500 scale-[1.08] shadow-md shadow-blue-500/30'
+                  ? 'bg-brand-fill scale-[1.08] shadow-md shadow-brand/30'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-[1.04]'}
               `}
             >
@@ -123,7 +123,7 @@ export function TransactionCalendar({
                 ${isSelected
                   ? 'text-white'
                   : isToday
-                    ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                    ? 'bg-brand-fill text-white'
                     : 'text-gray-700 dark:text-gray-300'}
               `}>
                 {day}
@@ -149,7 +149,7 @@ export function TransactionCalendar({
 
       {/* Selected date hint */}
       {selectedDate && (
-        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <div className="mt-3 pt-3 border-t border-hairline flex items-center justify-between">
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
               weekday: 'short', month: 'short', day: 'numeric',
@@ -157,7 +157,7 @@ export function TransactionCalendar({
           </span>
           <button
             onClick={() => onSelectDate(null)}
-            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-xs text-brand hover:underline"
           >
             Show all
           </button>

@@ -42,7 +42,7 @@ const COMPARE_OFFSETS = [1, 2, 3, 4, 5, 6]
 
 const insightColors: Record<Insight['type'], string> = {
   warning: 'bg-rose-500/10 text-rose-300',
-  tip:     'bg-blue-500/10 text-blue-300',
+  tip:     'bg-indigo-500/10 text-indigo-300',
   good:    'bg-emerald-500/10 text-emerald-300',
 }
 
@@ -177,11 +177,11 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
     analysis.score >= 40 ? 'bg-amber-400' : 'bg-rose-400'
 
   return (
-    <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 animate-fade-up">
+    <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl p-5 animate-fade-up">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-base">✨</span>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">AI Insights</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/45">AI Insights</p>
         <span className="ml-auto text-[10px] text-slate-700">Groq · GPT-OSS</span>
         {state === 'done' && (
           <button onClick={() => analyze(true)} title="Refresh" className="text-slate-700 hover:text-slate-400 transition-colors">
@@ -197,7 +197,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
         <button
           onClick={() => setPickerOpen(o => !o)}
           disabled={compareLoading}
-          className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1 disabled:opacity-50"
+          className="text-[11px] text-white/45 hover:text-slate-300 transition-colors flex items-center gap-1 disabled:opacity-50"
         >
           Compare with: {compareLoading ? 'Loading…' : getPeriodLabel(period, navigatePeriod(period, start, -compareOffset))}
           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -210,7 +210,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
           </p>
         )}
         {pickerOpen && (
-          <div className="absolute z-10 mt-1 w-56 bg-slate-800 rounded-xl border border-slate-700 shadow-lg py-1 animate-dropdown-in">
+          <div className="absolute z-10 mt-1 w-56 bg-white/10 rounded-xl border border-slate-700 shadow-lg py-1 animate-dropdown-in">
             {COMPARE_OFFSETS.map(offset => (
               <button
                 key={offset}
@@ -220,7 +220,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
                 }`}
               >
                 {getPeriodLabel(period, navigatePeriod(period, start, -offset))}
-                {offset === 1 && <span className="text-slate-600"> · previous</span>}
+                {offset === 1 && <span className="text-white/35"> · previous</span>}
               </button>
             ))}
           </div>
@@ -233,7 +233,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
           <p className="text-sm text-slate-400">Get an AI spending analysis for {periodLabel}</p>
           <button
             onClick={() => analyze()}
-            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium px-4 py-2 rounded-xl transition-colors active:scale-[0.97]"
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-slate-700 text-slate-200 text-sm font-medium px-4 py-2 rounded-xl transition-colors active:scale-[0.97]"
           >
             <span>✨</span> Analyze now
           </button>
@@ -243,11 +243,11 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
       {/* Loading skeleton */}
       {state === 'loading' && (
         <div className="space-y-3">
-          <div className="h-2.5 bg-slate-800 rounded-full animate-pulse w-full" />
-          <div className="h-2.5 bg-slate-800 rounded-full animate-pulse w-4/5" />
+          <div className="h-2.5 bg-white/10 rounded-full animate-pulse w-full" />
+          <div className="h-2.5 bg-white/10 rounded-full animate-pulse w-4/5" />
           <div className="mt-4 space-y-2">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-10 bg-slate-800/60 rounded-xl animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+              <div key={i} className="h-10 bg-white/10/60 rounded-xl animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
             ))}
           </div>
         </div>
@@ -259,29 +259,29 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
           <div className="flex items-center gap-4">
             <div className="shrink-0 text-center">
               <p className={`text-3xl font-bold tabular-nums leading-none ${scoreColor}`}>{analysis.score}</p>
-              <p className="text-[9px] text-slate-600 uppercase tracking-wider mt-0.5">score</p>
+              <p className="text-[9px] text-white/35 uppercase tracking-wider mt-0.5">score</p>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="h-1 bg-slate-800 rounded-full overflow-hidden mb-2">
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-2">
                 <div className={`h-full rounded-full animate-bar-fill ${barColor}`} style={{ width: `${analysis.score}%` }} />
               </div>
               <p className="text-sm text-slate-300 leading-relaxed">{analysis.summary}</p>
             </div>
           </div>
           {analysis.topSpend && (
-            <div className="flex items-center gap-2 bg-slate-800/60 rounded-xl px-3 py-2.5">
+            <div className="flex items-center gap-2 bg-white/10/60 rounded-xl px-3 py-2.5">
               <span className="text-base shrink-0">🏆</span>
               <div className="min-w-0">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Top spending</p>
+                <p className="text-[10px] text-white/45 uppercase tracking-wider mb-0.5">Top spending</p>
                 <p className="text-sm text-slate-200">{analysis.topSpend}</p>
               </div>
             </div>
           )}
           {analysis.assets && (
-            <div className="flex items-center gap-2 bg-slate-800/60 rounded-xl px-3 py-2.5">
+            <div className="flex items-center gap-2 bg-white/10/60 rounded-xl px-3 py-2.5">
               <span className="text-base shrink-0">💼</span>
               <div className="min-w-0">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Current assets</p>
+                <p className="text-[10px] text-white/45 uppercase tracking-wider mb-0.5">Current assets</p>
                 <p className="text-sm text-slate-200">{analysis.assets}</p>
               </div>
             </div>
@@ -312,7 +312,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
       {/* Error */}
       {state === 'error' && (
         <div className="text-center py-3">
-          <p className="text-sm text-slate-500 mb-2">Could not load the analysis.</p>
+          <p className="text-sm text-white/45 mb-2">Could not load the analysis.</p>
           <button onClick={() => analyze()} className="text-xs text-slate-400 hover:text-slate-200 transition-colors underline">
             Retry
           </button>

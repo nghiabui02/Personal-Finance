@@ -59,7 +59,7 @@ function BudgetCard({
   const remaining = limit - budget.spent
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-4">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <div
@@ -172,9 +172,9 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
 
       {/* Hero panel */}
       {tab === 'active' && activeBudgets.length > 0 && (
-        <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 mb-5">
+        <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl p-5 mb-5">
           <div className="flex items-start justify-between mb-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/45">
               Budget Overview
             </p>
             {overCount > 0 && (
@@ -189,19 +189,19 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
           }`}>
             {formatVND(totalSpent)}
           </p>
-          <p className="text-sm text-slate-500 mt-1">of {formatVND(totalBudget)} budgeted</p>
+          <p className="text-sm text-white/45 mt-1">of {formatVND(totalBudget)} budgeted</p>
 
           {totalBudget > 0 && (
             <div className="mt-4">
-              <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-1 rounded-full bg-white/10 overflow-hidden">
                 <div
                   className={`h-full rounded-full animate-bar-fill ${totalSpent > totalBudget ? 'bg-rose-500' : 'bg-emerald-400'}`}
                   style={{ width: `${spentPct}%` }}
                 />
               </div>
               <div className="flex justify-between mt-1.5">
-                <p className="text-[10px] text-slate-600">{Math.round(spentPct)}% spent</p>
-                <p className="text-[10px] text-slate-600">
+                <p className="text-[10px] text-white/35">{Math.round(spentPct)}% spent</p>
+                <p className="text-[10px] text-white/35">
                   {totalSpent > totalBudget
                     ? `${formatVND(totalSpent - totalBudget)} over`
                     : `${formatVND(totalBudget - totalSpent)} left`}

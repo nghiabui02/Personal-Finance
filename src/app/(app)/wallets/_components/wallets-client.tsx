@@ -42,7 +42,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
     <>
       {/* Total balance hero */}
       {wallets.length > 0 && (
-        <div className="bg-[#111111] dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl px-5 py-5 mb-4">
+        <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl px-5 py-5 mb-4">
           <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/30 mb-2">Total Balance</p>
           <p className="text-3xl sm:text-4xl font-light tabular-nums leading-none text-white">
             {formatVND(totalAssets)}
@@ -57,7 +57,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
 
       {/* Header row */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
           {wallets.length > 0 ? `${wallets.length} wallet${wallets.length > 1 ? 's' : ''}` : ''}
         </p>
         <button

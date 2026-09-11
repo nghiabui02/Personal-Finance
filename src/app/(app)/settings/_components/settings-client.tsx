@@ -37,8 +37,8 @@ const MonitorIcon = () => (
 )
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-5">{title}</p>
+  <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-6">
+    <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-5">{title}</p>
     {children}
   </div>
 )
@@ -225,7 +225,7 @@ export default function SettingsClient({
                 onError={() => setImgError(true)}
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xl font-semibold ring-2 ring-gray-100 dark:ring-gray-800">
+              <div className="w-16 h-16 rounded-full bg-brand-fill flex items-center justify-center text-white text-xl font-semibold ring-2 ring-gray-100 dark:ring-gray-800">
                 {initials}
               </div>
             )}
@@ -241,7 +241,7 @@ export default function SettingsClient({
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <button type="button" onClick={() => fileRef.current?.click()} className="text-sm text-indigo-500 hover:underline font-medium">
+              <button type="button" onClick={() => fileRef.current?.click()} className="text-sm text-brand hover:underline font-medium">
                 Change photo
               </button>
               {avatarPreview && (
@@ -307,13 +307,13 @@ export default function SettingsClient({
                   onClick={() => setTheme(value)}
                   className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-all ${
                     isActive
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                      : 'border-gray-100 dark:border-gray-800 text-gray-400 hover:border-gray-200 dark:hover:border-gray-700'
+                      ? 'border-brand bg-brand-soft text-brand'
+                      : 'border-hairline text-gray-400 hover:border-gray-200 dark:hover:border-gray-700'
                   }`}
                 >
                   <Icon />
                   <span className="text-xs font-medium">{label}</span>
-                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-brand-fill" />}
                 </button>
               )
             })}

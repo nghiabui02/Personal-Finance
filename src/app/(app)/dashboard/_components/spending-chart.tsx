@@ -1,7 +1,7 @@
 'use client'
 
 import { formatVND } from '@/lib/utils/currency'
-import { SectionCard, SectionEmpty } from './section-card'
+import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
 import { useState } from 'react'
 import { Pie as PieBase, PieChart, ResponsiveContainer, Sector } from 'recharts'
 

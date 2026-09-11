@@ -48,7 +48,7 @@ function DaySelect({ label, name, defaultValue }: { label: string; name: string;
       <select
         name={name}
         defaultValue={String(defaultValue ?? 1)}
-        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand"
       >
         {options.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -178,7 +178,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
             type="checkbox"
             name="is_default"
             defaultChecked={editing?.is_default ?? false}
-            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="w-4 h-4 rounded border-gray-300 text-brand-fill focus:ring-brand"
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">Set as default wallet</span>
         </label>

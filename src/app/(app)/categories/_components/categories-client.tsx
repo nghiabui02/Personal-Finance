@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
 import { type Category, categoriesApi } from '@/lib/api/categories'
@@ -66,17 +67,15 @@ export default function CategoriesClient({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-gray-400 text-sm">No {tab} categories yet.</p>
-          <button onClick={() => openModal()} className="mt-2 text-sm text-blue-600 hover:underline">
-            Create your first one
-          </button>
-        </div>
+        <EmptyState
+          message={`No ${tab} categories yet.`}
+          action={{ label: 'Create your first one', onClick: () => openModal() }}
+        />
       ) : (
         <div className="space-y-6">
           {custom.length > 0 && (
             <section>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Custom</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">Custom</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {custom.map(cat => (
                   <CategoryCard key={cat.id} category={cat}
@@ -88,7 +87,7 @@ export default function CategoriesClient({
           )}
           {defaults.length > 0 && (
             <section>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Default</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">Default</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {defaults.map(cat => (
                   <CategoryCard key={cat.id} category={cat}
