@@ -26,17 +26,6 @@ async function adjustBalance(
     .eq('user_id', userId)
 }
 
-export const GET = withAuth(async (_request, { supabase, user }) => {
-  const { data, error } = await supabase
-    .from('debts')
-    .select('*, debt_payments(id, amount, note, paid_at), wallets(id, name)')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  if (error) return supabaseError(error)
-  return NextResponse.json(data)
-})
-
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { type, person_name, person_contact, amount, due_date, note, wallet_id, date } = body

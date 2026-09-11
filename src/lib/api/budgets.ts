@@ -14,10 +14,6 @@ export type Budget = {
 }
 
 export const budgetsApi = {
-  list(month: string): Promise<Budget[]> {
-    return apiFetch(`/api/budgets?month=${month}`)
-  },
-
   create(payload: { category_id?: string; amount: number; month: string; rollover?: boolean; active?: boolean }): Promise<Budget> {
     return apiFetch('/api/budgets', { method: 'POST', body: JSON.stringify(payload) })
   },

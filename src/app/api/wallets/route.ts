@@ -1,18 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
 
-export const GET = withAuth(async (_request, { supabase, user }) => {
-  const { data, error } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('is_default', { ascending: false })
-    .order('created_at')
-
-  if (error) return supabaseError(error)
-  return NextResponse.json(data)
-})
-
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { name, type, balance, icon, color, is_default, credit_limit, statement_day, payment_due_day } = body

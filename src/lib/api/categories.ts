@@ -16,11 +16,6 @@ export type Category = {
 export const CATEGORY_COLUMNS = 'id, user_id, name, icon, color, type, is_default, parent_id, system_key'
 
 export const categoriesApi = {
-  list(type?: 'income' | 'expense'): Promise<Category[]> {
-    const qs = type ? `?type=${type}` : ''
-    return apiFetch(`/api/categories${qs}`)
-  },
-
   create(payload: { name: string; icon?: string; color?: string; type: 'income' | 'expense' }): Promise<Category> {
     return apiFetch('/api/categories', {
       method: 'POST',

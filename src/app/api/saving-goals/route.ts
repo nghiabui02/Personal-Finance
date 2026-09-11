@@ -1,17 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
 
-export const GET = withAuth(async (_request, { supabase, user }) => {
-  const { data, error } = await supabase
-    .from('saving_goals')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  if (error) return supabaseError(error)
-  return NextResponse.json(data)
-})
-
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { name, icon, target_amount, deadline, note } = body

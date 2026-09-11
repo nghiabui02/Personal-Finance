@@ -13,10 +13,6 @@ export type SavingGoal = {
 }
 
 export const savingGoalsApi = {
-  list(): Promise<SavingGoal[]> {
-    return apiFetch('/api/saving-goals')
-  },
-
   create(payload: {
     name: string; icon?: string; target_amount: number; deadline?: string; note?: string
   }): Promise<SavingGoal> {

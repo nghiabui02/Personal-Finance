@@ -26,10 +26,6 @@ export const FREQUENCY_LABELS: Record<RecurringTransaction['frequency'], string>
 }
 
 export const recurringApi = {
-  list(): Promise<RecurringTransaction[]> {
-    return apiFetch('/api/recurring-transactions')
-  },
-
   create(payload: {
     type: 'income' | 'expense'
     amount: number

@@ -25,10 +25,6 @@ export type Debt = {
 }
 
 export const debtsApi = {
-  list(): Promise<Debt[]> {
-    return apiFetch('/api/debts')
-  },
-
   create(payload: {
     type: 'lend' | 'borrow'
     person_name: string

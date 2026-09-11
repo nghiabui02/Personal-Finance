@@ -1,13 +1,5 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, conflict, supabaseError } from '@/lib/server/route'
-import { localYM } from '@/lib/utils/date'
-import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
-
-export const GET = withAuth(async (request, { supabase, user }) => {
-  const month = request.nextUrl.searchParams.get('month') ?? localYM()
-  const result = await getBudgetsForMonth(supabase, user.id, month)
-  return NextResponse.json(result)
-})
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()

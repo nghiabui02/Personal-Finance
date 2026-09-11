@@ -57,10 +57,6 @@ type WalletPayload = {
 }
 
 export const walletsApi = {
-  list(): Promise<Wallet[]> {
-    return apiFetch('/api/wallets')
-  },
-
   create(payload: WalletPayload): Promise<Wallet> {
     return apiFetch('/api/wallets', {
       method: 'POST',

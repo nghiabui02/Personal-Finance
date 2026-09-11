@@ -1,23 +1,5 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
-import { localYM, monthRange } from '@/lib/utils/date'
-
-export const GET = withAuth(async (request, { supabase, user }) => {
-  const month = request.nextUrl.searchParams.get('month') ?? localYM()
-  const { startDate, endDate } = monthRange(month)
-
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('*, categories(id, name, icon, color), wallets(id, name)')
-    .eq('user_id', user.id)
-    .gte('transaction_date', startDate)
-    .lt('transaction_date', endDate)
-    .order('transaction_date', { ascending: false })
-    .order('created_at', { ascending: false })
-
-  if (error) return supabaseError(error)
-  return NextResponse.json(data)
-})
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()

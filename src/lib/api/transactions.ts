@@ -31,11 +31,6 @@ export type TransactionPayload = {
 }
 
 export const transactionsApi = {
-  list(month?: string): Promise<Transaction[]> {
-    const qs = month ? `?month=${month}` : ''
-    return apiFetch(`/api/transactions${qs}`)
-  },
-
   create(payload: TransactionPayload): Promise<Transaction> {
     return apiFetch('/api/transactions', {
       method: 'POST',
