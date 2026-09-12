@@ -15,6 +15,9 @@ import { type Wallet } from '@/lib/api/wallets'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import type { DebtOption } from '@/lib/types'
+import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
+import type { ParsedDraft } from '@/lib/api/parse-transaction'
+import { QuickParse } from './quick-parse'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
@@ -23,6 +26,8 @@ interface TransactionModalProps {
   categories: Category[]
   wallets: Wallet[]
   debts: DebtOption[]
+  /** Repeats offered as one-tap chips. Empty until there is enough history. */
+  frequent?: FrequentTransaction[]
   defaultDate?: string
   onClose: () => void
 }
@@ -82,7 +87,7 @@ function CenteredAmountInput({
   )
 }
 
-export function TransactionModal({ editing, categories, wallets, debts, defaultDate, onClose }: TransactionModalProps) {
+export function TransactionModal({ editing, categories, wallets, debts, frequent = [], defaultDate, onClose }: TransactionModalProps) {
   const close = useModalClose()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -102,6 +107,41 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
   const [feeValue, setFeeValue] = useState(Number(editing?.bank_fee) || 0)
   const [selectedDebtId, setSelectedDebtId] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
+  // Bumping this remounts the amount field so a picked chip replaces whatever
+  // was typed, instead of the uncontrolled input keeping its old value.
+  const [preset, setPreset] = useState<FrequentTransaction | null>(null)
+  const [note, setNote] = useState(editing?.note ?? '')
+
+  function applyFrequent(f: FrequentTransaction) {
+    setTxType(f.type)
+    setCategoryId(f.categoryId ?? '')
+    if (f.walletId) setWalletId(f.walletId)
+    setSelectedDebtId('')
+    setAmountValue(f.amount)
+    setPreset(f)
+  }
+
+  /** Fills the form from a parsed draft. Nothing is saved until the user submits. */
+  function applyDraft(d: ParsedDraft) {
+    setTxType(d.type)
+    if (d.category_id) setCategoryId(d.category_id)
+    if (d.wallet_id) setWalletId(d.wallet_id)
+    if (d.date) setDate(d.date)
+    setNote(d.note ?? '')
+    setSelectedDebtId('')
+    setAmountValue(d.amount)
+    setPreset({
+      key: `draft-${d.amount}-${d.category_id ?? ''}`,
+      type: d.type,
+      amount: d.amount,
+      categoryId: d.category_id,
+      categoryName: '',
+      categoryIcon: null,
+      walletId: d.wallet_id,
+      note: d.note,
+      count: 0,
+    })
+  }
 
   const walletOptions = [
     { value: '', label: 'No wallet' },
@@ -135,6 +175,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
     setCategoryId('')
     setSelectedDebtId('')
     setMoreOpen(false)
+    setPreset(null)
   }
 
   function handleCategoryChange(id: string) {
@@ -155,7 +196,6 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
 
     const amount = Number(getValue('amount'))
     const fee    = Number(getValue('fee') || '0')
-    const note   = getValue('note')
 
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     if (!date) { setError('Please pick a date.'); return }
@@ -206,6 +246,8 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
     <Modal title={editing ? 'Edit transaction' : 'New transaction'} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
 
+        {!editing && <QuickParse onDraft={applyDraft} />}
+
         <TabGroup
           tabs={[{ key: 'expense', label: '− Expense' }, { key: 'income', label: '+ Income' }]}
           value={txType}
@@ -216,14 +258,41 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
 
         <div className="py-2">
           <CenteredAmountInput
-            key={`${txType}-${selectedDebtId || 'no-debt'}`}
+            key={`${txType}-${selectedDebtId || 'no-debt'}-${preset?.key ?? ''}`}
             name="amount"
-            defaultValue={editing ? Number(editing.amount) - Number(editing.bank_fee ?? 0) : selectedDebt?.remaining_amount}
+            defaultValue={preset?.amount ?? (editing ? Number(editing.amount) - Number(editing.bank_fee ?? 0) : selectedDebt?.remaining_amount)}
             onValueChange={setAmountValue}
             autoFocus={!editing}
             txType={txType}
           />
         </div>
+
+        {/* One-tap repeats — the same spend logged the same way before */}
+        {!editing && frequent.length > 0 && (
+          <div className="-mx-1 px-1 overflow-x-auto no-scrollbar">
+            <div className="flex gap-2 w-max">
+              {frequent.map(f => {
+                const active = preset?.key === f.key
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => applyFrequent(f)}
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-colors ${
+                      active
+                        ? 'border-brand bg-brand-soft text-brand'
+                        : 'border-hairline bg-gray-50 text-gray-600 hover:border-gray-300 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    <span className="leading-none">{f.categoryIcon ?? '🏷️'}</span>
+                    <span className="font-medium">{f.categoryName}</span>
+                    <span className="tabular-nums opacity-70">{formatVND(f.amount)}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Category tiles */}
         <div>
@@ -310,7 +379,7 @@ export function TransactionModal({ editing, categories, wallets, debts, defaultD
           </div>
         )}
 
-        <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''}
+        <Input label="Note (optional)" name="note" value={note} onChange={e => setNote(e.target.value)}
           placeholder="e.g. Lunch with colleagues" />
 
         {canAddFee && (

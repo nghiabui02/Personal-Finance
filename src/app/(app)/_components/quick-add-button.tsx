@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { type Category } from '@/lib/api/categories'
 import { type Wallet } from '@/lib/api/wallets'
 import type { DebtOption } from '@/lib/types'
+import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
 import { TransactionModal } from '../transactions/_components/transaction-modal'
 
 /** Everything the transaction modal needs, fetched once in the app layout. */
@@ -11,6 +12,7 @@ export interface QuickAddData {
   categories: Category[]
   wallets: Wallet[]
   debts: DebtOption[]
+  frequent: FrequentTransaction[]
 }
 
 const PLUS = (
@@ -48,6 +50,7 @@ export function QuickAddButton({ data, variant }: { data: QuickAddData; variant:
           categories={data.categories}
           wallets={data.wallets}
           debts={data.debts}
+          frequent={data.frequent}
           onClose={() => setOpen(false)}
         />
       )}

@@ -16,6 +16,9 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 import type { DebtOption } from '@/lib/types'
 import { TransactionModal } from './transaction-modal'
+import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
+import { countActiveFilters, type TransactionFilters } from '@/lib/server/transaction-filters'
+import { FilterModal } from './filter-modal'
 import { PeriodNavigator, ViewSelector, type ViewMode } from './period-navigator'
 import { TransactionCalendar } from './transaction-calendar'
 
@@ -45,9 +48,11 @@ interface TransactionsClientProps {
   categories: Category[]
   wallets: Wallet[]
   debts: DebtOption[]
+  frequent: FrequentTransaction[]
   view: ViewMode
   period: string
   searchQuery?: string
+  filters: TransactionFilters
 }
 
 const PAGE_SIZE = 10
@@ -304,14 +309,18 @@ export default function TransactionsClient({
   categories,
   wallets,
   debts,
+  frequent,
   view,
   period,
   searchQuery = '',
+  filters,
 }: TransactionsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [filter, setFilter] = useState<Filter>('all')
   const [modalOpen, setModalOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const activeFilters = countActiveFilters(filters)
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -353,7 +362,10 @@ export default function TransactionsClient({
   function clearSearch() {
     setSearchValue('')
     setSearchOpen(false)
-    router.push('/transactions')
+    // Closing the search box drops the query, not the filters the user set.
+    const url = new URL(window.location.href)
+    url.searchParams.delete('q')
+    router.push(url.pathname + url.search)
   }
 
   const totalIncome  = transactions.filter(tx => tx.type === 'income').reduce((s, tx) => s + Number(tx.amount), 0)
@@ -395,7 +407,9 @@ export default function TransactionsClient({
           className="mb-3"
           headline={
             transactions.length === 0
-              ? <>Nothing recorded here yet.</>
+              ? (activeFilters > 0 || searchQuery
+                  ? <>Nothing matches what you&rsquo;re looking for.</>
+                  : <>Nothing recorded here yet.</>)
               : totalNet >= 0
               ? <>You&rsquo;re up <Em tone="good">{formatVND(totalNet)}</Em> across {transactions.length} transaction{transactions.length === 1 ? '' : 's'}.</>
               : <>You&rsquo;re down <Em tone="bad">{formatVND(-totalNet)}</Em> across {transactions.length} transaction{transactions.length === 1 ? '' : 's'}.</>
@@ -466,6 +480,24 @@ export default function TransactionsClient({
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
+              )}
+            </button>
+            <button
+              onClick={() => setFilterOpen(true)}
+              aria-label={activeFilters > 0 ? `Filters (${activeFilters} active)` : 'Filter transactions'}
+              className={`relative p-2 rounded-xl border transition-colors ${
+                activeFilters > 0
+                  ? 'text-brand border-brand bg-brand-soft'
+                  : 'text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+              </svg>
+              {activeFilters > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-brand-fill text-white text-[10px] font-semibold leading-4 text-center">
+                  {activeFilters}
+                </span>
               )}
             </button>
             <Button onClick={() => openModal()}>
@@ -546,6 +578,15 @@ export default function TransactionsClient({
         )}
       </div>
 
+      {filterOpen && (
+        <FilterModal
+          filters={filters}
+          categories={categories}
+          wallets={wallets}
+          onClose={() => setFilterOpen(false)}
+        />
+      )}
+
       {modalOpen && (
         <TransactionModal
           key={editingTx?.id ?? 'new'}
@@ -553,6 +594,7 @@ export default function TransactionsClient({
           categories={categories}
           wallets={wallets}
           debts={debts}
+          frequent={frequent}
           defaultDate={editingTx ? undefined : getDefaultDate()}
           onClose={() => { setModalOpen(false); setEditingTx(null) }}
         />

@@ -17,9 +17,17 @@ const ClearIcon = () => (
 // Types where a clear button doesn't make sense
 const NO_CLEAR_TYPES = ['password', 'number', 'date', 'time', 'datetime-local', 'file', 'checkbox', 'radio']
 
-export function Input({ label, error, id, clearable, className = '', defaultValue, onChange, type = 'text', ...props }: InputProps) {
+export function Input({ label, error, id, clearable, className = '', defaultValue, value: controlledValue, onChange, type = 'text', ...props }: InputProps) {
   const inputId = id ?? label.toLowerCase().replace(/\s+/g, '-')
-  const [value, setValue] = useState(String(defaultValue ?? ''))
+  // Uncontrolled by default; pass `value` to drive it from the parent (e.g. a
+  // field the parent fills in from elsewhere) without a second component.
+  const [innerValue, setInnerValue] = useState(String(defaultValue ?? ''))
+  const isControlled = controlledValue !== undefined
+  const value = isControlled ? String(controlledValue) : innerValue
+
+  function setValue(next: string) {
+    if (!isControlled) setInnerValue(next)
+  }
 
   // Show clear button by default for text-like inputs, unless explicitly disabled
   const showClear = clearable !== false && !NO_CLEAR_TYPES.includes(type)
@@ -44,7 +52,10 @@ export function Input({ label, error, id, clearable, className = '', defaultValu
         {showClear && value && (
           <button
             type="button"
-            onClick={() => setValue('')}
+            onClick={() => {
+              setValue('')
+              onChange?.({ target: { value: '', name: props.name } } as React.ChangeEvent<HTMLInputElement>)
+            }}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <ClearIcon />

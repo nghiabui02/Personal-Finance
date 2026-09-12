@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
-import { ensureDebtCategory } from '@/lib/server/debt-categories'
+import { ensureSystemCategory } from '@/lib/server/system-categories'
 import { localYMD } from '@/lib/utils/date'
 
 async function adjustBalance(
@@ -60,7 +60,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   if (wallet_id) {
     const txType = type === 'lend' ? 'expense' : 'income'
     const txNote = type === 'lend' ? `Lent to ${person_name.trim()}` : `Borrowed from ${person_name.trim()}`
-    const categoryId = await ensureDebtCategory(supabase, user.id, type === 'lend' ? 'lend_out' : 'borrow_in')
+    const categoryId = await ensureSystemCategory(supabase, user.id, type === 'lend' ? 'lend_out' : 'borrow_in')
 
     await Promise.all([
       supabase.from('transactions').insert({

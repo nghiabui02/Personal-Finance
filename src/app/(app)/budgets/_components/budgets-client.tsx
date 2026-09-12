@@ -17,9 +17,13 @@ import { type Category } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { BudgetModal } from './budget-modal'
+import { SuggestBudgetsModal } from './suggest-budgets-modal'
+import type { BudgetSuggestion } from '@/lib/server/budget-suggestions'
 
 interface BudgetsClientProps {
   budgets: Budget[]
+  /** Categories worth budgeting that have no budget yet this month. */
+  suggestions: BudgetSuggestion[]
   expenseCategories: Category[]
   month: string
 }
@@ -104,13 +108,14 @@ function BudgetCard({
   )
 }
 
-export default function BudgetsClient({ budgets, expenseCategories, month }: BudgetsClientProps) {
+export default function BudgetsClient({ budgets, suggestions, expenseCategories, month }: BudgetsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [tab, setTab] = useState<'active' | 'inactive'>('active')
+  const [suggestOpen, setSuggestOpen] = useState(false)
 
   const activeBudgets = budgets.filter(b => b.active)
   const inactiveBudgets = budgets.filter(b => !b.active)
@@ -168,12 +173,22 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
           <PeriodNav label={monthLabel} onPrev={() => navigate(-1)} onNext={() => navigate(1)} />
         }
         action={
+          <div className="flex items-center gap-2">
+            {suggestions.length > 0 && (
+              <Button variant="secondary" onClick={() => setSuggestOpen(true)}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+                </svg>
+                <span className="hidden sm:inline">Suggest</span>
+              </Button>
+            )}
           <Button onClick={() => { setEditingBudget(null); setModalOpen(true) }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
             New budget
           </Button>
+          </div>
         }
       />
 
@@ -192,7 +207,14 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
       {visibleBudgets.length === 0 ? (
         <EmptyState
           message={tab === 'active' ? 'No budgets for this month.' : 'No inactive budgets.'}
-          action={tab === 'active' ? { label: 'Create your first budget', onClick: () => { setEditingBudget(null); setModalOpen(true) } } : undefined}
+          action={
+            tab !== 'active' ? undefined
+            : suggestions.length > 0
+              // With history to draw on, picking numbers is the hard part — lead
+              // with the suggestion rather than an empty form.
+              ? { label: 'Suggest budgets from the last 3 months', onClick: () => setSuggestOpen(true) }
+              : { label: 'Create your first budget', onClick: () => { setEditingBudget(null); setModalOpen(true) } }
+          }
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -216,6 +238,14 @@ export default function BudgetsClient({ budgets, expenseCategories, month }: Bud
           expenseCategories={expenseCategories}
           existingCategoryIds={existingCategoryIds}
           onClose={() => { setModalOpen(false); setEditingBudget(null) }}
+        />
+      )}
+
+      {suggestOpen && (
+        <SuggestBudgetsModal
+          suggestions={suggestions}
+          month={month}
+          onClose={() => setSuggestOpen(false)}
         />
       )}
 

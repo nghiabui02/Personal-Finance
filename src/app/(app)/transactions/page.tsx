@@ -1,5 +1,11 @@
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
+import { getFrequentTransactions } from '@/lib/server/frequent-transactions'
+import {
+  applyTransactionFilters,
+  parseTransactionFilters,
+  type TransactionFilterParams,
+} from '@/lib/server/transaction-filters'
 import TransactionsClient from './_components/transactions-client'
 import type { ViewMode } from './_components/period-navigator'
 import { localYMD, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
@@ -37,9 +43,10 @@ function getDateRange(
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; month?: string; week?: string; date?: string; q?: string }>
+  searchParams: Promise<{ view?: string; month?: string; week?: string; date?: string; q?: string } & TransactionFilterParams>
 }) {
   const params = await searchParams
+  const filters = parseTransactionFilters(params)
   const view = (['month', 'week', 'day'].includes(params.view ?? '') ? params.view : 'month') as ViewMode
   const today = localYMD()
   const q = params.q?.trim() ?? ''
@@ -53,24 +60,28 @@ export default async function TransactionsPage({
     { data: categories },
     { data: wallets },
     { data: debts },
+    frequent,
   ] = await Promise.all([
-    q
-      ? supabase
-          .from('transactions')
-          .select('*, categories(id, name, icon, color), wallets(id, name)')
-          .eq('user_id', user.id)
-          .ilike('note', `%${q}%`)
-          .order('transaction_date', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(100)
-      : supabase
-          .from('transactions')
-          .select('*, categories(id, name, icon, color), wallets(id, name)')
-          .eq('user_id', user.id)
-          .gte('transaction_date', startDate)
-          .lt('transaction_date', endDate)
-          .order('transaction_date', { ascending: false })
-          .order('created_at', { ascending: false }),
+    // A note search looks across all time; otherwise the visible period bounds
+    // it. Either way the same filters narrow the result.
+    applyTransactionFilters(
+      q
+        ? supabase
+            .from('transactions')
+            .select('*, categories(id, name, icon, color), wallets(id, name)')
+            .eq('user_id', user.id)
+            .ilike('note', `%${q}%`)
+            .limit(100)
+        : supabase
+            .from('transactions')
+            .select('*, categories(id, name, icon, color), wallets(id, name)')
+            .eq('user_id', user.id)
+            .gte('transaction_date', startDate)
+            .lt('transaction_date', endDate),
+      filters,
+    )
+      .order('transaction_date', { ascending: false })
+      .order('created_at', { ascending: false }),
     supabase
       .from('categories')
       .select(CATEGORY_COLUMNS)
@@ -89,6 +100,7 @@ export default async function TransactionsPage({
       .eq('status', 'active')
       .gt('remaining_amount', 0)
       .order('person_name'),
+    getFrequentTransactions(supabase, user.id),
   ])
 
   return (
@@ -97,9 +109,11 @@ export default async function TransactionsPage({
       categories={categories ?? []}
       wallets={(wallets ?? []) as unknown as Parameters<typeof TransactionsClient>[0]['wallets']}
       debts={(debts ?? []) as { id: string; type: 'lend' | 'borrow'; person_name: string; remaining_amount: number }[]}
+      frequent={frequent}
       view={view}
       period={period}
       searchQuery={q}
+      filters={filters}
     />
   )
 }

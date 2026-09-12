@@ -88,4 +88,20 @@ export const walletsApi = {
   transactions(id: string, offset: number): Promise<{ transactions: WalletTransaction[]; hasMore: boolean }> {
     return apiFetch(`/api/wallets/${id}/transactions?offset=${offset}&limit=${WALLET_TX_PAGE_SIZE}`)
   },
+
+  /** Files an adjustment transaction for the gap against the real bank balance. */
+  reconcile(id: string, payload: { actual_balance: number; note?: string; date?: string }): Promise<ReconcileResult> {
+    return apiFetch(`/api/wallets/${id}/reconcile`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+}
+
+type ReconcileResult = {
+  ok: true
+  /** Positive when the wallet held more than recorded, negative when less. */
+  delta: number
+  new_balance?: number
+  message?: string
 }

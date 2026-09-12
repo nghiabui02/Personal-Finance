@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, notFound, supabaseError } from '@/lib/server/route'
-import { ensureDebtCategory } from '@/lib/server/debt-categories'
+import { ensureSystemCategory } from '@/lib/server/system-categories'
 import { localYMD } from '@/lib/utils/date'
 
 export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
@@ -51,7 +51,7 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
         ? `Additional lend to ${debt.person_name}`
         : `Additional borrow from ${debt.person_name}`
     )
-    const categoryId = await ensureDebtCategory(supabase, user.id, debt.type === 'lend' ? 'lend_out' : 'borrow_in')
+    const categoryId = await ensureSystemCategory(supabase, user.id, debt.type === 'lend' ? 'lend_out' : 'borrow_in')
 
     await Promise.all([
       supabase.from('transactions').insert({

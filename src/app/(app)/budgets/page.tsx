@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
-import { localYM, monthRange } from '@/lib/utils/date'
+import { localYM } from '@/lib/utils/date'
+import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
+import { getBudgetSuggestions } from '@/lib/server/budget-suggestions'
 import BudgetsClient from './_components/budgets-client'
 import { CATEGORY_COLUMNS } from '@/lib/api/categories'
 
@@ -14,24 +16,15 @@ export default async function BudgetsPage({
 }) {
   const { month: monthParam } = await searchParams
   const month = monthParam ?? localYM()
-  const { startDate, endDate } = monthRange(month)
 
   const { supabase, user } = await requireUser()
 
-  const [{ data: budgets }, { data: expenses }, { data: categories }] = await Promise.all([
-    supabase
-      .from('budgets')
-      .select('*, categories(id, name, icon, color)')
-      .eq('user_id', user.id)
-      .eq('month', startDate)
-      .order('created_at'),
-    supabase
-      .from('transactions')
-      .select('category_id, amount')
-      .eq('user_id', user.id)
-      .eq('type', 'expense')
-      .gte('transaction_date', startDate)
-      .lt('transaction_date', endDate),
+  // Rollover is computed at read time, so the screen must go through the same
+  // helper the dashboard uses — hand-assembling the rows here left
+  // `effectiveAmount` undefined and every progress bar showed NaN.
+  const [budgets, suggestions, { data: categories }] = await Promise.all([
+    getBudgetsForMonth(supabase, user.id, month),
+    getBudgetSuggestions(supabase, user.id, month),
     supabase
       .from('categories')
       .select(CATEGORY_COLUMNS)
@@ -40,20 +33,10 @@ export default async function BudgetsPage({
       .order('name'),
   ])
 
-  const spent: Record<string, number> = {}
-  for (const tx of expenses ?? []) {
-    if (!tx.category_id) continue
-    spent[tx.category_id] = (spent[tx.category_id] ?? 0) + Number(tx.amount)
-  }
-
-  const budgetsWithSpent = (budgets ?? []).map(b => ({
-    ...b,
-    spent: spent[b.category_id ?? ''] ?? 0,
-  }))
-
   return (
     <BudgetsClient
-      budgets={budgetsWithSpent as unknown as Parameters<typeof BudgetsClient>[0]['budgets']}
+      budgets={budgets}
+      suggestions={suggestions}
       expenseCategories={categories ?? []}
       month={month}
     />
