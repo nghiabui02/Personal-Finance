@@ -210,17 +210,17 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
           </p>
         )}
         {pickerOpen && (
-          <div className="absolute z-10 mt-1 w-56 bg-white/10 rounded-xl border border-slate-700 shadow-lg py-1 animate-dropdown-in">
+          <div className="absolute z-30 mt-1 w-56 bg-slate-700 rounded-xl border border-slate-600 shadow-xl py-1 animate-dropdown-in">
             {COMPARE_OFFSETS.map(offset => (
               <button
                 key={offset}
                 onClick={() => selectCompareOffset(offset)}
-                className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-700 ${
-                  offset === compareOffset ? 'text-white font-medium' : 'text-slate-400'
+                className={`w-full text-left px-3 py-2 text-xs transition-colors hover:bg-slate-600 ${
+                  offset === compareOffset ? 'bg-slate-600 text-white font-medium' : 'text-slate-200'
                 }`}
               >
                 {getPeriodLabel(period, navigatePeriod(period, start, -offset))}
-                {offset === 1 && <span className="text-white/35"> · previous</span>}
+                {offset === 1 && <span className="text-slate-300"> · previous</span>}
               </button>
             ))}
           </div>
@@ -247,7 +247,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
           <div className="h-2.5 bg-white/10 rounded-full animate-pulse w-4/5" />
           <div className="mt-4 space-y-2">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-10 bg-white/10/60 rounded-xl animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+              <div key={i} className="h-10 bg-white/5 rounded-xl animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
             ))}
           </div>
         </div>
@@ -269,7 +269,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
             </div>
           </div>
           {analysis.topSpend && (
-            <div className="flex items-center gap-2 bg-white/10/60 rounded-xl px-3 py-2.5">
+            <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2.5">
               <span className="text-base shrink-0">🏆</span>
               <div className="min-w-0">
                 <p className="text-[10px] text-white/45 uppercase tracking-wider mb-0.5">Top spending</p>
@@ -278,7 +278,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
             </div>
           )}
           {analysis.assets && (
-            <div className="flex items-center gap-2 bg-white/10/60 rounded-xl px-3 py-2.5">
+            <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2.5">
               <span className="text-base shrink-0">💼</span>
               <div className="min-w-0">
                 <p className="text-[10px] text-white/45 uppercase tracking-wider mb-0.5">Current assets</p>
