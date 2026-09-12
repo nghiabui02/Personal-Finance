@@ -10,7 +10,7 @@ export function PeriodNav({
   label,
   onPrev,
   onNext,
-  labelClassName = 'min-w-36',
+  labelClassName = 'min-w-0 sm:min-w-36',
   className = '',
 }: PeriodNavProps) {
   return (
@@ -25,7 +25,7 @@ export function PeriodNav({
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
         </svg>
       </button>
-      <span className={`px-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-center ${labelClassName}`}>
+      <span className={`px-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-center whitespace-nowrap ${labelClassName}`}>
         {label}
       </span>
       <button

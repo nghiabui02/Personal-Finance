@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 import { toastError } from '@/components/ui/toast'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
@@ -391,7 +390,6 @@ export default function TransactionsClient({
     if (view === 'month' && selectedDate) return selectedDate
     return undefined
   })()
-  const newTransactionHref = defaultDate ? `/transactions/new?date=${defaultDate}` : '/transactions/new'
 
   function openModal(tx: Transaction | null = null) {
     setEditingTx(tx)
@@ -508,20 +506,16 @@ export default function TransactionsClient({
                 </span>
               )}
             </button>
-            {/* Same action, two shapes: a dialog where there is room for one,
-                a full page on a phone. Split by CSS so neither waits on JS to
-                learn the viewport. */}
-            <Link
-              href={newTransactionHref}
-              className="md:hidden inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-fill px-3.5 py-2 text-sm font-medium text-white hover:bg-brand-fill-hover transition-colors"
-            >
-              {PLUS_ICON}
-              <span className="hidden sm:inline">Add</span>
-            </Link>
-            <Button onClick={() => openModal()} className="hidden md:inline-flex">
-              {PLUS_ICON}
-              <span className="hidden sm:inline">Add</span>
-            </Button>
+            {/* Desktop only — on a phone the bottom nav's centre button already
+                covers this, and it opens the full-page form instead of a dialog.
+                The wrapper carries the visibility: Button sets its own
+                `inline-flex`, which outranks a `hidden` passed via className. */}
+            <div className="hidden md:block">
+              <Button onClick={() => openModal()}>
+                {PLUS_ICON}
+                <span className="hidden sm:inline">Add</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
