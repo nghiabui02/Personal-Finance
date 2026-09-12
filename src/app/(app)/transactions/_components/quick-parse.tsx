@@ -50,7 +50,7 @@ export function QuickParse({ onDraft }: { onDraft: (draft: ParsedDraft) => void 
           }}
           placeholder="cà phê 35k vcb — or paste a bank message"
           disabled={pending}
-          className="w-full rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/60 pl-3 pr-20 py-2.5 text-sm outline-none focus:border-brand focus:border-solid focus:ring-2 focus:ring-brand/20 transition-colors disabled:opacity-60"
+          className="w-full rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/60 pl-3 pr-20 py-2.5 text-sm outline-none focus:border-brand focus:border-solid transition-colors disabled:opacity-60"
         />
         <button
           type="button"

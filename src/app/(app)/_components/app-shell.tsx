@@ -88,7 +88,7 @@ function MobileBottomNav({ pathname, quickAdd }: { pathname: string; quickAdd: Q
         {/* Logging a transaction is the one thing done every day — it gets the
             centre slot instead of a floating button that overlaps content. */}
         <div className="w-16 shrink-0 flex items-start justify-center">
-          <QuickAddButton data={quickAdd} variant="nav" />
+          <QuickAddButton data={quickAdd} />
         </div>
         {BOTTOM_NAV.slice(2).map(tab)}
       </div>
@@ -129,7 +129,6 @@ export default function AppShell({
       </main>
 
       <MobileBottomNav pathname={pathname} quickAdd={quickAdd} />
-      <QuickAddButton data={quickAdd} variant="fab" />
       <Toaster />
     </div>
   )

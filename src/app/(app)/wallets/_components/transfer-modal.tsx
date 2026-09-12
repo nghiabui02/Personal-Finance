@@ -128,7 +128,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
               value={amountDisplay}
               onChange={e => setAmountDisplay(formatWithDots(e.target.value))}
               placeholder="0"
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2.5 pr-14 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2.5 pr-14 text-sm outline-none focus:border-brand"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
               {amountDisplay && (

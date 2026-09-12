@@ -23,15 +23,12 @@ const PLUS = (
 )
 
 /**
- * Logging a transaction, from anywhere. `nav` rides in the centre of the mobile
- * bottom bar; `fab` is the desktop floating button.
+ * Logging a transaction, from anywhere. Rides in the centre of the mobile
+ * bottom bar — never as a floating corner button, which overlapped the last
+ * row of every list it sat on.
  */
-export function QuickAddButton({ data, variant }: { data: QuickAddData; variant: 'nav' | 'fab' }) {
+export function QuickAddButton({ data }: { data: QuickAddData }) {
   const [open, setOpen] = useState(false)
-
-  const className = variant === 'nav'
-    ? '-mt-5 w-14 h-14 rounded-full'
-    : 'hidden md:flex fixed bottom-8 right-6 z-30 w-14 h-14 rounded-full'
 
   return (
     <>
@@ -39,7 +36,7 @@ export function QuickAddButton({ data, variant }: { data: QuickAddData; variant:
         type="button"
         onClick={() => setOpen(true)}
         aria-label="New transaction"
-        className={`${className} bg-brand-fill hover:bg-brand-fill-hover text-white shadow-[0_8px_24px_-6px_rgb(79_70_229/0.5)] flex items-center justify-center ring-4 ring-white dark:ring-gray-900 transition-[transform,background-color] duration-150 hover:scale-105 active:scale-95`}
+        className={`-mt-5 w-14 h-14 rounded-full bg-brand-fill hover:bg-brand-fill-hover text-white shadow-[0_8px_24px_-6px_rgb(79_70_229/0.5)] flex items-center justify-center ring-4 ring-white dark:ring-gray-900 transition-[transform,background-color] duration-150 hover:scale-105 active:scale-95`}
       >
         {PLUS}
       </button>

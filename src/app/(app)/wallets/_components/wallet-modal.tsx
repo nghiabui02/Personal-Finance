@@ -39,7 +39,7 @@ function DaySelect({ label, name, defaultValue }: { label: string; name: string;
       <select
         name={name}
         defaultValue={String(defaultValue ?? 1)}
-        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand"
+        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2.5 focus:outline-none focus:border-brand"
       >
         {options.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
