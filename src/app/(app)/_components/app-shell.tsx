@@ -6,7 +6,7 @@ import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import Header from './header'
 import Sidebar from './sidebar'
-import { QuickAddButton, type QuickAddData } from './quick-add-button'
+import { QuickAddButton } from './quick-add-button'
 import { Toaster } from '@/components/ui/toast'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -60,7 +60,7 @@ const BOTTOM_NAV = [
   { href: '/wallets',     label: 'Money',        icon: MONEY_ICON,        group: ['/wallets', '/debts', '/saving-goals', '/recurring'] },
 ]
 
-function MobileBottomNav({ pathname, quickAdd }: { pathname: string; quickAdd: QuickAddData }) {
+function MobileBottomNav({ pathname }: { pathname: string }) {
   const tab = (item: (typeof BOTTOM_NAV)[number]) => {
     const active = item.group.some(p => pathname === p || pathname.startsWith(p + '/'))
     return (
@@ -88,7 +88,7 @@ function MobileBottomNav({ pathname, quickAdd }: { pathname: string; quickAdd: Q
         {/* Logging a transaction is the one thing done every day — it gets the
             centre slot instead of a floating button that overlaps content. */}
         <div className="w-16 shrink-0 flex items-start justify-center">
-          <QuickAddButton data={quickAdd} />
+          <QuickAddButton />
         </div>
         {BOTTOM_NAV.slice(2).map(tab)}
       </div>
@@ -99,11 +99,9 @@ function MobileBottomNav({ pathname, quickAdd }: { pathname: string; quickAdd: Q
 export default function AppShell({
   children,
   user,
-  quickAdd,
 }: {
   children: ReactNode
   user: User
-  quickAdd: QuickAddData
 }) {
   const pathname = usePathname()
 
@@ -128,7 +126,7 @@ export default function AppShell({
         {children}
       </main>
 
-      <MobileBottomNav pathname={pathname} quickAdd={quickAdd} />
+      <MobileBottomNav pathname={pathname} />
       <Toaster />
     </div>
   )

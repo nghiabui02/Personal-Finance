@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
+import { checkWalletCanCover } from '@/lib/server/wallet-balance'
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
@@ -20,6 +21,13 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   // bank_fee. bank_fee is kept alongside purely to show the breakdown.
   const fee = Number(bank_fee) > 0 ? Number(bank_fee) : null
   const total = Number(amount) + (fee ?? 0)
+
+  // Checked before the insert: the row and the balance move in two steps, and
+  // a spend that overdraws must leave neither behind.
+  if (wallet_id && type === 'expense') {
+    const check = await checkWalletCanCover(supabase, user.id, wallet_id, total)
+    if (!check.ok) return badRequest(check.message!)
+  }
 
   const { data, error } = await supabase
     .from('transactions')

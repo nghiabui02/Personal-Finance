@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { toastError } from '@/components/ui/toast'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
@@ -56,6 +57,12 @@ interface TransactionsClientProps {
 }
 
 const PAGE_SIZE = 10
+
+const PLUS_ICON = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+  </svg>
+)
 
 
 function TransactionRow({
@@ -379,11 +386,12 @@ export default function TransactionsClient({
     ? transactions.filter(tx => tx.transaction_date === selectedDate)
     : transactions
 
-  function getDefaultDate(): string | undefined {
+  const defaultDate = (() => {
     if (view === 'day') return period
     if (view === 'month' && selectedDate) return selectedDate
     return undefined
-  }
+  })()
+  const newTransactionHref = defaultDate ? `/transactions/new?date=${defaultDate}` : '/transactions/new'
 
   function openModal(tx: Transaction | null = null) {
     setEditingTx(tx)
@@ -500,10 +508,18 @@ export default function TransactionsClient({
                 </span>
               )}
             </button>
-            <Button onClick={() => openModal()}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
+            {/* Same action, two shapes: a dialog where there is room for one,
+                a full page on a phone. Split by CSS so neither waits on JS to
+                learn the viewport. */}
+            <Link
+              href={newTransactionHref}
+              className="md:hidden inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-fill px-3.5 py-2 text-sm font-medium text-white hover:bg-brand-fill-hover transition-colors"
+            >
+              {PLUS_ICON}
+              <span className="hidden sm:inline">Add</span>
+            </Link>
+            <Button onClick={() => openModal()} className="hidden md:inline-flex">
+              {PLUS_ICON}
               <span className="hidden sm:inline">Add</span>
             </Button>
           </div>
@@ -595,7 +611,7 @@ export default function TransactionsClient({
           wallets={wallets}
           debts={debts}
           frequent={frequent}
-          defaultDate={editingTx ? undefined : getDefaultDate()}
+          defaultDate={editingTx ? undefined : defaultDate}
           onClose={() => { setModalOpen(false); setEditingTx(null) }}
         />
       )}

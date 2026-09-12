@@ -26,10 +26,11 @@ export function QuickParse({ onDraft }: { onDraft: (draft: ParsedDraft) => void 
       const draft = await parseTransactionText(value)
       onDraft(draft)
       setText('')
+      // A confident read is obvious from the filled-in form; only flag doubt.
       setHint(
         draft.confidence !== null && draft.confidence < LOW_CONFIDENCE
           ? 'Filled in, but check the amount and category.'
-          : 'Filled in below — check and save.'
+          : null
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read that.')

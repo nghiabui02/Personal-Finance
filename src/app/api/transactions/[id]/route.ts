@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, notFound, noContent, supabaseError } from '@/lib/server/route'
+import { checkWalletCanCover } from '@/lib/server/wallet-balance'
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
@@ -28,6 +29,16 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
     .single()
 
   if (!original) return notFound('Transaction not found.')
+
+  // Only the *extra* spend needs covering: what the original already took out
+  // of this wallet is about to be given back. A different wallet gets no credit
+  // for the original, so the full amount has to fit.
+  if (wallet_id && type === 'expense') {
+    const alreadyDeducted =
+      original.wallet_id === wallet_id && original.type === 'expense' ? Number(original.amount) : 0
+    const check = await checkWalletCanCover(supabase, user.id, wallet_id, total - alreadyDeducted)
+    if (!check.ok) return badRequest(check.message!)
+  }
 
   // Reverse old balance effect
   if (original.wallet_id) {

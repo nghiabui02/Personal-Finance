@@ -1,56 +1,21 @@
-'use client'
-
-import { useState } from 'react'
-import { type Category } from '@/lib/api/categories'
-import { type Wallet } from '@/lib/api/wallets'
-import type { DebtOption } from '@/lib/types'
-import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
-import { TransactionModal } from '../transactions/_components/transaction-modal'
-
-/** Everything the transaction modal needs, fetched once in the app layout. */
-export interface QuickAddData {
-  categories: Category[]
-  wallets: Wallet[]
-  debts: DebtOption[]
-  frequent: FrequentTransaction[]
-}
-
-const PLUS = (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24"
-       stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-  </svg>
-)
+import Link from 'next/link'
 
 /**
- * Logging a transaction, from anywhere. Rides in the centre of the mobile
- * bottom bar — never as a floating corner button, which overlapped the last
- * row of every list it sat on.
+ * The centre slot of the mobile bottom bar. It navigates rather than opening a
+ * dialog: the create form is tall, and a dialog on a phone puts a scroll inside
+ * a scroll. Desktop keeps the dialog — there is room for it there.
  */
-export function QuickAddButton({ data }: { data: QuickAddData }) {
-  const [open, setOpen] = useState(false)
-
+export function QuickAddButton() {
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="New transaction"
-        className={`-mt-5 w-14 h-14 rounded-full bg-brand-fill hover:bg-brand-fill-hover text-white shadow-[0_8px_24px_-6px_rgb(79_70_229/0.5)] flex items-center justify-center ring-4 ring-white dark:ring-gray-900 transition-[transform,background-color] duration-150 hover:scale-105 active:scale-95`}
-      >
-        {PLUS}
-      </button>
-
-      {open && (
-        <TransactionModal
-          editing={null}
-          categories={data.categories}
-          wallets={data.wallets}
-          debts={data.debts}
-          frequent={data.frequent}
-          onClose={() => setOpen(false)}
-        />
-      )}
-    </>
+    <Link
+      href="/transactions/new"
+      aria-label="New transaction"
+      className="-mt-5 w-14 h-14 rounded-full bg-brand-fill hover:bg-brand-fill-hover text-white shadow-[0_8px_24px_-6px_rgb(79_70_229/0.5)] flex items-center justify-center ring-4 ring-white dark:ring-gray-900 transition-[transform,background-color] duration-150 hover:scale-105 active:scale-95"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24"
+           stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+    </Link>
   )
 }
