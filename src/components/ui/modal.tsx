@@ -7,10 +7,24 @@ import { createPortal } from 'react-dom'
 let _originX = 0
 let _originY = 0
 
+/**
+ * Which input opened the modal.
+ *
+ * A click leaves the trigger focused but unringed, because the browser is in
+ * pointer modality. Pressing Escape flips it to keyboard modality, and the ring
+ * appears on a button the user never navigated to. Keyboard users do want focus
+ * back on the trigger; pointer users have no use for it.
+ */
+let _lastInputWasKeyboard = false
+
 if (typeof document !== 'undefined') {
   document.addEventListener('pointerdown', e => {
     _originX = e.clientX
     _originY = e.clientY
+    _lastInputWasKeyboard = false
+  }, true)
+  document.addEventListener('keydown', () => {
+    _lastInputWasKeyboard = true
   }, true)
 }
 
@@ -41,6 +55,22 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
     x: _originX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 400),
     y: _originY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 300),
   }))
+
+  // Captured at open time: by the moment the modal closes, Escape has already
+  // flipped the modality to keyboard.
+  const [openedByKeyboard] = useState(() => _lastInputWasKeyboard)
+  const triggerRef = useRef<HTMLElement | null>(
+    typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null
+  )
+
+  useEffect(() => {
+    const trigger = triggerRef.current
+    return () => {
+      if (openedByKeyboard || !trigger) return
+      // Only the trigger itself — anything else focused was a deliberate move.
+      if (document.activeElement === trigger) trigger.blur()
+    }
+  }, [openedByKeyboard])
 
   const closingRef = useRef(false)
 
