@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useAnchoredPanel, useOutsideClose } from './use-anchored-panel'
 import { toYMD } from '@/lib/utils/date'
 
 // Week starts Monday
@@ -58,64 +59,18 @@ interface DatePickerProps {
 
 // Approximate panel height, used to pick the opening direction
 const PANEL_HEIGHT = 380
-
-type PanelPos = { top?: number; bottom?: number; left: number; width: number }
+const PANEL_MIN_WIDTH = 268
 
 export function DatePicker({ label, name, value, onChange, required }: DatePickerProps) {
   const [open, setOpen]         = useState(false)
-  const [panelPos, setPanelPos] = useState<PanelPos | null>(null)
   const [viewYear, setViewYear]     = useState(new Date().getFullYear())
   const [viewMonth, setViewMonth]   = useState(new Date().getMonth() + 1)
   const ref        = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const panelRef   = useRef<HTMLDivElement>(null)
-
-  // The panel is portaled to <body> and positioned fixed: the modal card is
-  // an overflow-y-auto container with an inline transform, so an absolutely
-  // positioned panel gets clipped at the card's scrollport edge
-  const computePanelPos = useCallback((): PanelPos | null => {
-    const trigger = triggerRef.current
-    if (!trigger) return null
-    const rect = trigger.getBoundingClientRect()
-    const width = Math.max(268, rect.width)
-
-    // Anchor to whichever edge keeps the panel inside the viewport
-    let left = rect.left
-    const overflowsRight = rect.left + width > window.innerWidth - 8
-    const fitsWhenRightAligned = rect.right - width >= 8
-    if (overflowsRight && fitsWhenRightAligned) left = rect.right - width
-    left = Math.max(8, Math.min(left, window.innerWidth - 8 - width))
-
-    // Open toward the larger space when it doesn't fit below
-    const spaceBelow = window.innerHeight - rect.bottom
-    const openUpward = spaceBelow < PANEL_HEIGHT && rect.top > spaceBelow
-    return openUpward
-      ? { bottom: window.innerHeight - rect.top + 4, left, width }
-      : { top: rect.bottom + 4, left, width }
-  }, [])
-
-  // Close on outside click (the panel lives outside `ref`, so check both)
-  useEffect(() => {
-    function onMouseDown(e: MouseEvent) {
-      const target = e.target as Node
-      if (ref.current?.contains(target) || panelRef.current?.contains(target)) return
-      setOpen(false)
-    }
-    document.addEventListener('mousedown', onMouseDown)
-    return () => document.removeEventListener('mousedown', onMouseDown)
-  }, [])
-
-  // Follow the trigger while open (modal body scroll, window resize)
-  useEffect(() => {
-    if (!open) return
-    const reposition = () => setPanelPos(computePanelPos())
-    window.addEventListener('scroll', reposition, true)
-    window.addEventListener('resize', reposition)
-    return () => {
-      window.removeEventListener('scroll', reposition, true)
-      window.removeEventListener('resize', reposition)
-    }
-  }, [open, computePanelPos])
+  const { triggerRef, panelRef, pos: panelPos, reposition } = useAnchoredPanel<HTMLButtonElement>(
+    open, { height: PANEL_HEIGHT, minWidth: PANEL_MIN_WIDTH },
+  )
+  const closePanel = useCallback(() => setOpen(false), [])
+  useOutsideClose(ref, panelRef, closePanel)
 
   function handleOpen() {
     if (!open) {
@@ -124,7 +79,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
       const [y, m] = base.split('-').map(Number)
       setViewYear(y)
       setViewMonth(m)
-      setPanelPos(computePanelPos())
+      reposition()
     }
     setOpen(v => !v)
   }

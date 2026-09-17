@@ -1,6 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useAnchoredPanel, useOutsideClose } from './use-anchored-panel'
 
 type SelectOption = {
   value: string
@@ -8,6 +10,9 @@ type SelectOption = {
   icon?: string | null
   color?: string | null
 }
+
+/** Search box + ten rows, the most the list scrolls to. */
+const PANEL_HEIGHT = 260
 
 interface CustomSelectProps {
   label: string | null
@@ -34,6 +39,12 @@ export function CustomSelect({
   const inputRef = useRef<HTMLInputElement>(null)
   const selected = options.find(o => o.value === value)
 
+  const { triggerRef, panelRef, pos, reposition } = useAnchoredPanel<HTMLButtonElement>(
+    open, { height: PANEL_HEIGHT },
+  )
+  const close = useCallback(() => { setOpen(false); setQuery('') }, [])
+  useOutsideClose(ref, panelRef, close)
+
   // Auto-focus the search input on mount — but not on touch devices, where
   // it pops the on-screen keyboard over the very list you want to scroll.
   const searchCallbackRef = useCallback((node: HTMLInputElement | null) => {
@@ -46,23 +57,12 @@ export function CustomSelect({
     ? options.filter(o => o.label?.toLowerCase().includes(query.toLowerCase()))
     : options
 
-  // Close on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-        setQuery('')
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
   // Closing the dropdown always clears the search query — every close path
   // (select, escape, outside click, trigger toggle) goes through here.
   function toggleOpen() {
-    if (open) setQuery('')
-    setOpen(!open)
+    if (open) { close(); return }
+    reposition()
+    setOpen(true)
   }
 
   function handleSelect(val: string) {
@@ -95,6 +95,7 @@ export function CustomSelect({
 
         {/* Trigger button */}
         <button
+          ref={triggerRef}
           type="button"
           onClick={toggleOpen}
           className={`w-full h-[42px] flex items-center justify-between gap-2 rounded-lg border px-3 text-sm text-left transition-colors outline-none ${
@@ -126,8 +127,12 @@ export function CustomSelect({
         </button>
 
         {/* Dropdown with search */}
-        {open && (
-          <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden animate-dropdown-in">
+        {open && pos && createPortal(
+          <div
+            ref={panelRef}
+            className="fixed z-[200] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden animate-dropdown-in"
+            style={{ top: pos.top, bottom: pos.bottom, left: pos.left, width: pos.width }}
+          >
             {/* Search box */}
             <div className="px-2 pt-2 pb-1">
               <div className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 py-1.5">
@@ -164,7 +169,7 @@ export function CustomSelect({
                       type="button"
                       onMouseDown={e => e.preventDefault()}
                       onClick={() => handleSelect(opt.value)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${
+                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 h-9 text-sm text-left transition-colors ${
                         isSelected
                           ? 'bg-brand-soft text-brand'
                           : isHighlighted
@@ -173,7 +178,7 @@ export function CustomSelect({
                       }`}
                     >
                       {opt.icon ? (
-                        <span className="text-base w-5 text-center shrink-0">{opt.icon}</span>
+                        <span className="text-base leading-none w-5 text-center shrink-0">{opt.icon}</span>
                       ) : opt.color ? (
                         <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: opt.color }} />
                       ) : (
@@ -190,7 +195,8 @@ export function CustomSelect({
                 )
               })}
             </ul>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
     )
@@ -207,6 +213,7 @@ export function CustomSelect({
       <input type="hidden" name={name} value={value} />
 
       <button
+        ref={triggerRef}
         type="button"
         onClick={toggleOpen}
         className={`w-full h-[42px] flex items-center justify-between gap-2 rounded-lg border px-3 text-sm text-left transition-colors outline-none ${
@@ -237,8 +244,12 @@ export function CustomSelect({
         </svg>
       </button>
 
-      {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden animate-dropdown-in">
+      {open && pos && createPortal(
+        <div
+          ref={panelRef}
+          className="fixed z-[200] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden animate-dropdown-in"
+          style={{ top: pos.top, bottom: pos.bottom, left: pos.left, width: pos.width }}
+        >
           <ul className="max-h-52 overflow-y-auto overscroll-contain py-1">
             {options.map(opt => {
               const isSelected = opt.value === value
@@ -247,14 +258,14 @@ export function CustomSelect({
                   <button
                     type="button"
                     onClick={() => { onChange(opt.value); setOpen(false) }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 h-9 text-sm text-left transition-colors ${
                       isSelected
                         ? 'bg-brand-soft text-brand'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     {opt.icon ? (
-                      <span className="text-base w-5 text-center shrink-0">{opt.icon}</span>
+                      <span className="text-base leading-none w-5 text-center shrink-0">{opt.icon}</span>
                     ) : opt.color ? (
                       <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: opt.color }} />
                     ) : (
@@ -271,7 +282,8 @@ export function CustomSelect({
               )
             })}
           </ul>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

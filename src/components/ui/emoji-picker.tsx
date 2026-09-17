@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useAnchoredPanel, useOutsideClose } from './use-anchored-panel'
 
 const CATEGORIES = [
   {
@@ -54,8 +55,6 @@ const PANEL_HEIGHT = 268
 /** Eight columns of emoji need this much room, whatever the field's width. */
 const PANEL_MIN_WIDTH = 288
 
-type PanelPos = { top?: number; bottom?: number; left: number; width: number }
-
 interface EmojiPickerInputProps {
   label: string
   name: string
@@ -65,65 +64,23 @@ interface EmojiPickerInputProps {
 export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPickerInputProps) {
   const [value, setValue] = useState(defaultValue)
   const [open, setOpen] = useState(false)
-  const [panelPos, setPanelPos] = useState<PanelPos | null>(null)
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('finance')
   const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
   const searchRef = useCallback((node: HTMLInputElement | null) => {
     if (node) setTimeout(() => node.focus(), 0)
   }, [])
 
-  // Portaled to <body> and positioned fixed: inside a modal the card is an
-  // overflow-y-auto scrollport, and an absolutely positioned panel gets clipped
-  // at its edge. Same reason the date picker does this.
-  const computePanelPos = useCallback((): PanelPos | null => {
-    const trigger = triggerRef.current
-    if (!trigger) return null
-    const rect = trigger.getBoundingClientRect()
-    const width = Math.max(PANEL_MIN_WIDTH, rect.width)
-
-    let left = rect.left
-    const overflowsRight = rect.left + width > window.innerWidth - 8
-    const fitsWhenRightAligned = rect.right - width >= 8
-    if (overflowsRight && fitsWhenRightAligned) left = rect.right - width
-    left = Math.max(8, Math.min(left, window.innerWidth - 8 - width))
-
-    const spaceBelow = window.innerHeight - rect.bottom
-    const openUpward = spaceBelow < PANEL_HEIGHT && rect.top > spaceBelow
-    return openUpward
-      ? { bottom: window.innerHeight - rect.top + 4, left, width }
-      : { top: rect.bottom + 4, left, width }
-  }, [])
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      const target = e.target as Node
-      if (ref.current?.contains(target) || panelRef.current?.contains(target)) return
-      setOpen(false)
-      setQuery('')
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  // Follow the trigger while open (modal body scroll, window resize)
-  useEffect(() => {
-    if (!open) return
-    const reposition = () => setPanelPos(computePanelPos())
-    window.addEventListener('scroll', reposition, true)
-    window.addEventListener('resize', reposition)
-    return () => {
-      window.removeEventListener('scroll', reposition, true)
-      window.removeEventListener('resize', reposition)
-    }
-  }, [open, computePanelPos])
+  const { triggerRef, panelRef, pos, reposition } = useAnchoredPanel<HTMLButtonElement>(
+    open, { height: PANEL_HEIGHT, minWidth: PANEL_MIN_WIDTH },
+  )
+  const close = useCallback(() => { setOpen(false); setQuery('') }, [])
+  useOutsideClose(ref, panelRef, close)
 
   function handleOpen() {
-    if (open) { setOpen(false); return }
+    if (open) { close(); return }
     setQuery('')
-    setPanelPos(computePanelPos())
+    reposition()
     setOpen(true)
   }
 
@@ -183,15 +140,15 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
       </div>
 
       {/* Picker panel */}
-      {open && panelPos && createPortal(
+      {open && pos && createPortal(
         <div
           ref={panelRef}
           className="fixed z-[200] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden flex flex-col animate-dropdown-in"
           style={{
-            top: panelPos.top,
-            bottom: panelPos.bottom,
-            left: panelPos.left,
-            width: panelPos.width,
+            top: pos.top,
+            bottom: pos.bottom,
+            left: pos.left,
+            width: pos.width,
             maxHeight: PANEL_HEIGHT,
           }}
         >
