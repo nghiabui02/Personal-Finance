@@ -101,51 +101,58 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
   return (
     <Modal title={editing ? 'Edit wallet' : 'New wallet'} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Name"
-          name="name"
-          defaultValue={editing?.name ?? ''}
-          required
-          placeholder={isCredit ? 'e.g. Vietcombank Visa' : 'e.g. Vietcombank'}
-        />
+        {/* What the wallet is. Name takes the extra width — a type is one word. */}
+        <div className="grid grid-cols-[3fr_2fr] gap-3 items-end">
+          <Input
+            label="Name"
+            name="name"
+            defaultValue={editing?.name ?? ''}
+            required
+            placeholder={isCredit ? 'e.g. VCB Visa' : 'e.g. Vietcombank'}
+          />
+          <CustomSelect
+            label="Type"
+            name="type"
+            options={TYPE_OPTIONS}
+            value={type}
+            onChange={v => setType(v as Wallet['type'])}
+          />
+        </div>
 
-        <CustomSelect
-          label="Type"
-          name="type"
-          options={TYPE_OPTIONS}
-          value={type}
-          onChange={v => setType(v as Wallet['type'])}
-        />
-
-        {isCredit ? (
-          <>
+        {/* The money field beside the icon — both are short enough to share. */}
+        <div className="grid grid-cols-2 gap-3 items-end">
+          {isCredit ? (
             <AmountInput
               label="Credit Limit"
               name="credit_limit"
               defaultValue={editing?.credit_limit ?? 0}
               required
             />
+          ) : (
+            <AmountInput
+              label="Balance"
+              name="balance"
+              defaultValue={editing?.balance ?? 0}
+            />
+          )}
+          <EmojiPickerInput
+            label="Icon"
+            name="icon"
+            defaultValue={editing?.icon ?? ''}
+          />
+        </div>
+
+        {isCredit && (
+          <div>
             <div className="grid grid-cols-2 gap-3">
               <DaySelect label="Statement Day" name="statement_day" defaultValue={editing?.statement_day ?? 26} />
               <DaySelect label="Payment Due Day" name="payment_due_day" defaultValue={editing?.payment_due_day ?? 10} />
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 -mt-1">
+            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
               Example: statement on the 26th, payment due on the 10th of the next month
             </p>
-          </>
-        ) : (
-          <AmountInput
-            label="Balance"
-            name="balance"
-            defaultValue={editing?.balance ?? 0}
-          />
+          </div>
         )}
-
-        <EmojiPickerInput
-          label="Icon"
-          name="icon"
-          defaultValue={editing?.icon ?? ''}
-        />
 
         <div>
           <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</p>
