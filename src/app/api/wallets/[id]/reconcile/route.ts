@@ -12,9 +12,30 @@ import { localYMD } from '@/lib/utils/date'
  * adjustment transaction for the difference. The drift stays visible and every
  * report keeps balancing.
  */
+/**
+ * Confirms a caller-supplied category is the user's own and points the right
+ * way: crediting a wallet cannot be filed under an expense category.
+ */
+async function resolveUserCategory(
+  supabase: Parameters<typeof ensureSystemCategory>[0],
+  userId: string,
+  categoryId: string,
+  direction: 'income' | 'expense',
+): Promise<string | null> {
+  const { data } = await supabase
+    .from('categories')
+    .select('id, type')
+    .eq('id', categoryId)
+    .eq('type', direction)
+    .or(`user_id.eq.${userId},user_id.is.null`)
+    .maybeSingle()
+
+  return data?.id ?? null
+}
+
 export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
-  const { actual_balance, note, date } = await request.json()
+  const { actual_balance, note, date, category_id } = await request.json()
 
   const actual = Number(actual_balance)
   if (!Number.isFinite(actual)) return badRequest('Enter the balance shown by your bank.')
@@ -45,7 +66,15 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
     return NextResponse.json({ ok: true, delta: 0, message: 'Already matches — nothing to adjust.' })
   }
 
-  const categoryId = await ensureSystemCategory(supabase, user.id, delta > 0 ? 'adjust_up' : 'adjust_down')
+  // A gap is not always a bookkeeping error. A savings pocket that pays daily
+  // interest grows on its own, and that growth is real income — filing it as a
+  // correction would keep it out of the month's totals, where it belongs.
+  // Default stays "correction"; the caller names a category to say otherwise.
+  const categoryId = category_id
+    ? await resolveUserCategory(supabase, user.id, category_id, delta > 0 ? 'income' : 'expense')
+    : await ensureSystemCategory(supabase, user.id, delta > 0 ? 'adjust_up' : 'adjust_down')
+
+  if (!categoryId) return badRequest('That category does not match the direction of this change.')
 
   const { error: txError } = await supabase.from('transactions').insert({
     user_id: user.id,

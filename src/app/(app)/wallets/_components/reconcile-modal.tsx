@@ -4,7 +4,9 @@ import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { Modal, useModalClose } from '@/components/ui/modal'
+import { type Category } from '@/lib/api/categories'
 import { toast } from '@/components/ui/toast'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
@@ -16,17 +18,36 @@ import { useState, useTransition } from 'react'
  * Type in the balance the bank actually shows; the gap is filed as one
  * adjustment transaction. Nothing is overwritten, so the history still adds up.
  */
-export function ReconcileModal({ wallet, onClose }: { wallet: Wallet; onClose: () => void }) {
+export function ReconcileModal({
+  wallet,
+  categories,
+  onClose,
+}: {
+  wallet: Wallet
+  categories: Category[]
+  onClose: () => void
+}) {
   const close = useModalClose()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [date, setDate] = useState(localYMD())
   const [actual, setActual] = useState<number | null>(null)
+  const [categoryId, setCategoryId] = useState('')
 
   const isCredit = wallet.type === 'credit'
   const recorded = Number(wallet.balance)
   const delta = actual === null ? null : actual - recorded
+
+  // The gap becomes an income or an expense row, so only categories pointing
+  // that way can hold it.
+  const direction = delta !== null && delta > 0 ? 'income' : 'expense'
+  const reasonOptions = [
+    { value: '', label: 'Balance correction' },
+    ...categories
+      .filter(c => c.type === direction)
+      .map(c => ({ value: c.id, label: `${c.icon ?? ''} ${c.name}`.trim() })),
+  ]
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -39,7 +60,12 @@ export function ReconcileModal({ wallet, onClose }: { wallet: Wallet; onClose: (
     setError(null)
     startTransition(async () => {
       try {
-        const result = await walletsApi.reconcile(wallet.id, { actual_balance: value, note, date })
+        const result = await walletsApi.reconcile(wallet.id, {
+          actual_balance: value,
+          note,
+          date,
+          category_id: categoryId || undefined,
+        })
         toast.success(
           result.delta === 0
             ? 'Already matches — nothing to adjust.'
@@ -86,10 +112,23 @@ export function ReconcileModal({ wallet, onClose }: { wallet: Wallet; onClose: (
                 <span className={`font-semibold tabular-nums ${delta > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                   {delta > 0 ? '+' : '−'}{formatVND(Math.abs(delta))}
                 </span>{' '}
-                as a balance adjustment. {delta > 0 ? 'You held more than recorded.' : 'You held less than recorded.'}
+                {categoryId
+                  ? `as ${reasonOptions.find(o => o.value === categoryId)?.label ?? 'that category'} — counted in your ${direction === 'income' ? 'income' : 'spending'}.`
+                  : 'as a balance correction — kept out of your income and spending totals.'}
               </p>
             )}
           </div>
+        )}
+
+        {delta !== null && delta !== 0 && reasonOptions.length > 1 && (
+          <CustomSelect
+            label="Reason"
+            name="reason"
+            options={reasonOptions}
+            value={categoryId}
+            onChange={setCategoryId}
+            searchable
+          />
         )}
 
         <DatePicker label="Date" name="date" value={date} onChange={setDate} required />

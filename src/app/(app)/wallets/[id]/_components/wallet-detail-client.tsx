@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { BRAND_HEX } from '@/lib/utils/colors'
 import { useEffect, useRef, useState } from 'react'
 import { ReconcileModal } from '../../_components/reconcile-modal'
+import { type Category } from '@/lib/api/categories'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_ICONS, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
@@ -27,12 +28,14 @@ const TransferIcon = () => (
 
 export default function WalletDetailClient({
   wallet,
+  categories,
   initialTransactions,
   initialHasMore,
   totalIncome,
   totalExpense,
 }: {
   wallet: Wallet
+  categories: Category[]
   initialTransactions: WalletTransaction[]
   initialHasMore: boolean
   totalIncome: number
@@ -140,7 +143,7 @@ export default function WalletDetailClient({
       </div>
 
       {reconcileOpen && (
-        <ReconcileModal wallet={wallet} onClose={() => setReconcileOpen(false)} />
+        <ReconcileModal wallet={wallet} categories={categories} onClose={() => setReconcileOpen(false)} />
       )}
 
       {/* History */}

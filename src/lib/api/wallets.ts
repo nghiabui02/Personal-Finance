@@ -90,7 +90,7 @@ export const walletsApi = {
   },
 
   /** Files an adjustment transaction for the gap against the real bank balance. */
-  reconcile(id: string, payload: { actual_balance: number; note?: string; date?: string }): Promise<ReconcileResult> {
+  reconcile(id: string, payload: { actual_balance: number; note?: string; date?: string; category_id?: string }): Promise<ReconcileResult> {
     return apiFetch(`/api/wallets/${id}/reconcile`, {
       method: 'POST',
       body: JSON.stringify(payload),
