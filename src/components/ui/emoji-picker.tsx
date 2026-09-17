@@ -1,46 +1,47 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 const CATEGORIES = [
   {
-    key: 'finance', icon: '💰', label: 'Finance & Money',
+    key: 'finance', icon: '💰', label: 'Finance & Money', shortLabel: 'Money',
     emojis: ['💰','💵','💴','💶','💷','💸','💳','🏧','💹','📈','📉','🪙','💎','🏦','📊','💼','🏛️','📋','🤑','💲','💱','🏷️','🧾','📑','🤝','🏪','🏬','🎰','💡','🔐','🗝️','📦','🏺','📬','🧮','⚖️'],
   },
   {
-    key: 'food', icon: '🍔', label: 'Food & Drink',
+    key: 'food', icon: '🍔', label: 'Food & Drink', shortLabel: 'Food',
     emojis: ['🍔','🍕','🍣','🍜','🥗','🥘','🍱','☕','🍺','🥤','🍷','🥂','🍦','🎂','🍎','🍊','🥑','🍇','🥩','🧁','🍰','🥐','🍳','🌮','🌯','🍛','🥟','🍤','🥞','🧇'],
   },
   {
-    key: 'transport', icon: '🚗', label: 'Transport',
+    key: 'transport', icon: '🚗', label: 'Transport', shortLabel: 'Transport',
     emojis: ['🚗','🚕','🚌','🚂','✈️','🚢','🛵','🏍️','🚲','🛺','🚐','🚁','⛽','🅿️','🚦','🛣️','🚙','🛻','🚛','🚜','🛴','🛹','⛵','🚀','🚁','🛸'],
   },
   {
-    key: 'shopping', icon: '🛍️', label: 'Shopping',
+    key: 'shopping', icon: '🛍️', label: 'Shopping', shortLabel: 'Shopping',
     emojis: ['🛍️','👗','👟','💄','🛒','🎁','👜','👔','💍','🧴','👒','🧤','🎀','👠','🧸','🏪','🛻','👛','🧣','🥿','👞','🎽','🩱','🧢','👓','⌚','💻','📱','📷'],
   },
   {
-    key: 'health', icon: '🏥', label: 'Health & Fitness',
+    key: 'health', icon: '🏥', label: 'Health & Fitness', shortLabel: 'Health',
     emojis: ['🏥','💊','🏋️','🧘','🩺','💉','🩹','🧬','🏃','🚴','🥊','🛁','🧴','🦷','👁️','🫀','🧠','🩻','🏊','⚽','🎾','🏸','🤸','🧗','🪥','🩺'],
   },
   {
-    key: 'fun', icon: '🎮', label: 'Entertainment',
+    key: 'fun', icon: '🎮', label: 'Entertainment', shortLabel: 'Fun',
     emojis: ['🎬','🎮','🎵','🎸','🎨','🎭','📺','🎤','🎧','🎲','🎯','♟️','🎳','📸','🎡','🎢','🎪','🎠','🎹','🥁','🎷','🎺','🎻','🪗','🎫','🎟️','🃏','🎴'],
   },
   {
-    key: 'home', icon: '🏠', label: 'Home & Living',
+    key: 'home', icon: '🏠', label: 'Home & Living', shortLabel: 'Home',
     emojis: ['🏠','🏡','🛋️','🔨','🧹','🪴','🛏️','🚿','🧺','🪣','🔑','🪑','🧰','💡','🪟','🚪','🧻','🪒','🛁','🪞','🫧','🧽','🔧','🪛','🔌','💻','📺','🖼️'],
   },
   {
-    key: 'education', icon: '📚', label: 'Education',
+    key: 'education', icon: '📚', label: 'Education', shortLabel: 'Study',
     emojis: ['📚','✏️','🎓','📝','🔬','💻','📱','🖥️','⌨️','📐','📏','🖊️','📖','🔭','🧪','📡','🧑‍💻','📓','📔','📒','📃','📄','📑','📊','📈','📉','🗂️','📁'],
   },
   {
-    key: 'travel', icon: '🌍', label: 'Travel',
+    key: 'travel', icon: '🌍', label: 'Travel', shortLabel: 'Travel',
     emojis: ['🌴','🏖️','⛺','🗺️','🧳','🏔️','🗼','🗽','🏰','🎡','🌍','🧭','🏕️','🌅','🏄','🤿','🛂','🏨','🗿','🌋','🏜️','🌊','⛰️','🌁','🗾','🌐','🏟️','🎑'],
   },
   {
-    key: 'other', icon: '⭐', label: 'Symbols & Other',
+    key: 'other', icon: '⭐', label: 'Symbols & Other', shortLabel: 'Other',
     emojis: ['❤️','✅','⚡','🔥','💡','⭐','🌙','☀️','🌈','🎊','🎉','🍀','🌸','🦋','🐕','🐈','🌺','🪄','🔔','📣','💬','🔖','📌','📍','🏁','🚩','🏳️','♻️','⚠️','🆕','✨','💫','🌟'],
   },
 ] as const
@@ -48,6 +49,12 @@ const CATEGORIES = [
 type CategoryKey = typeof CATEGORIES[number]['key']
 
 const ALL_EMOJIS = CATEGORIES.flatMap(c => c.emojis)
+
+const PANEL_HEIGHT = 268
+/** Eight columns of emoji need this much room, whatever the field's width. */
+const PANEL_MIN_WIDTH = 288
+
+type PanelPos = { top?: number; bottom?: number; left: number; width: number }
 
 interface EmojiPickerInputProps {
   label: string
@@ -58,33 +65,65 @@ interface EmojiPickerInputProps {
 export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPickerInputProps) {
   const [value, setValue] = useState(defaultValue)
   const [open, setOpen] = useState(false)
-  const [openUpward, setOpenUpward] = useState(false)
+  const [panelPos, setPanelPos] = useState<PanelPos | null>(null)
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('finance')
   const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const searchRef = useCallback((node: HTMLInputElement | null) => {
     if (node) setTimeout(() => node.focus(), 0)
   }, [])
 
+  // Portaled to <body> and positioned fixed: inside a modal the card is an
+  // overflow-y-auto scrollport, and an absolutely positioned panel gets clipped
+  // at its edge. Same reason the date picker does this.
+  const computePanelPos = useCallback((): PanelPos | null => {
+    const trigger = triggerRef.current
+    if (!trigger) return null
+    const rect = trigger.getBoundingClientRect()
+    const width = Math.max(PANEL_MIN_WIDTH, rect.width)
+
+    let left = rect.left
+    const overflowsRight = rect.left + width > window.innerWidth - 8
+    const fitsWhenRightAligned = rect.right - width >= 8
+    if (overflowsRight && fitsWhenRightAligned) left = rect.right - width
+    left = Math.max(8, Math.min(left, window.innerWidth - 8 - width))
+
+    const spaceBelow = window.innerHeight - rect.bottom
+    const openUpward = spaceBelow < PANEL_HEIGHT && rect.top > spaceBelow
+    return openUpward
+      ? { bottom: window.innerHeight - rect.top + 4, left, width }
+      : { top: rect.bottom + 4, left, width }
+  }, [])
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-        setQuery('')
-      }
+      const target = e.target as Node
+      if (ref.current?.contains(target) || panelRef.current?.contains(target)) return
+      setOpen(false)
+      setQuery('')
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // Follow the trigger while open (modal body scroll, window resize)
+  useEffect(() => {
+    if (!open) return
+    const reposition = () => setPanelPos(computePanelPos())
+    window.addEventListener('scroll', reposition, true)
+    window.addEventListener('resize', reposition)
+    return () => {
+      window.removeEventListener('scroll', reposition, true)
+      window.removeEventListener('resize', reposition)
+    }
+  }, [open, computePanelPos])
+
   function handleOpen() {
     if (open) { setOpen(false); return }
-    if (triggerRef.current) {
-      const r = triggerRef.current.getBoundingClientRect()
-      setOpenUpward(window.innerHeight - r.bottom < 340)
-    }
     setQuery('')
+    setPanelPos(computePanelPos())
     setOpen(true)
   }
 
@@ -106,45 +145,58 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
       </label>
       <input type="hidden" name={name} value={value} />
 
-      {/* Trigger + Panel wrapper */}
-      <div className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={handleOpen}
-        className={`w-full flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors outline-none ${
+      <div
+        className={`w-full flex items-center rounded-lg border transition-colors ${
           open
             ? 'border-brand'
             : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
         } bg-white dark:bg-gray-800`}
       >
-        {value ? (
-          <span className="text-xl leading-none">{value}</span>
-        ) : (
-          <span className="text-gray-400 text-sm">Choose emoji</span>
-        )}
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={handleOpen}
+          className="flex-1 min-w-0 flex items-center gap-2 px-3 py-2.5 text-sm text-left outline-none"
+        >
+          {value
+            ? <span className="text-xl leading-none">{value}</span>
+            : <span className="text-gray-400 text-sm">Choose emoji</span>}
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+            className={`ml-auto text-gray-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+          </svg>
+        </button>
+        {/* Clearing shouldn't mean hunting down the chosen emoji to click it again */}
         {value && (
-          <span className="text-gray-400 text-sm">Change</span>
+          <button
+            type="button"
+            onClick={() => setValue('')}
+            aria-label="Remove icon"
+            title="Remove icon"
+            className="px-2.5 py-2.5 text-gray-400 hover:text-rose-600 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12"/>
+            </svg>
+          </button>
         )}
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-          className={`ml-auto text-gray-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
-        </svg>
-      </button>
+      </div>
 
       {/* Picker panel */}
-      {open && (
+      {open && panelPos && createPortal(
         <div
-          className="absolute z-[200] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden flex flex-col"
+          ref={panelRef}
+          className="fixed z-[200] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden flex flex-col animate-dropdown-in"
           style={{
-            width: '100%',
-            maxHeight: 340,
-            left: 0,
-            ...(openUpward ? { bottom: 'calc(100% + 4px)' } : { top: 'calc(100% + 4px)' }),
+            top: panelPos.top,
+            bottom: panelPos.bottom,
+            left: panelPos.left,
+            width: panelPos.width,
+            maxHeight: PANEL_HEIGHT,
           }}
         >
           {/* Search */}
-          <div className="px-2.5 pt-2.5 pb-1.5 shrink-0">
+          <div className="p-2 shrink-0">
             <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-2.5 py-1.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} className="text-gray-400 shrink-0">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -154,11 +206,11 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Search all emoji"
-                className="flex-1 text-sm bg-transparent outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400"
+                placeholder="money, food, car…"
+                className="flex-1 min-w-0 text-sm bg-transparent outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400"
               />
               {query && (
-                <button type="button" onMouseDown={e => { e.preventDefault(); setQuery('') }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <button type="button" onMouseDown={e => { e.preventDefault(); setQuery('') }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12"/>
                   </svg>
@@ -167,36 +219,36 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
             </div>
           </div>
 
-          {/* Category tabs */}
-          {!query && (
-            <div className="flex items-center gap-0.5 px-2 pb-1 border-b border-hairline shrink-0 overflow-x-auto">
+          {/* Category tabs — named, because a row of emoji reads as more emoji,
+              not as navigation. The active one also serves as the section label. */}
+          {!query ? (
+            <div className="flex items-center gap-1 px-2 pb-2 shrink-0 overflow-x-auto no-scrollbar">
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.key}
                   type="button"
-                  title={cat.label}
                   onClick={() => setActiveCategory(cat.key)}
-                  className={`shrink-0 text-base w-8 h-7 rounded flex items-center justify-center transition-colors ${
+                  className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
                     activeCategory === cat.key
-                      ? 'bg-brand-soft'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-800 opacity-60 hover:opacity-100'
+                      ? 'bg-brand-soft text-brand'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
-                  {cat.icon}
+                  <span className="text-sm leading-none">{cat.icon}</span>
+                  {cat.shortLabel}
                 </button>
               ))}
             </div>
+          ) : (
+            <p className="px-3 pb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 shrink-0">
+              {sectionLabel}
+            </p>
           )}
 
-          {/* Section label */}
-          <div className="px-3 pt-2 pb-1 shrink-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">{sectionLabel}</p>
-          </div>
-
           {/* Emoji grid */}
-          <div className="overflow-y-auto flex-1 px-2 pb-2">
+          <div className="overflow-y-auto flex-1 px-2 pb-2 border-t border-hairline pt-2">
             {displayedEmojis.length === 0 ? (
-              <p className="text-center text-sm text-gray-400 py-6">No emoji found</p>
+              <p className="text-center text-sm text-gray-400 py-6">Nothing matches that.</p>
             ) : (
               <div className="grid grid-cols-8 gap-0.5">
                 {displayedEmojis.map((emoji, i) => (
@@ -205,7 +257,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
                     type="button"
                     onClick={() => select(emoji)}
                     className={`text-xl p-1 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 aspect-square flex items-center justify-center ${
-                      value === emoji ? 'bg-brand-soft ring-1 ring-brand' : ''
+                      value === emoji ? 'bg-brand-soft' : ''
                     }`}
                   >
                     {emoji}
@@ -214,9 +266,9 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
-      </div>
     </div>
   )
 }
