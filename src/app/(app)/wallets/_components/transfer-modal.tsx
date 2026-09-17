@@ -82,7 +82,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
     const after = Number(wallet.balance) + delta
     const changed = amount > 0
     return (
-      <span className={`text-xs tabular-nums truncate ${align} ${
+      <span className={`block min-w-0 text-xs tabular-nums truncate ${align} ${
         !changed ? 'text-gray-400 dark:text-gray-500'
           : delta < 0 ? 'text-rose-600 dark:text-rose-400'
           : 'text-emerald-600 dark:text-emerald-400'
@@ -98,17 +98,19 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
 
         {/* From → To on one row; the button between them swaps the direction */}
         <div>
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-end">
-            <CustomSelect
-              label="From"
-              name="from_wallet"
-              options={walletOptions(wallets)}
-              value={fromId}
-              onChange={v => {
-                setFromId(v)
-                if (toId === v) setToId(wallets.find(w => w.id !== v)?.id ?? '')
-              }}
-            />
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-end">
+            <div className="min-w-0">
+              <CustomSelect
+                label="From"
+                name="from_wallet"
+                options={walletOptions(wallets)}
+                value={fromId}
+                onChange={v => {
+                  setFromId(v)
+                  if (toId === v) setToId(wallets.find(w => w.id !== v)?.id ?? '')
+                }}
+              />
+            </div>
             <button
               type="button"
               onClick={swap}
@@ -120,16 +122,18 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
               </svg>
             </button>
-            <CustomSelect
-              label="To"
-              name="to_wallet"
-              options={walletOptions(wallets.filter(w => w.id !== fromId))}
-              value={toId}
-              onChange={setToId}
-            />
+            <div className="min-w-0">
+              <CustomSelect
+                label="To"
+                name="to_wallet"
+                options={walletOptions(wallets.filter(w => w.id !== fromId))}
+                value={toId}
+                onChange={setToId}
+              />
+            </div>
           </div>
 
-          <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] gap-2 items-baseline">
+          <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-baseline">
             {balanceLine(fromWallet, -amount, 'text-left')}
             <span className="w-9" />
             {balanceLine(toWallet, amount, 'text-right')}
