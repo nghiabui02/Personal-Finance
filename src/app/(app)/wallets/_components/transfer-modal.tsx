@@ -61,89 +61,100 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
     }
   }
 
+  // The balance lives under each select instead of in the option label — at half
+  // width a long "name — 1.122.262 ₫" would truncate away the part that matters.
   const walletOptions = (list: Wallet[]) => list.map(w => ({
     value: w.id,
-    label: `${w.name} — ${formatVND(w.balance)}`,
+    label: w.name,
     icon: w.icon ?? null,
     color: w.color ?? null,
   }))
 
+  function swap() {
+    if (!fromId || !toId) return
+    setFromId(toId)
+    setToId(fromId)
+  }
+
+  /** Current balance, or where it lands once the amount is entered. */
+  function balanceLine(wallet: Wallet | undefined, delta: number, align: string) {
+    if (!wallet) return <span />
+    const after = Number(wallet.balance) + delta
+    const changed = amount > 0
+    return (
+      <span className={`text-xs tabular-nums truncate ${align} ${
+        !changed ? 'text-gray-400 dark:text-gray-500'
+          : delta < 0 ? 'text-rose-600 dark:text-rose-400'
+          : 'text-emerald-600 dark:text-emerald-400'
+      }`}>
+        {formatVND(changed ? after : Number(wallet.balance))}
+      </span>
+    )
+  }
+
   return (
-    <Modal title="Transfer between wallets" size="sm" onClose={onClose}>
+    <Modal title="Transfer between wallets" size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* From wallet */}
-        <CustomSelect
-          label="From"
-          name="from_wallet"
-          options={walletOptions(wallets)}
-          value={fromId}
-          onChange={v => {
-            setFromId(v)
-            if (toId === v) setToId(wallets.find(w => w.id !== v)?.id ?? '')
-          }}
-        />
-
-        {/* Arrow + balance preview */}
-        <div className="flex items-center justify-center gap-3">
-          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-          <div className="w-8 h-8 rounded-full bg-brand-soft flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} className="text-brand">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" />
-            </svg>
-          </div>
-          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-        </div>
-
-        {/* To wallet */}
-        <CustomSelect
-          label="To"
-          name="to_wallet"
-          options={walletOptions(wallets.filter(w => w.id !== fromId))}
-          value={toId}
-          onChange={setToId}
-        />
-
-        {/* Balance after preview */}
-        {amount > 0 && fromWallet && toWallet && (
-          <div className="rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between text-xs text-gray-500 dark:text-gray-400 gap-4">
-            <div>
-              <p className="font-medium text-gray-700 dark:text-gray-300 truncate">{fromWallet.icon} {fromWallet.name}</p>
-              <p className="mt-0.5 text-rose-500">{formatVND(Number(fromWallet.balance) - amount)}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-medium text-gray-700 dark:text-gray-300 truncate">{toWallet.icon} {toWallet.name}</p>
-              <p className="mt-0.5 text-emerald-600">{formatVND(Number(toWallet.balance) + amount)}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Amount */}
+        {/* From → To on one row; the button between them swaps the direction */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
-          <div className="relative">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={amountDisplay}
-              onChange={e => setAmountDisplay(formatWithDots(e.target.value))}
-              placeholder="0"
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2.5 pr-14 text-sm outline-none focus:border-brand"
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-end">
+            <CustomSelect
+              label="From"
+              name="from_wallet"
+              options={walletOptions(wallets)}
+              value={fromId}
+              onChange={v => {
+                setFromId(v)
+                if (toId === v) setToId(wallets.find(w => w.id !== v)?.id ?? '')
+              }}
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-              {amountDisplay && (
-                <button type="button" onClick={() => setAmountDisplay('')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-              <span className="text-sm text-gray-400 pointer-events-none">₫</span>
-            </div>
+            <button
+              type="button"
+              onClick={swap}
+              aria-label="Swap wallets"
+              title="Swap"
+              className="h-[42px] w-9 rounded-lg bg-brand-soft text-brand flex items-center justify-center shrink-0 transition-transform active:scale-90"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+            </button>
+            <CustomSelect
+              label="To"
+              name="to_wallet"
+              options={walletOptions(wallets.filter(w => w.id !== fromId))}
+              value={toId}
+              onChange={setToId}
+            />
+          </div>
+
+          <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] gap-2 items-baseline">
+            {balanceLine(fromWallet, -amount, 'text-left')}
+            <span className="w-9" />
+            {balanceLine(toWallet, amount, 'text-right')}
           </div>
         </div>
 
-        <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
+        {/* Amount + Date share a row — neither needs the full width */}
+        <div className="grid grid-cols-2 gap-3 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={amountDisplay}
+                onChange={e => setAmountDisplay(formatWithDots(e.target.value))}
+                placeholder="0"
+                autoFocus
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2.5 pr-8 text-sm outline-none focus:border-brand"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">₫</span>
+            </div>
+          </div>
+          <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
+        </div>
 
         <Input
           label="Note (optional)"
