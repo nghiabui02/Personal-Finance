@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, notFound, supabaseError } from '@/lib/server/route'
 import { ensureSystemCategory } from '@/lib/server/system-categories'
+import { checkWalletCanCover } from '@/lib/server/wallet-balance'
 import { localYMD } from '@/lib/utils/date'
 
 export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
@@ -24,6 +25,11 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
   const newAmount = Number(debt.amount) + addAmount
   const newRemaining = Number(debt.remaining_amount) + addAmount
   const txDate = date ?? localYMD()
+
+  if (wallet_id && debt.type === 'lend') {
+    const check = await checkWalletCanCover(supabase, user.id, wallet_id, addAmount)
+    if (!check.ok) return badRequest(check.message!)
+  }
 
   const [{ error: payErr }, { error: debtErr }] = await Promise.all([
     supabase.from('debt_payments').insert({

@@ -396,6 +396,13 @@ export default function TransactionsClient({
     setModalOpen(true)
   }
 
+  const confirmTx = transactions.find(t => t.id === confirmId)
+  const deleteConsequence = confirmTx?.debt_payment_id
+    ? 'The money goes back to the wallet and the debt is reopened for this amount.'
+    : confirmTx?.wallet_id
+      ? 'The amount goes back to the wallet it came from.'
+      : 'This transaction will be permanently deleted.'
+
   function handleDeleteConfirmed() {
     if (!confirmId) return
     startTransition(async () => {
@@ -613,7 +620,7 @@ export default function TransactionsClient({
       {confirmId && (
         <ConfirmModal
           title="Delete transaction?"
-          description="This transaction will be permanently deleted."
+          description={deleteConsequence}
           confirmLabel="Delete"
           isPending={isPending}
           onConfirm={handleDeleteConfirmed}

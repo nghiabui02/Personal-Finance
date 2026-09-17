@@ -1,30 +1,8 @@
 import { NextResponse } from 'next/server'
-import { SupabaseClient } from '@supabase/supabase-js'
 import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
 import { ensureSystemCategory } from '@/lib/server/system-categories'
+import { checkWalletCanCover } from '@/lib/server/wallet-balance'
 import { localYMD } from '@/lib/utils/date'
-
-async function adjustBalance(
-  supabase: SupabaseClient,
-  walletId: string,
-  delta: number,
-  userId: string,
-) {
-  const { data: wallet } = await supabase
-    .from('wallets')
-    .select('balance')
-    .eq('id', walletId)
-    .eq('user_id', userId)
-    .single()
-
-  if (!wallet) return
-
-  await supabase
-    .from('wallets')
-    .update({ balance: Number(wallet.balance) + delta })
-    .eq('id', walletId)
-    .eq('user_id', userId)
-}
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
@@ -36,6 +14,11 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   }
   if (type !== 'lend' && type !== 'borrow') {
     return badRequest('Invalid type.')
+  }
+
+  if (wallet_id && type === 'lend') {
+    const check = await checkWalletCanCover(supabase, user.id, wallet_id, Number(amount))
+    if (!check.ok) return badRequest(check.message!)
   }
 
   const { data, error } = await supabase
@@ -72,7 +55,11 @@ export const POST = withAuth(async (request, { supabase, user }) => {
         note: txNote,
         category_id: categoryId,
       }),
-      adjustBalance(supabase, wallet_id, txType === 'income' ? Number(amount) : -Number(amount), user.id),
+      supabase.rpc('adjust_wallet_balance', {
+        p_wallet_id: wallet_id,
+        p_delta: txType === 'income' ? Number(amount) : -Number(amount),
+        p_user_id: user.id,
+      }),
     ])
   }
 

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { monthRange, shiftLocalDate } from '@/lib/utils/date'
 import type { PeriodType } from '@/lib/utils/period'
+import { excludeAdjustments, getAdjustmentCategoryIds } from './adjustment-filter'
 
 export function getDateRange(period: PeriodType, start: string): { startDate: string; endDate: string } {
   if (period === 'week') {
@@ -37,14 +38,20 @@ export async function getPeriodSummary(
 
   // Transfer legs are excluded: moving money between your own wallets creates
   // a paired income+expense row, which would inflate both totals equally and
-  // distort the savings rate. Debt-linked rows stay — those are real cash flow.
-  const { data: rows } = await supabase
-    .from('transactions')
-    .select('type, amount, categories(name)')
-    .eq('user_id', userId)
-    .is('transfer_pair_id', null)
-    .gte('transaction_date', startDate)
-    .lt('transaction_date', endDate)
+  // distort the savings rate. Reconciliation adjustments are excluded for the
+  // same reason — no money moved. Debt-linked rows stay: those are real cash
+  // flow leaving or entering a wallet.
+  const adjustmentIds = await getAdjustmentCategoryIds(supabase, userId)
+  const { data: rows } = await excludeAdjustments(
+    supabase
+      .from('transactions')
+      .select('type, amount, categories(name)')
+      .eq('user_id', userId)
+      .is('transfer_pair_id', null)
+      .gte('transaction_date', startDate)
+      .lt('transaction_date', endDate),
+    adjustmentIds,
+  )
 
   let totalIncome = 0
   let totalExpense = 0

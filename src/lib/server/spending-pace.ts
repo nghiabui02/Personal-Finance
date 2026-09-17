@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { localYMD, monthRange } from '@/lib/utils/date'
+import { excludeAdjustments, getAdjustmentCategoryIds } from './adjustment-filter'
 
 /**
  * Is this month tracking above or below how the last few months actually went?
@@ -54,14 +55,20 @@ export async function getSpendingPace(
   const lookbackStart = monthRange(shiftMonth(month, -LOOKBACK_MONTHS)).startDate
 
   // Transfer legs move money between the user's own wallets — not spending.
-  const { data } = await supabase
-    .from('transactions')
-    .select('amount, transaction_date')
-    .eq('user_id', userId)
-    .eq('type', 'expense')
-    .is('transfer_pair_id', null)
-    .gte('transaction_date', lookbackStart)
-    .lt('transaction_date', startDate)
+  // Adjustments are corrections to the ledger, likewise not spending; both
+  // sides of the ratio have to exclude them or the comparison is meaningless.
+  const adjustmentIds = await getAdjustmentCategoryIds(supabase, userId)
+  const { data } = await excludeAdjustments(
+    supabase
+      .from('transactions')
+      .select('amount, transaction_date')
+      .eq('user_id', userId)
+      .eq('type', 'expense')
+      .is('transfer_pair_id', null)
+      .gte('transaction_date', lookbackStart)
+      .lt('transaction_date', startDate),
+    adjustmentIds,
+  )
 
   const byMonth = new Map<string, number>()
   for (const row of data ?? []) {

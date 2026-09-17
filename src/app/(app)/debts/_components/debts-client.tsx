@@ -515,7 +515,7 @@ export default function DebtsClient({
       {confirmId && (
         <ConfirmModal
           title="Delete debt?"
-          description="This debt and all payment history will be permanently deleted."
+          description="The debt and its payment history will be permanently deleted. Wallet transactions already recorded stay — the money really did move."
           confirmLabel="Delete"
           isPending={isPending}
           onConfirm={handleDeleteConfirmed}

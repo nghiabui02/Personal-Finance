@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
 import { getDateRange, getPeriodSummary } from '@/lib/server/period-summary'
+import { excludeAdjustments, getAdjustmentCategoryIds } from '@/lib/server/adjustment-filter'
 import { getMondayOfLocalWeek, localYMD, shiftLocalDate } from '@/lib/utils/date'
 import type { PeriodType } from '@/lib/utils/period'
 import type { CategoryRef, NetWorthSnapshot } from '@/lib/types'
@@ -97,6 +98,10 @@ export default async function ReportsPage({
 
   const { supabase, user } = await requireUser()
 
+  // Reconciliation rows correct the ledger; no money moved, so they stay out of
+  // the period's income/expense and out of the category breakdown.
+  const adjustmentIds = await getAdjustmentCategoryIds(supabase, user.id)
+
   const [
     { data: rows },
     { data: walletRows },
@@ -105,14 +110,17 @@ export default async function ReportsPage({
     prevSummary,
     { data: budgetRows },
   ] = await Promise.all([
-    // Transfer legs excluded — see getPeriodSummary() for the rationale
-    supabase
-      .from('transactions')
-      .select('type, amount, note, transaction_date, categories(id, name, icon, color)')
-      .eq('user_id', user.id)
-      .is('transfer_pair_id', null)
-      .gte('transaction_date', startDate)
-      .lt('transaction_date', endDate),
+    // Transfer legs and adjustments excluded — see getPeriodSummary()
+    excludeAdjustments(
+      supabase
+        .from('transactions')
+        .select('type, amount, note, transaction_date, categories(id, name, icon, color)')
+        .eq('user_id', user.id)
+        .is('transfer_pair_id', null)
+        .gte('transaction_date', startDate)
+        .lt('transaction_date', endDate),
+      adjustmentIds,
+    ),
     supabase.from('wallets').select('type, balance, credit_limit').eq('user_id', user.id),
     supabase.from('debts').select('type, remaining_amount, status').eq('user_id', user.id),
     supabase
