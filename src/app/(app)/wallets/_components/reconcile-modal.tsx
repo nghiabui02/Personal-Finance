@@ -131,13 +131,14 @@ export function ReconcileModal({
           />
         )}
 
-        <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
-
-        <Input
-          label="Note (optional)"
-          name="note"
-          placeholder="e.g. Bank fee not recorded"
-        />
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-3 items-end">
+          <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
+          <Input
+            label="Note (optional)"
+            name="note"
+            placeholder="e.g. Interest"
+          />
+        </div>
 
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 

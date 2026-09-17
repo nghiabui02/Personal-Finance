@@ -8,7 +8,7 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { formatWithDots } from '@/components/ui/amount-input'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
-import { type Wallet } from '@/lib/api/wallets'
+import { type Wallet, WALLET_TYPE_ICONS } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -66,7 +66,9 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
   const walletOptions = (list: Wallet[]) => list.map(w => ({
     value: w.id,
     label: w.name,
-    icon: w.icon ?? null,
+    // Always an icon: falling back to a colour dot changes the row height and
+    // makes the field jump when the selection changes.
+    icon: w.icon || WALLET_TYPE_ICONS[w.type],
     color: w.color ?? null,
   }))
 
