@@ -28,6 +28,52 @@ if (typeof document !== 'undefined') {
   }, true)
 }
 
+/**
+ * Freezes the page behind the modal.
+ *
+ * `overflow: hidden` on <body> is ignored by iOS Safari, so the page is pinned
+ * with `position: fixed` and its offset restored on close. Skipped when the
+ * document does not scroll — on desktop the shell is capped at viewport height
+ * and <main> scrolls instead, which the backdrop already sits over.
+ */
+let _lockDepth = 0
+
+function lockPageScroll(): () => void {
+  const owns = _lockDepth++ === 0 && document.documentElement.scrollHeight > window.innerHeight
+  if (!owns) return () => { _lockDepth-- }
+
+  const offset = window.scrollY
+  const { style } = document.body
+  style.position = 'fixed'
+  style.top = `-${offset}px`
+  style.left = '0'
+  style.right = '0'
+
+  return () => {
+    _lockDepth--
+    style.position = ''
+    style.top = ''
+    style.left = ''
+    style.right = ''
+    window.scrollTo(0, offset)
+  }
+}
+
+/**
+ * Makes everything outside the modal unclickable and untabbable.
+ *
+ * Only the body children that exist right now are marked, so panels a field
+ * opens later — they portal to <body> too — stay interactive.
+ */
+function deactivateBackground(...ownNodes: (Element | null)[]): () => void {
+  const marked = Array.from(document.body.children).filter(
+    // NEXTJS-PORTAL is the dev error overlay — inert would lock its buttons too.
+    el => !ownNodes.includes(el) && !el.hasAttribute('inert') && el.tagName !== 'NEXTJS-PORTAL'
+  )
+  marked.forEach(el => el.setAttribute('inert', ''))
+  return () => marked.forEach(el => el.removeAttribute('inert'))
+}
+
 const sizes = { sm: 'max-w-sm', md: 'max-w-md' }
 
 // Module-level stack — works regardless of where useModalClose() is called in the component tree
@@ -73,6 +119,17 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
   }, [openedByKeyboard])
 
   const closingRef = useRef(false)
+  const backdropRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const unlockScroll = lockPageScroll()
+    const reactivate = deactivateBackground(backdropRef.current, frameRef.current)
+    return () => {
+      reactivate()
+      unlockScroll()
+    }
+  }, [])
 
   // Track the latest onClose without re-registering the stack/keydown effect
   const onCloseRef = useRef(onClose)
@@ -143,13 +200,14 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
   return createPortal(
     <>
       <div
+        ref={backdropRef}
         className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
         style={backdropStyle}
         onClick={handleClose}
       />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div ref={frameRef} className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className={`bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full ${sizes[size]} p-6 pointer-events-auto max-h-[calc(100dvh-2rem)] overflow-y-auto`}
+          className={`bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full ${sizes[size]} p-6 pointer-events-auto max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain`}
           style={cardStyle}
           onClick={e => e.stopPropagation()}
         >
