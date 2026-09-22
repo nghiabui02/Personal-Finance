@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 interface Tab<T extends string> {
   key: T
@@ -31,20 +31,20 @@ export function TabGroup<T extends string>({
   const containerRef = useRef<HTMLDivElement>(null)
   const [pill, setPill] = useState({ left: 0, width: 0 })
 
-  const updatePill = () => {
+  const updatePill = useCallback(() => {
     const container = containerRef.current
     if (!container) return
     const btn = container.querySelector<HTMLElement>(`[data-key="${value}"]`)
     if (!btn) return
     setPill({ left: btn.offsetLeft, width: btn.offsetWidth })
-  }
+  }, [value])
 
-  useLayoutEffect(updatePill, [value])
+  useLayoutEffect(updatePill, [updatePill])
 
   useEffect(() => {
     window.addEventListener('resize', updatePill)
     return () => window.removeEventListener('resize', updatePill)
-  })
+  }, [updatePill])
 
   const pillColor = activeColors?.[value]
   const isLg = size === 'lg'

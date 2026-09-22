@@ -22,6 +22,9 @@ interface CustomSelectProps {
   onChange: (value: string) => void
   placeholder?: string
   searchable?: boolean
+  /** Open the list as soon as the field appears — for a field that is itself
+   *  revealed by a click, so reaching an option does not cost a second one. */
+  autoOpen?: boolean
 }
 
 export function CustomSelect({
@@ -32,6 +35,7 @@ export function CustomSelect({
   onChange,
   placeholder = 'Select...',
   searchable = false,
+  autoOpen = false,
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -44,6 +48,16 @@ export function CustomSelect({
   )
   const close = useCallback(() => { setOpen(false); setQuery('') }, [])
   useOutsideClose(ref, panelRef, close)
+
+  // Opening happens as the container mounts rather than in an effect, so the
+  // trigger is already measurable and the list is up on the render that reveals
+  // the field — no second click to get at the options.
+  const containerCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    ref.current = node
+    if (!node || !autoOpen) return
+    reposition()
+    setOpen(true)
+  }, [autoOpen, reposition])
 
   // Auto-focus the search input on mount — but not on touch devices, where
   // it pops the on-screen keyboard over the very list you want to scroll.
@@ -85,7 +99,7 @@ export function CustomSelect({
 
   if (searchable) {
     return (
-      <div ref={ref} className="relative">
+      <div ref={containerCallbackRef} className="relative">
         {label && (
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {label}
@@ -204,7 +218,7 @@ export function CustomSelect({
 
   // Non-searchable: original button trigger
   return (
-    <div ref={ref} className="relative">
+    <div ref={containerCallbackRef} className="relative">
       {label && (
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {label}

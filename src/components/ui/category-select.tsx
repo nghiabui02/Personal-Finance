@@ -13,6 +13,7 @@ interface CategorySelectProps {
   label?: string
   placeholder?: string
   searchable?: boolean
+  autoOpen?: boolean
 }
 
 export function CategorySelect({
@@ -25,6 +26,7 @@ export function CategorySelect({
   label = 'Category',
   placeholder = 'No category',
   searchable = false,
+  autoOpen = false,
 }: CategorySelectProps) {
   const options = [
     { value: '', label: placeholder },
@@ -43,6 +45,7 @@ export function CategorySelect({
       onChange={onChange}
       placeholder={placeholder}
       searchable={searchable}
+      autoOpen={autoOpen}
     />
   )
 }

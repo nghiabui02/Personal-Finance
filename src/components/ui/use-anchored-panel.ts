@@ -53,19 +53,34 @@ export function useAnchoredPanel<T extends HTMLElement>(
       : { top: rect.bottom + 4, left, width }
   }, [height, minWidth])
 
+  /**
+   * Keeps the previous object when the numbers match. The scroll listener below
+   * is capture-phase, so it also fires for the panel's own option list — without
+   * this, every scrolled pixel would hand React a new object and re-render the
+   * whole field for a position that never moved.
+   */
+  const apply = useCallback(() => {
+    const next = compute()
+    setPos(prev =>
+      prev && next && prev.top === next.top && prev.bottom === next.bottom
+        && prev.left === next.left && prev.width === next.width
+        ? prev
+        : next,
+    )
+  }, [compute])
+
   /** Call when opening, before the panel renders. */
-  const reposition = useCallback(() => setPos(compute()), [compute])
+  const reposition = apply
 
   useEffect(() => {
     if (!open) return
-    const onMove = () => setPos(compute())
-    window.addEventListener('scroll', onMove, true)
-    window.addEventListener('resize', onMove)
+    window.addEventListener('scroll', apply, true)
+    window.addEventListener('resize', apply)
     return () => {
-      window.removeEventListener('scroll', onMove, true)
-      window.removeEventListener('resize', onMove)
+      window.removeEventListener('scroll', apply, true)
+      window.removeEventListener('resize', apply)
     }
-  }, [open, compute])
+  }, [open, apply])
 
   return { triggerRef, panelRef, pos, reposition }
 }

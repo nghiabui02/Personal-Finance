@@ -309,7 +309,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
       </div>
 
       {/* One-tap repeats — the same spend logged the same way before */}
-      {!editing && frequent.length > 0 && !amountValue && !categoryId && (
+      {!editing && frequent.length > 0 && !amountValue && (
         <div className="-mx-1 px-1 overflow-x-auto no-scrollbar">
           <div className="flex gap-2 w-max">
             {frequent.map(f => {
@@ -388,7 +388,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
           <div className="mt-2.5">
             <CategorySelect
               categories={categories} filterType={txType} label=""
-              value={categoryId} onChange={handleCategoryChange} searchable />
+              value={categoryId} onChange={handleCategoryChange} searchable autoOpen />
           </div>
         )}
       </div>

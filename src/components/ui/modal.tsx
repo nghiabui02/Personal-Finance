@@ -74,6 +74,11 @@ function deactivateBackground(...ownNodes: (Element | null)[]): () => void {
   return () => marked.forEach(el => el.removeAttribute('inert'))
 }
 
+/** Card animation, in ms. The close timer has to outlast the CSS transition,
+ *  so both read from here. */
+const OPEN_MS = 240
+const CLOSE_MS = 200
+
 const sizes = { sm: 'max-w-sm', md: 'max-w-md' }
 
 // Module-level stack — works regardless of where useModalClose() is called in the component tree
@@ -139,7 +144,7 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
     if (closingRef.current) return
     closingRef.current = true
     setStage('closing')
-    setTimeout(() => onCloseRef.current(), 420)
+    setTimeout(() => onCloseRef.current(), CLOSE_MS + 10)
   }, [])
 
   // Push handleClose onto the stack when modal opens, pop when it unmounts.
@@ -174,22 +179,25 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
 
   const backdropStyle = {
     opacity: stage === 'open' ? 1 : 0,
-    transition: 'opacity 0.35s ease',
+    transition: `opacity ${OPEN_MS}ms ease`,
   }
 
+  // Starts at 0.4 rather than near-zero: the card has to be a real click target
+  // almost immediately, or a quick click lands past its edge and hits the
+  // backdrop, which reads as the click being swallowed.
   const cardStyle: React.CSSProperties =
     stage === 'open'
       ? {
           transform: 'translate(0,0) scale(1)',
           opacity: 1,
-          transition: 'transform 0.42s cubic-bezier(0.16,1,0.3,1), opacity 0.25s ease',
+          transition: `transform ${OPEN_MS}ms cubic-bezier(0.16,1,0.3,1), opacity 160ms ease`,
         }
       : {
-          transform: `translate(${dx}px, ${dy}px) scale(0.05)`,
+          transform: `translate(${dx}px, ${dy}px) scale(0.4)`,
           opacity: 0,
           transition:
             stage === 'closing'
-              ? 'transform 0.4s cubic-bezier(0.4,0,0.6,1), opacity 0.3s ease'
+              ? `transform ${CLOSE_MS}ms cubic-bezier(0.4,0,0.6,1), opacity ${CLOSE_MS}ms ease`
               : 'none',
         }
 
@@ -203,7 +211,7 @@ export function Modal({ title, size = 'sm', onClose, children }: ModalProps) {
         ref={backdropRef}
         className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
         style={backdropStyle}
-        onClick={handleClose}
+        onClick={stage === 'open' ? handleClose : undefined}
       />
       <div ref={frameRef} className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
