@@ -1,6 +1,6 @@
 'use client'
 
-import { AmountInput, formatWithDots } from '@/components/ui/amount-input'
+import { AmountInput, amountSuggestions, formatWithDots } from '@/components/ui/amount-input'
 import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
 import { Button } from '@/components/ui/button'
 import { CategorySelect } from '@/components/ui/category-select'
@@ -66,6 +66,8 @@ function CenteredAmountInput({
     : display.length > 10 ? 'text-3xl'
     : 'text-4xl'
 
+  const suggestions = amountSuggestions(display)
+
   return (
     <div className="text-center">
       <input type="hidden" name={name} value={rawValue} />
@@ -84,6 +86,24 @@ function CenteredAmountInput({
         <span className="text-xl font-semibold shrink-0">đ</span>
       </div>
       <div className={`mx-auto mt-2 h-0.5 w-36 rounded-full ${isExpense ? 'bg-rose-400' : 'bg-emerald-400'}`} />
+
+      {/* Shortcuts to the same digits one, two and three zeros longer.
+          onMouseDown keeps the caret in the field, so typing can carry on. */}
+      {suggestions.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+          {suggestions.map(s => (
+            <button
+              key={s}
+              type="button"
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => handleChange(s)}
+              className="rounded-full border border-hairline px-2.5 py-1 text-xs tabular-nums text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand transition-colors"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

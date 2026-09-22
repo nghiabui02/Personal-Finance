@@ -12,6 +12,21 @@ export function formatWithDots(value: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
+/**
+ * The same digits shifted up one power of ten at a time, so typing "5" offers
+ * 5.000 / 50.000 / 500.000 instead of six more keystrokes. Amounts here are
+ * dong, so anything under a thousand is almost never what was meant — the
+ * first rung pads out to four digits before the shifting starts.
+ */
+export function amountSuggestions(value: string, count = 3): string[] {
+  const digits = value.replace(/\D/g, '')
+  if (!Number(digits)) return []
+  const firstShift = Math.max(4 - digits.length, 1)
+  return Array.from({ length: count }, (_, i) => digits + '0'.repeat(firstShift + i))
+    .filter(d => d.length <= MAX_AMOUNT_DIGITS)
+    .map(formatWithDots)
+}
+
 interface AmountInputProps {
   label: string
   name: string
