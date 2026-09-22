@@ -53,6 +53,8 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     supabase.from('recurring_transactions')
       .select('id, type, amount, note, frequency, next_run_date, end_date, categories(name, icon)')
       .eq('user_id', user.id)
+      // A paused rule will not run, so there is nothing upcoming to announce.
+      .eq('active', true)
       .not('next_run_date', 'is', null)
       .lte('next_run_date', recurringHorizon),
     supabase.from('saving_goals')
