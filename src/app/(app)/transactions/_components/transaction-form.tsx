@@ -35,6 +35,16 @@ interface TransactionFormProps {
 }
 
 /** Big centered amount display, tinted by transaction type */
+/**
+ * Stops a click from moving focus out of whatever field the user was typing in.
+ *
+ * Without it the mousedown blurs the input and the browser scrolls the newly
+ * focused button into view inside the modal's scrollport. The element under the
+ * pointer shifts before mouseup, so no click is dispatched at all and the first
+ * press appears to do nothing but unfocus.
+ */
+const keepFocus = (e: React.MouseEvent) => e.preventDefault()
+
 function CenteredAmountInput({
   name,
   defaultValue,
@@ -95,7 +105,7 @@ function CenteredAmountInput({
             <button
               key={s}
               type="button"
-              onMouseDown={e => e.preventDefault()}
+              onMouseDown={keepFocus}
               onClick={() => handleChange(s)}
               className="rounded-full border border-hairline px-2.5 py-1 text-xs tabular-nums text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand transition-colors"
             >
@@ -318,6 +328,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
                 <button
                   key={f.key}
                   type="button"
+                  onMouseDown={keepFocus}
                   onClick={() => applyFrequent(f)}
                   className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-colors ${
                     active
@@ -345,6 +356,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
               <button
                 key={c.id}
                 type="button"
+                onMouseDown={keepFocus}
                 onClick={() => handleCategoryChange(active ? '' : c.id)}
                 className={`flex flex-col items-center gap-1.5 rounded-xl border px-1 py-2.5 transition-colors ${
                   active
@@ -363,6 +375,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
           })}
           <button
             type="button"
+            onMouseDown={keepFocus}
             onClick={() => setMoreOpen(o => !o)}
             className={`flex flex-col items-center gap-1.5 rounded-xl border px-1 py-2.5 transition-colors ${
               overflowSelected
