@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
+import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { getDateRange, getPeriodSummary } from '@/lib/server/period-summary'
-import { excludeAdjustments, getAdjustmentCategoryIds } from '@/lib/server/adjustment-filter'
+import { getReportingGroup, summarizeNonOperatingFlows } from '@/lib/server/transaction-reporting'
 import { getMondayOfLocalWeek, localYMD, shiftLocalDate } from '@/lib/utils/date'
 import type { PeriodType } from '@/lib/utils/period'
 import type { CategoryRef, NetWorthSnapshot } from '@/lib/types'
@@ -34,7 +35,14 @@ function getPrevStart(period: PeriodType, start: string): string {
   return `${y - 1}-01-01`
 }
 
-type RawTx = { type: 'income' | 'expense'; amount: number; transaction_date: string; note?: string | null }
+type RawTx = {
+  type: 'income' | 'expense'
+  amount: number
+  transaction_date: string
+  note: string | null
+  transfer_pair_id: string | null
+  categories: (CategoryRef & { system_key: string | null }) | null
+}
 
 function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): ChartPoint[] {
   const sum = (list: RawTx[], type: 'income' | 'expense') =>
@@ -98,29 +106,19 @@ export default async function ReportsPage({
 
   const { supabase, user } = await requireUser()
 
-  // Reconciliation rows correct the ledger; no money moved, so they stay out of
-  // the period's income/expense and out of the category breakdown.
-  const adjustmentIds = await getAdjustmentCategoryIds(supabase, user.id)
-
   const [
     { data: rows },
     { data: walletRows },
     { data: debtRows },
     { data: snapshotRows },
     prevSummary,
-    { data: budgetRows },
+    budgetRows,
   ] = await Promise.all([
-    // Transfer legs and adjustments excluded — see getPeriodSummary()
-    excludeAdjustments(
-      supabase
-        .from('transactions')
-        .select('type, amount, note, transaction_date, categories(id, name, icon, color)')
-        .eq('user_id', user.id)
-        .is('transfer_pair_id', null)
-        .gte('transaction_date', startDate)
-        .lt('transaction_date', endDate),
-      adjustmentIds,
-    ),
+    supabase.from('transactions')
+      .select('type, amount, note, transaction_date, transfer_pair_id, categories(id, name, icon, color, system_key)')
+      .eq('user_id', user.id)
+      .gte('transaction_date', startDate)
+      .lt('transaction_date', endDate),
     supabase.from('wallets').select('type, balance, credit_limit').eq('user_id', user.id),
     supabase.from('debts').select('type, remaining_amount, status').eq('user_id', user.id),
     supabase
@@ -133,24 +131,22 @@ export default async function ReportsPage({
     getPeriodSummary(supabase, user.id, period, prevStart),
     // Budgets only make sense for the month view (they are monthly)
     period === 'month'
-      ? supabase
-          .from('budgets')
-          .select('amount, category_id, categories(name)')
-          .eq('user_id', user.id)
-          .eq('month', `${start.slice(0, 7)}-01`)
-      : Promise.resolve({ data: null }),
+      ? getBudgetsForMonth(supabase, user.id, start.slice(0, 7))
+      : Promise.resolve([]),
   ])
 
   const { netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed } =
     computeNetWorth(walletRows ?? [], debtRows ?? [])
   await recordNetWorthSnapshot(supabase, user.id, netWorth)
 
-  const transactions = (rows ?? []) as RawTx[]
+  const allTransactions = (rows ?? []) as unknown as RawTx[]
+  const reportRows = allTransactions.filter(row => getReportingGroup(row) === 'operating')
+  const nonOperatingFlows = summarizeNonOperatingFlows(allTransactions)
   let totalIncome = 0
   let totalExpense = 0
   const catMap = new Map<string, CategoryData>()
 
-  for (const row of rows ?? []) {
+  for (const row of reportRows) {
     const amt = Number(row.amount)
     if (row.type === 'income') { totalIncome += amt; continue }
     totalExpense += amt
@@ -160,7 +156,7 @@ export default async function ReportsPage({
     catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + amt })
   }
 
-  const topTransactions = (rows ?? [])
+  const topTransactions = reportRows
     .filter(r => r.type === 'expense')
     .sort((a, b) => Number(b.amount) - Number(a.amount))
     .slice(0, 5)
@@ -171,9 +167,9 @@ export default async function ReportsPage({
       date: r.transaction_date,
     }))
 
-  const aiBudgets = (budgetRows ?? []).map(b => ({
+  const aiBudgets = budgetRows.filter(b => b.active).map(b => ({
     name: (b.categories as unknown as { name: string } | null)?.name ?? 'Other',
-    budgeted: Number(b.amount),
+    budgeted: b.effectiveAmount,
     spent: b.category_id ? (catMap.get(b.category_id)?.amount ?? 0) : 0,
   }))
 
@@ -194,8 +190,9 @@ export default async function ReportsPage({
       period={period}
       start={start}
       prevStart={prevStart}
-      chartData={buildChartData(transactions, period, startDate)}
+      chartData={buildChartData(reportRows, period, startDate)}
       byCategory={[...catMap.values()].sort((a, b) => b.amount - a.amount).slice(0, 8)}
+      nonOperatingFlows={nonOperatingFlows}
       totalIncome={totalIncome}
       totalExpense={totalExpense}
       aiPrevious={prevSummary}

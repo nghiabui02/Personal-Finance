@@ -1,3 +1,4 @@
+import { getReportingGroup } from './transaction-reporting'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { monthRange } from '@/lib/utils/date'
 import type { CategoryRef } from '@/lib/types'
@@ -49,8 +50,7 @@ export async function getBudgetSuggestions(
   const { startDate } = monthRange(month)
 
   const [{ data: rows }, { data: existing }] = await Promise.all([
-    // Transfers move money between the user's own wallets and system categories
-    // (debt, reconciliation) are not discretionary — neither belongs in a budget.
+    // Transfers, loan principal and ledger corrections do not belong in spending budgets.
     supabase
       .from('transactions')
       .select('amount, transaction_date, category_id, categories(id, name, icon, color, system_key)')
@@ -78,7 +78,7 @@ export async function getBudgetSuggestions(
     categories: (CategoryRef & { system_key: string | null }) | null
   }[]) {
     const cat = row.categories
-    if (!row.category_id || !cat || cat.system_key) continue
+    if (!row.category_id || !cat || getReportingGroup({ categories: cat }) !== 'operating') continue
     if (alreadyBudgeted.has(row.category_id)) continue
 
     const entry = totals.get(row.category_id) ?? { category: cat, byMonth: new Map() }

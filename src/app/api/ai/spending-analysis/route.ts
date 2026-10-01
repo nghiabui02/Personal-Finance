@@ -1,3 +1,4 @@
+import { getNonOperatingCategoryIds, onlyOperatingTransactions } from '@/lib/server/transaction-reporting'
 import Groq from 'groq-sdk'
 import { NextResponse } from 'next/server'
 import { withAuth, jsonError } from '@/lib/server/route'
@@ -28,6 +29,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const { periodLabel, period, start, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo, force } = await request.json()
   const periodType: 'week' | 'month' | 'quarter' | 'year' = period ?? 'month'
 
+  const excludedCategoryIds = await getNonOperatingCategoryIds(supabase, user.id)
+
   // Balance-sheet snapshot fetched server-side — the client only knows the
   // period's in/out flows, but sound advice needs the current position too
   const [{ data: walletRows }, { data: debtRows }, { data: goalRows }, { data: recentExpenseRows }] = await Promise.all([
@@ -43,12 +46,11 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     // Last 90 days of real spending — the emergency-fund run rate must come
     // from a stable trailing average, NOT from extrapolating the viewed period
     // (one heavy shopping week × 4.33 would fake a run rate and wreck the score).
-    supabase.from('transactions')
+    onlyOperatingTransactions(supabase.from('transactions')
       .select('amount')
       .eq('user_id', user.id).eq('type', 'expense')
-      .is('transfer_pair_id', null)
       .gte('transaction_date', shiftLocalDate(localYMD(), -90))
-      .lt('transaction_date', localYMD()),
+      .lt('transaction_date', localYMD()), excludedCategoryIds),
   ])
 
   const wallets = walletRows ?? []
@@ -70,7 +72,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   // the cache, not silently return an analysis written for a different one.
   const prevForKey = previous as { label?: string; totalIncome?: number; totalExpense?: number } | undefined
   const compareKeyPart = prevForKey ? `${prevForKey.label ?? ''}::${prevForKey.totalIncome ?? 0}::${prevForKey.totalExpense ?? 0}` : 'none'
-  const cacheKey = `v8::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}::${netWorth}::${compareKeyPart}`
+  const cacheKey = `v9::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}::${netWorth}::${compareKeyPart}`
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_insights_cache')
@@ -172,13 +174,12 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     // period — otherwise the score would jump around as they browse comparisons.
     const weekStart = typeof start === 'string' ? start : localYMD()
     const prevWeekStart = shiftLocalDate(weekStart, -7)
-    const { data: prevWeekRows } = await supabase
+    const { data: prevWeekRows } = await onlyOperatingTransactions(supabase
       .from('transactions')
       .select('amount')
       .eq('user_id', user.id).eq('type', 'expense')
-      .is('transfer_pair_id', null)
       .gte('transaction_date', prevWeekStart)
-      .lt('transaction_date', weekStart)
+      .lt('transaction_date', weekStart), excludedCategoryIds)
     const prevExpense = (prevWeekRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
     const expenseChange = prevExpense > 0 ? (totalExpense - prevExpense) / prevExpense : null
     suggestedScore =
@@ -279,6 +280,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     'You receive a PERSONAL FINANCE REPORT with 2 parts: (1) this period\'s cash flow (income/expense), (2) current assets & debts (balance sheet). Advice must connect both — e.g. how this period\'s spending affects the emergency fund, where surplus cash should go first.',
     '',
     'Mandatory rules:',
+    '- Income and expense represent earned income and actual spending. Loan principal, transfers, credit card principal payments and ledger adjustments are excluded. Never describe borrowing or debt collection as earnings.',
     '- ONLY use the figures given in this message. Never invent numbers, never compute percentages yourself — every number and % you need is already calculated.',
     '- Only discuss trends/comparisons if a "COMPARISON PERIOD" section is present — that period may NOT be the immediately preceding one, read its note carefully for how to refer to it correctly. Only mention specific transactions or dates if they appear in the data.',
     '- Every insight must reference a specific category name or a real number. No generic advice like "spend more wisely", "track your spending", "consider cutting back".',

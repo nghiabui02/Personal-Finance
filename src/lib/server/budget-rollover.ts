@@ -1,3 +1,4 @@
+import { getNonOperatingCategoryIds, onlyOperatingTransactions } from './transaction-reporting'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { monthRange } from '@/lib/utils/date'
 import type { CategoryRef } from '@/lib/types'
@@ -43,11 +44,12 @@ export async function getBudgetsForMonth(
 
   if (!current?.length) return []
 
-  const { data: currentExpenses } = await supabase
+  const excludedCategoryIds = await getNonOperatingCategoryIds(supabase, userId)
+  const { data: currentExpenses } = await onlyOperatingTransactions(supabase
     .from('transactions')
     .select('category_id, amount')
     .eq('user_id', userId).eq('type', 'expense')
-    .gte('transaction_date', startDate).lt('transaction_date', endDate)
+    .gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds)
 
   const spentThisMonth = new Map<string, number>()
   for (const tx of currentExpenses ?? []) {
@@ -73,13 +75,13 @@ export async function getBudgetsForMonth(
     const earliestMonth = history?.[0]?.month
     const historyExpensesByCatMonth = new Map<string, number>()
     if (earliestMonth) {
-      const { data: histExpenses } = await supabase
+      const { data: histExpenses } = await onlyOperatingTransactions(supabase
         .from('transactions')
         .select('category_id, amount, transaction_date')
         .eq('user_id', userId).eq('type', 'expense')
         .in('category_id', rolloverCategoryIds)
         .gte('transaction_date', earliestMonth)
-        .lt('transaction_date', startDate)
+        .lt('transaction_date', startDate), excludedCategoryIds)
       for (const tx of histExpenses ?? []) {
         if (!tx.category_id) continue
         const key = `${tx.category_id}::${tx.transaction_date.slice(0, 7)}`

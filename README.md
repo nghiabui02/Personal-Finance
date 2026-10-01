@@ -39,6 +39,7 @@ A personal finance app for a single user. Income/expense tracking, wallets, budg
 - Every screen opens with a sentence, not a number: *"You're spending 12% faster than your 3-month average."* The figures below it are the evidence
 - Dashboard: spending pace vs your own trailing average, net worth breakdown, spending by category, budget alerts
 - Reports: week/month/quarter/year, income vs expense chart, net worth history, CSV export
+- Income, spending, savings rate, budgets and AI comparisons exclude loan principal, transfers, credit card principal payments and balance corrections. Reports and CSV show debt cash flow and balance adjustments separately; interest and fees remain income/spending.
 - **AI Insights**: spending analysis, comparison against any earlier period you pick, budget and balance-sheet health (emergency fund runway, credit utilization), scored per period type — a week isn't marked a deficit just because salary hasn't landed yet
 
 ## Project Structure

@@ -1,3 +1,4 @@
+import { getReportingGroup, summarizeNonOperatingFlows } from '@/lib/server/transaction-reporting'
 import { NextResponse } from 'next/server'
 import { withAuth } from '@/lib/server/route'
 import { toYMD } from '@/lib/utils/date'
@@ -44,7 +45,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const [{ data: txRows }, { data: budgetRows }, { data: walletRows }] = await Promise.all([
     supabase
       .from('transactions')
-      .select('id, type, amount, note, transaction_date, payment_method, transfer_pair_id, categories(name, icon), wallets(name)')
+      .select('id, type, amount, note, transaction_date, payment_method, transfer_pair_id, categories(name, icon, system_key), wallets(name)')
       .eq('user_id', user.id)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate)
@@ -72,15 +73,14 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     transaction_date: string
     payment_method: string | null
     transfer_pair_id: string | null
-    categories: { name: string; icon: string | null } | null
+    categories: { name: string; icon: string | null; system_key: string | null } | null
     wallets: { name: string } | null
   }
   const txs = (txRows ?? []) as unknown as TxRow[]
 
-  // The detailed transaction list keeps transfers (the user wants to see them),
-  // but every aggregate excludes them: a transfer between own wallets is a
-  // paired income+expense that would inflate both totals and skew savings rate.
-  const flowTxs = txs.filter(t => !t.transfer_pair_id)
+  // Export totals follow the same operating classification as the report screen.
+  const flowTxs = txs.filter(tx => getReportingGroup(tx) === 'operating')
+  const nonOperatingFlows = summarizeNonOperatingFlows(txs)
 
   const totalIncome  = flowTxs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const totalExpense = flowTxs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
@@ -131,6 +131,14 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   lines.push(row('Expense transactions', flowTxs.filter(t => t.type === 'expense').length))
   lines.push('')
 
+  lines.push('=== DEBT CASH FLOW AND BALANCE ADJUSTMENTS ===')
+  lines.push(row('Borrowing and debt collections', fmt(nonOperatingFlows.debtIncome)))
+  lines.push(row('Lending and principal repayments', fmt(nonOperatingFlows.debtExpense)))
+  lines.push(row('Balance increases', fmt(nonOperatingFlows.adjustmentIncome)))
+  lines.push(row('Balance decreases', fmt(nonOperatingFlows.adjustmentExpense)))
+  lines.push(row('Net cash flow including debt', fmt(net + nonOperatingFlows.debtIncome - nonOperatingFlows.debtExpense)))
+  lines.push('')
+
   // ── SECTION 2: WALLETS ─────────────────────────────────────────
   if (walletRows?.length) {
     lines.push('=== WALLET BALANCES ===')
@@ -172,11 +180,12 @@ export const GET = withAuth(async (request, { supabase, user }) => {
 
   // ── SECTION 5: ALL TRANSACTIONS ───────────────────────────────
   lines.push('=== ALL TRANSACTIONS ===')
-  lines.push(row('Date', 'Type', 'Category', 'Amount', 'Wallet', 'Payment method', 'Note'))
+  lines.push(row('Date', 'Type', 'Reporting group', 'Category', 'Amount', 'Wallet', 'Payment method', 'Note'))
   for (const t of txs) {
     lines.push(row(
       t.transaction_date,
       t.type === 'income' ? 'Income' : 'Expense',
+      getReportingGroup(t),
       t.categories?.name ?? 'Uncategorized',
       `${fmt(Number(t.amount))}đ`,
       t.wallets?.name ?? '-',

@@ -73,7 +73,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
   }
 
   const effectivePrevious = compareOffset === 1 ? previous : (customPrevious ?? previous)
-  const cacheKey = `ai-insights::v8::${periodLabel}::${totalIncome}::${totalExpense}::${effectivePrevious?.label ?? ''}`
+  const cacheKey = `ai-insights::v9::${periodLabel}::${totalIncome}::${totalExpense}::${effectivePrevious?.label ?? ''}`
 
   // A period with no transactions is dropped from the prompt server-side, so
   // say it here — otherwise the analysis silently omits the comparison.

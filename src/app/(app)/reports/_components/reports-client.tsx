@@ -1,5 +1,7 @@
 'use client'
 
+import { SectionCard } from '@/components/ui/section-card'
+import type { NonOperatingFlows } from '@/lib/server/transaction-reporting'
 import { formatVND } from '@/lib/utils/currency'
 import { useRouter } from 'next/navigation'
 import { TabGroup } from '@/components/ui/tab-group'
@@ -22,6 +24,7 @@ interface ReportsClientProps {
   prevStart: string
   chartData: ChartPoint[]
   byCategory: CategoryData[]
+  nonOperatingFlows: NonOperatingFlows
   totalIncome: number
   totalExpense: number
   netWorth: number
@@ -37,7 +40,7 @@ interface ReportsClientProps {
 }
 
 export default function ReportsClient({
-  period, start, prevStart, chartData, byCategory, totalIncome, totalExpense,
+  period, start, prevStart, chartData, byCategory, totalIncome, totalExpense, nonOperatingFlows,
   netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed, netWorthSnapshots,
   aiPrevious, aiTopTransactions, aiBudgets, aiNetWorth,
 }: ReportsClientProps) {
@@ -46,6 +49,7 @@ export default function ReportsClient({
   const savingsRate = totalIncome > 0 ? ((net / totalIncome) * 100).toFixed(1) : '0.0'
   const expensePct = totalIncome > 0 ? Math.min(100, (totalExpense / totalIncome) * 100) : 0
   const savingsPct = Math.max(0, 100 - expensePct)
+  const cashFlowNet = net + nonOperatingFlows.debtIncome - nonOperatingFlows.debtExpense
   const isOverBudget = net < 0
 
   const PERIODS: { key: PeriodType; label: string }[] = [
@@ -92,14 +96,14 @@ export default function ReportsClient({
         eyebrow={getPeriodLabel(period, start)}
         headline={
           totalIncome === 0 && totalExpense === 0
-            ? <>Nothing recorded for this period yet.</>
+            ? <>No earned income or spending recorded for this period.</>
             : net >= 0
             ? <>You kept <Em tone="good">{formatVND(net)}</Em> of what came in{totalIncome > 0 ? <> — <Em tone="good">{savingsRate}%</Em> of it</> : null}.</>
             : <>You spent <Em tone="bad">{formatVND(-net)}</Em> more than you earned.</>
         }
         support={
           (totalIncome > 0 || totalExpense > 0) && (
-            <><span>{formatVND(totalIncome)} in</span><Dot /><span>{formatVND(totalExpense)} out</span></>
+            <><span>{formatVND(totalIncome)} earned</span><Dot /><span>{formatVND(totalExpense)} spent</span></>
           )
         }
         segments={REPORT_SEGMENTS}
@@ -160,6 +164,29 @@ export default function ReportsClient({
 
       {/* Spending breakdown leaderboard */}
       <CategoryChart data={byCategory} totalExpense={totalExpense} />
+
+      <SectionCard title="Debt cash flow and balance adjustments">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          {[
+            ['Borrowing and debt collections', nonOperatingFlows.debtIncome],
+            ['Lending and principal repayments', nonOperatingFlows.debtExpense],
+            ['Balance increases', nonOperatingFlows.adjustmentIncome],
+            ['Balance decreases', nonOperatingFlows.adjustmentExpense],
+          ].map(([label, amount]) => (
+            <div key={label}>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+              <p className="mt-1 font-semibold tabular-nums text-gray-900 dark:text-gray-100">{formatVND(Number(amount))}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+          Net cash flow including debt: {formatVND(cashFlowNet)}
+        </p>
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          Loan principal and balance adjustments are excluded from income, spending and savings rate.
+          Transfers and credit card principal payments stay in wallet history.
+        </p>
+      </SectionCard>
 
       {/* Net Worth */}
       <div className="bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 rounded-2xl px-5 py-5">

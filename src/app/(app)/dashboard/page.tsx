@@ -3,7 +3,7 @@ import { requireUser } from '@/lib/server/auth'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { getSpendingPace } from '@/lib/server/spending-pace'
-import { excludeAdjustments, getAdjustmentCategoryIds } from '@/lib/server/adjustment-filter'
+import { onlyOperatingTransactions, getNonOperatingCategoryIds } from '@/lib/server/transaction-reporting'
 import type { CategoryRef } from '@/lib/types'
 import { formatVND } from '@/lib/utils/currency'
 import { localYM, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
@@ -33,9 +33,8 @@ export default async function DashboardPage({
 
   const { supabase, user } = await requireUser()
 
-  // Reconciliation rows are ledger corrections, not cash flow — they must not
-  // land in the month's income/expense or in the spending pace derived from it.
-  const adjustmentIds = await getAdjustmentCategoryIds(supabase, user.id)
+  // Loan principal and corrections do not affect earned income or spending.
+  const excludedCategoryIds = await getNonOperatingCategoryIds(supabase, user.id)
 
   const [
     [
@@ -49,13 +48,10 @@ export default async function DashboardPage({
     budgetsWithRollover,
   ] = await Promise.all([
     Promise.all([
-      // Income/expense totals exclude transfer legs (money moved between own
-      // wallets) and reconciliation adjustments — see getPeriodSummary(). The
-      // recent-transactions list keeps both, since the user does want to see
-      // them in their history.
-      excludeAdjustments(supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').is('transfer_pair_id', null).gte('transaction_date', startDate).lt('transaction_date', endDate), adjustmentIds),
+      // History keeps all rows; income and spending use operating rows only.
+      onlyOperatingTransactions(supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
       supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
-      excludeAdjustments(supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').is('transfer_pair_id', null).gte('transaction_date', startDate).lt('transaction_date', endDate), adjustmentIds),
+      onlyOperatingTransactions(supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
       supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
       supabase.from('wallets').select(WALLET_COLUMNS).eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
       supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
