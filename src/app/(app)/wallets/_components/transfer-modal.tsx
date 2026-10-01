@@ -40,7 +40,8 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
     e.preventDefault()
     if (!fromId || !toId) return setError('Select both wallets.')
     if (fromId === toId) return setError('Source and destination must be different.')
-    if (!amount || amount <= 0) return setError('Enter a valid amount.')
+    if (!Number.isFinite(amount) || amount <= 0) return setError('Enter a valid amount.')
+    if (insufficient) return setError('Insufficient balance in source wallet.')
 
     setSaving(true)
     setError(null)

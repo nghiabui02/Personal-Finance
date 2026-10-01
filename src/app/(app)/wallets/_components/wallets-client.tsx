@@ -127,7 +127,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
         <ConfirmModal
           title={`Delete "${confirmWallet.name}"?`}
           description={
-            Number(confirmWallet.balance) > 0
+            confirmWallet.type !== 'credit' && Number(confirmWallet.balance) > 0
               ? `This wallet has a remaining balance of ${formatVND(Number(confirmWallet.balance))}. It will be automatically transferred to your default wallet before deletion.`
               : 'This wallet will be permanently deleted. Existing transactions linked to it will not be deleted.'
           }

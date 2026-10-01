@@ -74,7 +74,7 @@ export const walletsApi = {
     })
   },
 
-  update(id: string, payload: WalletPayload): Promise<Wallet> {
+  update(id: string, payload: Pick<WalletPayload, 'name' | 'color'>): Promise<Wallet> {
     return apiFetch(`/api/wallets/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),

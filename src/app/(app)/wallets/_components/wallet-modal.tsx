@@ -73,21 +73,19 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
     setError(null)
     startTransition(async () => {
       try {
-        const base = { name, type, icon: icon || undefined, color: selectedColor, is_default }
-
-        const payload = isCredit
-          ? {
-              ...base,
-              balance: 0,
-              credit_limit: Number(get('credit_limit')) || 0,
-              statement_day: Number(get('statement_day')) || 26,
-              payment_due_day: Number(get('payment_due_day')) || 10,
-            }
-          : { ...base, balance: Number(get('balance')) || 0 }
-
         if (editing) {
-          await walletsApi.update(editing.id, payload)
+          await walletsApi.update(editing.id, { name, color: selectedColor })
         } else {
+          const base = { name, type, icon: icon || undefined, color: selectedColor, is_default }
+          const payload = isCredit
+            ? {
+                ...base,
+                balance: 0,
+                credit_limit: Number(get('credit_limit')) || 0,
+                statement_day: Number(get('statement_day')) || 26,
+                payment_due_day: Number(get('payment_due_day')) || 10,
+              }
+            : { ...base, balance: Number(get('balance')) || 0 }
           await walletsApi.create(payload)
         }
         router.refresh()
@@ -102,7 +100,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
     <Modal title={editing ? 'Edit wallet' : 'New wallet'} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* What the wallet is. Name takes the extra width — a type is one word. */}
-        <div className="grid grid-cols-[3fr_2fr] gap-3 items-end">
+        <div className={editing ? '' : 'grid grid-cols-[3fr_2fr] gap-3 items-end'}>
           <Input
             label="Name"
             name="name"
@@ -110,43 +108,43 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
             required
             placeholder={isCredit ? 'e.g. VCB Visa' : 'e.g. Vietcombank'}
           />
-          <CustomSelect
+          {!editing && <CustomSelect
             label="Type"
             name="type"
             options={TYPE_OPTIONS}
             value={type}
             onChange={v => setType(v as Wallet['type'])}
-          />
+          />}
         </div>
 
         {/* The money field beside the icon — both are short enough to share. */}
-        <div className="grid grid-cols-2 gap-3 items-end">
+        {!editing && <div className="grid grid-cols-2 gap-3 items-end">
           {isCredit ? (
             <AmountInput
               label="Credit Limit"
               name="credit_limit"
-              defaultValue={editing?.credit_limit ?? 0}
+              defaultValue={0}
               required
             />
           ) : (
             <AmountInput
               label="Balance"
               name="balance"
-              defaultValue={editing?.balance ?? 0}
+              defaultValue={0}
             />
           )}
           <EmojiPickerInput
             label="Icon"
             name="icon"
-            defaultValue={editing?.icon ?? ''}
+            defaultValue={''}
           />
-        </div>
+        </div>}
 
-        {isCredit && (
+        {!editing && isCredit && (
           <div>
             <div className="grid grid-cols-2 gap-3">
-              <DaySelect label="Statement Day" name="statement_day" defaultValue={editing?.statement_day ?? 26} />
-              <DaySelect label="Payment Due Day" name="payment_due_day" defaultValue={editing?.payment_due_day ?? 10} />
+              <DaySelect label="Statement Day" name="statement_day" defaultValue={26} />
+              <DaySelect label="Payment Due Day" name="payment_due_day" defaultValue={10} />
             </div>
             <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
               Example: statement on the 26th, payment due on the 10th of the next month
@@ -171,15 +169,15 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
           </div>
         </div>
 
-        <label className="flex items-center gap-2.5 cursor-pointer">
+        {!editing && <label className="flex items-center gap-2.5 cursor-pointer">
           <input
             type="checkbox"
             name="is_default"
-            defaultChecked={editing?.is_default ?? false}
+            defaultChecked={false}
             className="w-4 h-4 rounded border-gray-300 text-brand-fill focus:ring-brand"
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">Set as default wallet</span>
-        </label>
+        </label>}
 
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 

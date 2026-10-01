@@ -11,7 +11,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   if (from_wallet_id === to_wallet_id) {
     return badRequest('Source and destination wallets must be different.')
   }
-  if (!amount || Number(amount) <= 0) {
+  const transferAmount = Number(amount)
+  if (!Number.isFinite(transferAmount) || transferAmount <= 0) {
     return badRequest('Amount must be greater than 0.')
   }
 
@@ -27,7 +28,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   }
 
   const fromWallet = wallets.find(w => w.id === from_wallet_id)
-  if (fromWallet && Number(fromWallet.balance) < Number(amount)) {
+  if (fromWallet && Number(fromWallet.balance) < transferAmount) {
     return badRequest('Insufficient balance in source wallet.')
   }
   const toWallet = wallets.find(w => w.id === to_wallet_id)
@@ -40,7 +41,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
       user_id: user.id,
       wallet_id: from_wallet_id,
       type: 'expense',
-      amount: Number(amount),
+      amount: transferAmount,
       note: baseNote ?? `Transfer to ${toWallet?.name}`,
       transaction_date: date,
       transfer_pair_id: pairId,
@@ -49,7 +50,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
       user_id: user.id,
       wallet_id: to_wallet_id,
       type: 'income',
-      amount: Number(amount),
+      amount: transferAmount,
       note: baseNote ?? `Transfer from ${fromWallet?.name}`,
       transaction_date: date,
       transfer_pair_id: pairId,
@@ -60,10 +61,13 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     return supabaseError((err1 ?? err2)!)
   }
 
-  await Promise.all([
-    supabase.rpc('adjust_wallet_balance', { p_wallet_id: from_wallet_id, p_delta: -Number(amount), p_user_id: user.id }),
-    supabase.rpc('adjust_wallet_balance', { p_wallet_id: to_wallet_id, p_delta: Number(amount), p_user_id: user.id }),
+  const balanceUpdates = await Promise.all([
+    supabase.rpc('adjust_wallet_balance', { p_wallet_id: from_wallet_id, p_delta: -transferAmount, p_user_id: user.id }),
+    supabase.rpc('adjust_wallet_balance', { p_wallet_id: to_wallet_id, p_delta: transferAmount, p_user_id: user.id }),
   ])
+
+  const balanceError = balanceUpdates.find(result => result.error)?.error
+  if (balanceError) return supabaseError(balanceError)
 
   return NextResponse.json({ success: true, transfer_pair_id: pairId }, { status: 201 })
 })
