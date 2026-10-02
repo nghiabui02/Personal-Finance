@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, rpcError } from '@/lib/server/route'
+import { scalarResult } from '@/lib/server/rpc-result'
 import { localYMD } from '@/lib/utils/date'
 
 export const POST = withAuth<{ id: string }>(async (request, { supabase, params }) => {
@@ -18,5 +19,8 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, params 
 
   if (error) return rpcError(error)
 
-  return NextResponse.json({ ok: true, new_credit_balance: Number(data) })
+  return NextResponse.json({
+    ok: true,
+    new_credit_balance: Number(scalarResult<number>(data, 'new_available_credit')),
+  })
 })

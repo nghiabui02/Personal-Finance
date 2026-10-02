@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, rpcError } from '@/lib/server/route'
+import { scalarResult } from '@/lib/server/rpc-result'
 import { localYMD } from '@/lib/utils/date'
 
 export const POST = withAuth(async (request, { supabase }) => {
@@ -17,5 +18,8 @@ export const POST = withAuth(async (request, { supabase }) => {
 
   if (error) return rpcError(error)
 
-  return NextResponse.json({ success: true, transfer_pair_id: data }, { status: 201 })
+  return NextResponse.json(
+    { success: true, transfer_pair_id: scalarResult<string>(data, 'transfer_pair_id') },
+    { status: 201 },
+  )
 })

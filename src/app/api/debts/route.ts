@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, rpcError } from '@/lib/server/route'
+import { debtResult } from '@/lib/server/rpc-result'
 import { ensureSystemCategory } from '@/lib/server/system-categories'
 import { localYMD } from '@/lib/utils/date'
 
@@ -29,5 +30,5 @@ export const POST = withAuth(async (request, { supabase, user }) => {
 
   if (error) return rpcError(error)
 
-  return NextResponse.json(data, { status: 201 })
+  return NextResponse.json(debtResult(data) ?? data, { status: 201 })
 })

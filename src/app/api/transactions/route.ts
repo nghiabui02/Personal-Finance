@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, rpcError } from '@/lib/server/route'
+import { transactionWithRelations } from '@/lib/server/rpc-result'
 
 export const POST = withAuth(async (request, { supabase }) => {
   const body = await request.json()
@@ -20,13 +21,5 @@ export const POST = withAuth(async (request, { supabase }) => {
 
   if (error) return rpcError(error)
 
-  // The function returns the bare row; the client wants its category and wallet
-  // alongside, same as before.
-  const { data: full } = await supabase
-    .from('transactions')
-    .select('*, categories(id, name, icon, color), wallets(id, name)')
-    .eq('id', data.id)
-    .single()
-
-  return NextResponse.json(full ?? data, { status: 201 })
+  return NextResponse.json(await transactionWithRelations(supabase, data), { status: 201 })
 })

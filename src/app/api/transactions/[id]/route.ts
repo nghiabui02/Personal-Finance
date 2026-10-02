@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, noContent, rpcError } from '@/lib/server/route'
+import { transactionWithRelations } from '@/lib/server/rpc-result'
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, params }) => {
   const { id } = params
@@ -23,13 +24,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, params
 
   if (error) return rpcError(error)
 
-  const { data: full } = await supabase
-    .from('transactions')
-    .select('*, categories(id, name, icon, color), wallets(id, name)')
-    .eq('id', data.id)
-    .single()
-
-  return NextResponse.json(full ?? data)
+  return NextResponse.json(await transactionWithRelations(supabase, data))
 })
 
 export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, params }) => {
