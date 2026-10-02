@@ -73,11 +73,13 @@ BEGIN
   INSERT INTO categories (user_id, name, type, icon, color) VALUES (v_uid, 'Giáo dục', 'expense', '📚', '#6366f1') RETURNING id INTO c_giaoduc;
   INSERT INTO categories (user_id, name, type, icon, color) VALUES (v_uid, 'Nhà cửa', 'expense', '🏠', '#a16207') RETURNING id INTO c_nhacua;
 
-  -- Danh mục nợ — đúng tên/icon app tự tạo trong lib/server/debt-categories.ts
-  INSERT INTO categories (user_id, name, type, icon, color) VALUES (v_uid, 'Cho vay', 'expense', '💸', '#6366f1') RETURNING id INTO c_chovay;
-  INSERT INTO categories (user_id, name, type, icon, color) VALUES (v_uid, 'Đi vay', 'income', '🤝', '#f97316') RETURNING id INTO c_divay;
-  INSERT INTO categories (user_id, name, type, icon, color) VALUES (v_uid, 'Thu nợ', 'income', '💰', '#10b981') RETURNING id INTO c_thuno;
-  INSERT INTO categories (user_id, name, type, icon, color) VALUES (v_uid, 'Trả nợ', 'expense', '🏦', '#ef4444') RETURNING id INTO c_trano;
+  -- Danh mục nợ — đúng tên/icon app tự tạo trong lib/server/system-categories.ts.
+  -- system_key là BẮT BUỘC: báo cáo phân loại nợ theo key này chứ không theo tên,
+  -- thiếu key thì 3 giao dịch nợ bên dưới bị tính thẳng vào thu nhập/chi tiêu.
+  INSERT INTO categories (user_id, name, type, icon, color, system_key) VALUES (v_uid, 'Cho vay', 'expense', '💸', '#6366f1', 'lend_out')     RETURNING id INTO c_chovay;
+  INSERT INTO categories (user_id, name, type, icon, color, system_key) VALUES (v_uid, 'Đi vay',  'income',  '🤝', '#f97316', 'borrow_in')    RETURNING id INTO c_divay;
+  INSERT INTO categories (user_id, name, type, icon, color, system_key) VALUES (v_uid, 'Thu nợ',  'income',  '💰', '#10b981', 'collect_debt') RETURNING id INTO c_thuno;
+  INSERT INTO categories (user_id, name, type, icon, color, system_key) VALUES (v_uid, 'Trả nợ',  'expense', '🏦', '#ef4444', 'repay_debt')   RETURNING id INTO c_trano;
 
   -- ---------------------------------------------------------------------------
   -- 4. Giao dịch — tháng hiện tại (chỉ tới mùng 7 như một tháng đang dở dang)
