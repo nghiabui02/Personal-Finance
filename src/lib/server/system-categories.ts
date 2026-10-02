@@ -43,12 +43,31 @@ type DebtCategoryKey = keyof typeof DEBT_CATEGORIES
 type AdjustmentCategoryKey = keyof typeof ADJUSTMENT_CATEGORIES
 type SystemCategoryKey = DebtCategoryKey | AdjustmentCategoryKey
 
+/** Postgres unique_violation. Two callers creating the same system category at
+ *  the same moment is the only way this route hits it. */
+const UNIQUE_VIOLATION = '23505'
+
 /**
  * Returns the id of the user's category for `key`, creating it on first use.
  *
  * Looked up by `system_key`, not name — the display name is free to change
  * (rename, translate) without breaking the lookup. Only the key is stable.
  */
+async function findSystemCategory(
+  supabase: SupabaseClient,
+  userId: string,
+  key: SystemCategoryKey,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('system_key', key)
+    .maybeSingle()
+
+  return data?.id ?? null
+}
+
 export async function ensureSystemCategory(
   supabase: SupabaseClient,
   userId: string,
@@ -56,14 +75,8 @@ export async function ensureSystemCategory(
 ): Promise<string> {
   const def = ALL_SYSTEM_CATEGORIES[key]
 
-  const { data: existing } = await supabase
-    .from('categories')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('system_key', key)
-    .maybeSingle()
-
-  if (existing) return existing.id
+  const found = await findSystemCategory(supabase, userId, key)
+  if (found) return found
 
   const { data: created, error } = await supabase
     .from('categories')
@@ -78,11 +91,17 @@ export async function ensureSystemCategory(
     .select('id')
     .single()
 
-  // Swallowing this used to leave transactions silently uncategorised — the
-  // caller could not tell a missing category from a rejected one.
-  if (error || !created) {
-    throw new Error(`Could not create the "${def.name}" category: ${error?.message ?? 'unknown error'}`)
+  if (created) return created.id
+
+  // Someone else created it between the lookup and the insert — the partial
+  // unique index on (user_id, system_key) stops the duplicate, and the row we
+  // wanted is now there. Rare, but a reconcile opened in two tabs hits it.
+  if (error?.code === UNIQUE_VIOLATION) {
+    const raced = await findSystemCategory(supabase, userId, key)
+    if (raced) return raced
   }
 
-  return created.id
+  // Swallowing this used to leave transactions silently uncategorised — the
+  // caller could not tell a missing category from a rejected one.
+  throw new Error(`Could not create the "${def.name}" category: ${error?.message ?? 'unknown error'}`)
 }
