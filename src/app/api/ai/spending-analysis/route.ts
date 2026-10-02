@@ -54,8 +54,15 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   ])
 
   const wallets = walletRows ?? []
+  // An emergency fund is money you can spend today. An investment wallet holds
+  // value, but selling it takes time and the figure moves with the market, so
+  // counting it as cash would overstate the runway. It still belongs in net
+  // worth — it is an asset, just not a liquid one.
+  const investments = wallets
+    .filter(w => w.type === 'investment')
+    .reduce((s, w) => s + Number(w.balance), 0)
   const liquidAssets = wallets
-    .filter(w => w.type !== 'credit')
+    .filter(w => w.type !== 'credit' && w.type !== 'investment')
     .reduce((s, w) => s + Number(w.balance), 0)
   const creditWallets = wallets.filter(w => w.type === 'credit' && Number(w.credit_limit) > 0)
   const creditLimitTotal = creditWallets.reduce((s, w) => s + Number(w.credit_limit), 0)
@@ -64,7 +71,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     .reduce((s, d) => s + Number(d.remaining_amount), 0)
   const payable = (debtRows ?? []).filter(d => d.type === 'borrow')
     .reduce((s, d) => s + Number(d.remaining_amount), 0)
-  const netWorth = liquidAssets + receivable - creditUsed - payable
+  const netWorth = liquidAssets + investments + receivable - creditUsed - payable
 
   // Check DB cache (skip if force-refresh). Version prefix invalidates old
   // cached results whenever the prompt changes materially. Comparison period
@@ -72,7 +79,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   // the cache, not silently return an analysis written for a different one.
   const prevForKey = previous as { label?: string; totalIncome?: number; totalExpense?: number } | undefined
   const compareKeyPart = prevForKey ? `${prevForKey.label ?? ''}::${prevForKey.totalIncome ?? 0}::${prevForKey.totalExpense ?? 0}` : 'none'
-  const cacheKey = `v9::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}::${netWorth}::${compareKeyPart}`
+  const cacheKey = `v10::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}::${netWorth}::${compareKeyPart}`
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_insights_cache')
@@ -145,16 +152,17 @@ export const POST = withAuth(async (request, { supabase, user }) => {
 
   const assetSection = [
     '\n=== CURRENT ASSETS & CASH POSITION (real balances, not this period\'s cash flow) ===',
-    `Available cash (cash + bank + wallets): ${fmt(liquidAssets)}đ`,
+    `Available cash (cash + bank + e-wallets, spendable today): ${fmt(liquidAssets)}đ`,
+    investments > 0 ? `Investments (held, not spendable today): ${fmt(investments)}đ` : '',
     creditLimitTotal > 0
       ? `Credit card debt: ${fmt(creditUsed)}đ / limit ${fmt(creditLimitTotal)}đ (using ${creditUtilPct}% of limit)`
       : 'No credit cards.',
     receivable > 0 ? `Money lent out (not yet collected): ${fmt(receivable)}đ` : '',
     payable > 0 ? `Money borrowed (not yet repaid): ${fmt(payable)}đ${overdueDebts.length ? ` — ${overdueDebts.length} of these OVERDUE` : ''}` : '',
-    `Net worth (available + lent − credit debt − borrowed): ${fmt(netWorth)}đ`,
+    `Net worth (available + investments + lent − credit debt − borrowed): ${fmt(netWorth)}đ`,
     netWorthChangeLine,
     runwayMonths !== null
-      ? `Emergency fund: available cash covers ${runwayMonths.toFixed(1)} months of spending (~${fmt(monthlyExpense)}đ/month run rate, averaged over the last 90 days — not this period alone)`
+      ? `Emergency fund: available cash covers ${runwayMonths.toFixed(1)} months of spending (~${fmt(monthlyExpense)}đ/month run rate, averaged over the last 90 days — not this period alone). Investments are excluded: never count them toward the emergency fund.`
       : 'Emergency fund not calculable yet (no spending in the last 90 days).',
     goalPct !== null ? `Savings goals: ${fmt(goalCurrent)}đ / ${fmt(goalTarget)}đ (${goalPct}%) contributed across ${goals.length} goal(s)` : '',
     '',

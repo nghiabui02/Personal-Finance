@@ -1,4 +1,5 @@
 import { getReportingGroup, summarizeNonOperatingFlows } from '@/lib/server/transaction-reporting'
+import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { NextResponse } from 'next/server'
 import { withAuth } from '@/lib/server/route'
 import { toYMD } from '@/lib/utils/date'
@@ -42,7 +43,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const start  = searchParams.get('start') ?? toYMD(new Date())
   const { startDate, endDate } = getDateRange(period, start)
 
-  const [{ data: txRows }, { data: budgetRows }, { data: walletRows }] = await Promise.all([
+  const [{ data: txRows }, { data: walletRows }] = await Promise.all([
     supabase
       .from('transactions')
       .select('id, type, amount, note, transaction_date, payment_method, transfer_pair_id, categories(name, icon, system_key), wallets(name)')
@@ -51,13 +52,6 @@ export const GET = withAuth(async (request, { supabase, user }) => {
       .lt('transaction_date', endDate)
       .order('transaction_date', { ascending: true })
       .order('created_at', { ascending: true }),
-
-    supabase
-      .from('budgets')
-      .select('amount, categories(name)')
-      .eq('user_id', user.id)
-      .gte('month', startDate)
-      .lt('month', endDate),
 
     supabase
       .from('wallets')
@@ -110,8 +104,14 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const timeList = [...timeMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   const timeLabel = (period === 'quarter' || period === 'year') ? 'Month' : 'Date'
 
-  // Budget comparison
-  const budgets = (budgetRows ?? []) as unknown as { amount: number; categories: { name: string } | null }[]
+  // Budget comparison — same source as the Reports screen, so the two agree.
+  // Budgets are monthly, so they only line up with the month view. Reading
+  // `budgets.amount` straight from the table would also ignore rollover carry
+  // and paused rows, and over a quarter or year it would pick one arbitrary
+  // month's row per category.
+  const budgets = period === 'month'
+    ? (await getBudgetsForMonth(supabase, user.id, start.slice(0, 7))).filter(b => b.active)
+    : []
 
   const lines: string[] = []
 
@@ -156,7 +156,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     const pct = totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) + '%' : '0%'
     const avg = count > 0 ? Math.round(amount / count) : 0
     const budget = budgets.find(b => b.categories?.name === name)
-    const budgetAmt = budget ? Number(budget.amount) : null
+    const budgetAmt = budget ? Number(budget.effectiveAmount) : null
     const remaining = budgetAmt !== null ? budgetAmt - amount : null
     lines.push(row(
       name,

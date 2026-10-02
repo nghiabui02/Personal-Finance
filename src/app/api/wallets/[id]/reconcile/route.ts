@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { withAuth, badRequest, notFound, supabaseError } from '@/lib/server/route'
+import { withAuth, badRequest, notFound, rpcError } from '@/lib/server/route'
 import { ensureSystemCategory } from '@/lib/server/system-categories'
 import { localYMD } from '@/lib/utils/date'
 
@@ -12,6 +12,7 @@ import { localYMD } from '@/lib/utils/date'
  * adjustment transaction for the difference. The drift stays visible and every
  * report keeps balancing.
  */
+
 /**
  * Confirms a caller-supplied category is the user's own and points the right
  * way: crediting a wallet cannot be filed under an expense category.
@@ -40,59 +41,41 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
   const actual = Number(actual_balance)
   if (!Number.isFinite(actual)) return badRequest('Enter the balance shown by your bank.')
 
+  // Read once to work out which way the gap goes, so only the category that is
+  // actually needed gets created. The function re-reads the balance under a
+  // lock and refuses if the direction flipped in between.
   const { data: wallet } = await supabase
     .from('wallets')
-    .select('name, type, balance, credit_limit')
+    .select('balance')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
 
   if (!wallet) return notFound('Wallet not found.')
 
-  if (wallet.type === 'credit') {
-    const limit = Number(wallet.credit_limit ?? 0)
-    // For credit wallets `balance` is available credit, which the database
-    // constrains to the card's limit — reject here so the user gets a sentence
-    // instead of a constraint violation.
-    if (actual < 0 || actual > limit) {
-      return badRequest(`Available credit must be between 0 and ${limit}.`)
-    }
-  } else if (actual < 0) {
-    return badRequest('Balance cannot be negative.')
-  }
-
-  const delta = actual - Number(wallet.balance)
-  if (delta === 0) {
-    return NextResponse.json({ ok: true, delta: 0, message: 'Already matches — nothing to adjust.' })
-  }
+  const expectedUp = actual - Number(wallet.balance) > 0
+  const direction = expectedUp ? 'income' : 'expense'
 
   // A gap is not always a bookkeeping error. A savings pocket that pays daily
   // interest grows on its own, and that growth is real income — filing it as a
   // correction would keep it out of the month's totals, where it belongs.
   // Default stays "correction"; the caller names a category to say otherwise.
   const categoryId = category_id
-    ? await resolveUserCategory(supabase, user.id, category_id, delta > 0 ? 'income' : 'expense')
-    : await ensureSystemCategory(supabase, user.id, delta > 0 ? 'adjust_up' : 'adjust_down')
+    ? await resolveUserCategory(supabase, user.id, category_id, direction)
+    : await ensureSystemCategory(supabase, user.id, expectedUp ? 'adjust_up' : 'adjust_down')
 
   if (!categoryId) return badRequest('That category does not match the direction of this change.')
 
-  const { error: txError } = await supabase.from('transactions').insert({
-    user_id: user.id,
-    wallet_id: id,
-    category_id: categoryId,
-    type: delta > 0 ? 'income' : 'expense',
-    amount: Math.abs(delta),
-    note: note?.trim() || `Reconciled ${wallet.name}`,
-    transaction_date: date ?? localYMD(),
-  })
-  if (txError) return supabaseError(txError)
-
-  const { error: balanceError } = await supabase.rpc('adjust_wallet_balance', {
+  const { data, error } = await supabase.rpc('reconcile_wallet', {
     p_wallet_id: id,
-    p_delta: delta,
-    p_user_id: user.id,
+    p_actual_balance: actual,
+    p_date: date || localYMD(),
+    p_category_up: expectedUp ? categoryId : null,
+    p_category_down: expectedUp ? null : categoryId,
+    p_note: note ?? null,
   })
-  if (balanceError) return supabaseError(balanceError)
 
-  return NextResponse.json({ ok: true, delta, new_balance: actual })
+  if (error) return rpcError(error)
+
+  return NextResponse.json(data)
 })

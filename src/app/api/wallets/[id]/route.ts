@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { withAuth, badRequest, notFound, noContent, supabaseError } from '@/lib/server/route'
+import { withAuth, badRequest, noContent, rpcError, supabaseError } from '@/lib/server/route'
 import { localYMD } from '@/lib/utils/date'
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
@@ -24,51 +24,21 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
     .single()
 
   if (error) return supabaseError(error)
+
   return NextResponse.json(data)
 })
 
-export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {
+export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, params }) => {
   const { id } = params
 
-  // Fetch the wallet being deleted
-  const { data: wallet } = await supabase
-    .from('wallets').select('balance, type').eq('id', id).eq('user_id', user.id).single()
+  // Refuses a card that still owes, hands any remaining cash to the default
+  // wallet as a recorded transfer, and deletes — all in one transaction, so a
+  // failure cannot leave the money moved and the wallet still there.
+  const { error } = await supabase.rpc('delete_wallet', {
+    p_wallet_id: id,
+    p_date: localYMD(),
+  })
+  if (error) return rpcError(error)
 
-  if (!wallet) return notFound('Wallet not found.')
-
-  const balance = Number(wallet.balance)
-
-  // Available credit is not cash and must never be transferred on deletion.
-  if (wallet.type !== 'credit' && balance > 0) {
-    const { data: defaultWallet } = await supabase
-      .from('wallets').select('id, balance')
-      .eq('user_id', user.id).eq('is_default', true).neq('id', id).single()
-
-    if (!defaultWallet) {
-      return badRequest('Cannot delete: wallet has balance but no default wallet found to receive it.')
-    }
-
-    // Move balance to default wallet and record a transfer transaction pair
-    const pairId = crypto.randomUUID()
-    const today = localYMD()
-    await Promise.all([
-      supabase.rpc('adjust_wallet_balance', { p_wallet_id: defaultWallet.id, p_delta: balance, p_user_id: user.id }),
-      supabase.from('transactions').insert([
-        {
-          user_id: user.id, wallet_id: id, type: 'expense',
-          amount: balance, note: 'Balance transferred to default wallet',
-          transaction_date: today, transfer_pair_id: pairId,
-        },
-        {
-          user_id: user.id, wallet_id: defaultWallet.id, type: 'income',
-          amount: balance, note: 'Balance transferred from deleted wallet',
-          transaction_date: today, transfer_pair_id: pairId,
-        },
-      ]),
-    ])
-  }
-
-  const { error } = await supabase.from('wallets').delete().eq('id', id).eq('user_id', user.id)
-  if (error) return supabaseError(error)
   return noContent()
 })

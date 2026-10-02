@@ -1,60 +1,32 @@
 import { NextResponse } from 'next/server'
-import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
-import { checkWalletCanCover } from '@/lib/server/wallet-balance'
+import { withAuth, rpcError } from '@/lib/server/route'
 
-export const POST = withAuth(async (request, { supabase, user }) => {
+export const POST = withAuth(async (request, { supabase }) => {
   const body = await request.json()
   const { type, amount, category_id, wallet_id, transaction_date, note, bank_fee } = body
 
-  if (!type || !amount || !transaction_date) {
-    return badRequest('Type, amount and date are required.')
-  }
-  if (type !== 'income' && type !== 'expense') {
-    return badRequest('Invalid type.')
-  }
-  if (bank_fee !== undefined && bank_fee !== null && Number(bank_fee) < 0) {
-    return badRequest('Bank fee must be positive.')
-  }
+  // `amount` is the base; the function adds the fee and moves the wallet by the
+  // total, inside one database transaction so a row can never exist without its
+  // balance change (or the other way round).
+  const { data, error } = await supabase.rpc('create_transaction', {
+    p_type: type,
+    p_amount: Number(amount),
+    p_transaction_date: transaction_date,
+    p_category_id: category_id || null,
+    p_wallet_id: wallet_id || null,
+    p_note: note ?? null,
+    p_bank_fee: bank_fee ?? null,
+  })
 
-  // `amount` from the client is the base amount; the stored amount is the real
-  // total charged to the wallet (base + fee) so no aggregate has to know about
-  // bank_fee. bank_fee is kept alongside purely to show the breakdown.
-  const fee = Number(bank_fee) > 0 ? Number(bank_fee) : null
-  const total = Number(amount) + (fee ?? 0)
+  if (error) return rpcError(error)
 
-  // Checked before the insert: the row and the balance move in two steps, and
-  // a spend that overdraws must leave neither behind.
-  if (wallet_id && type === 'expense') {
-    const check = await checkWalletCanCover(supabase, user.id, wallet_id, total)
-    if (!check.ok) return badRequest(check.message!)
-  }
-
-  const { data, error } = await supabase
+  // The function returns the bare row; the client wants its category and wallet
+  // alongside, same as before.
+  const { data: full } = await supabase
     .from('transactions')
-    .insert({
-      user_id: user.id,
-      type,
-      amount: total,
-      bank_fee: fee,
-      category_id: category_id || null,
-      wallet_id: wallet_id || null,
-      transaction_date,
-      note: note?.trim() || null,
-    })
     .select('*, categories(id, name, icon, color), wallets(id, name)')
+    .eq('id', data.id)
     .single()
 
-  if (error) return supabaseError(error)
-
-  if (wallet_id) {
-    const delta = type === 'income' ? total : -total
-    const { error: balErr } = await supabase.rpc('adjust_wallet_balance', {
-      p_wallet_id: wallet_id,
-      p_delta: delta,
-      p_user_id: user.id,
-    })
-    if (balErr) return supabaseError(balErr)
-  }
-
-  return NextResponse.json(data, { status: 201 })
+  return NextResponse.json(full ?? data, { status: 201 })
 })

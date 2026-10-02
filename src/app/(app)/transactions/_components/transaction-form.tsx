@@ -476,7 +476,8 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
 
       {editing?.debt_payment_id && (
         <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
-          This transaction is linked to a debt. Editing it will not update the debt balance.
+          This is a debt repayment. Changing the amount moves the debt with it;
+          the direction and category are fixed.
         </p>
       )}
 

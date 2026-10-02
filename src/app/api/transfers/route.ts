@@ -1,73 +1,21 @@
 import { NextResponse } from 'next/server'
-import { withAuth, badRequest, notFound, supabaseError } from '@/lib/server/route'
+import { withAuth, rpcError } from '@/lib/server/route'
 import { localYMD } from '@/lib/utils/date'
 
-export const POST = withAuth(async (request, { supabase, user }) => {
+export const POST = withAuth(async (request, { supabase }) => {
   const { from_wallet_id, to_wallet_id, amount, note, transfer_date } = await request.json()
 
-  if (!from_wallet_id || !to_wallet_id) {
-    return badRequest('Both wallets are required.')
-  }
-  if (from_wallet_id === to_wallet_id) {
-    return badRequest('Source and destination wallets must be different.')
-  }
-  const transferAmount = Number(amount)
-  if (!Number.isFinite(transferAmount) || transferAmount <= 0) {
-    return badRequest('Amount must be greater than 0.')
-  }
+  // Both wallets are locked for the duration, so two transfers issued at the
+  // same moment can no longer both pass the balance check and overdraw.
+  const { data, error } = await supabase.rpc('transfer_funds', {
+    p_from_wallet_id: from_wallet_id ?? null,
+    p_to_wallet_id: to_wallet_id ?? null,
+    p_amount: Number(amount),
+    p_date: transfer_date || localYMD(),
+    p_note: note ?? null,
+  })
 
-  // Fetch both wallet names for the notes
-  const { data: wallets } = await supabase
-    .from('wallets')
-    .select('id, name, balance')
-    .in('id', [from_wallet_id, to_wallet_id])
-    .eq('user_id', user.id)
+  if (error) return rpcError(error)
 
-  if (!wallets || wallets.length < 2) {
-    return notFound('One or both wallets not found.')
-  }
-
-  const fromWallet = wallets.find(w => w.id === from_wallet_id)
-  if (fromWallet && Number(fromWallet.balance) < transferAmount) {
-    return badRequest('Insufficient balance in source wallet.')
-  }
-  const toWallet = wallets.find(w => w.id === to_wallet_id)
-  const pairId = crypto.randomUUID()
-  const date = transfer_date ?? localYMD()
-  const baseNote = note?.trim() || null
-
-  const [{ error: err1 }, { error: err2 }] = await Promise.all([
-    supabase.from('transactions').insert({
-      user_id: user.id,
-      wallet_id: from_wallet_id,
-      type: 'expense',
-      amount: transferAmount,
-      note: baseNote ?? `Transfer to ${toWallet?.name}`,
-      transaction_date: date,
-      transfer_pair_id: pairId,
-    }),
-    supabase.from('transactions').insert({
-      user_id: user.id,
-      wallet_id: to_wallet_id,
-      type: 'income',
-      amount: transferAmount,
-      note: baseNote ?? `Transfer from ${fromWallet?.name}`,
-      transaction_date: date,
-      transfer_pair_id: pairId,
-    }),
-  ])
-
-  if (err1 || err2) {
-    return supabaseError((err1 ?? err2)!)
-  }
-
-  const balanceUpdates = await Promise.all([
-    supabase.rpc('adjust_wallet_balance', { p_wallet_id: from_wallet_id, p_delta: -transferAmount, p_user_id: user.id }),
-    supabase.rpc('adjust_wallet_balance', { p_wallet_id: to_wallet_id, p_delta: transferAmount, p_user_id: user.id }),
-  ])
-
-  const balanceError = balanceUpdates.find(result => result.error)?.error
-  if (balanceError) return supabaseError(balanceError)
-
-  return NextResponse.json({ success: true, transfer_pair_id: pairId }, { status: 201 })
+  return NextResponse.json({ success: true, transfer_pair_id: data }, { status: 201 })
 })

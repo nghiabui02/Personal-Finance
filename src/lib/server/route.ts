@@ -27,6 +27,15 @@ export function supabaseError(error: { message: string; code?: string }): NextRe
   return jsonError(500, error.message)
 }
 
+/**
+ * The money functions raise their user-facing refusals — not enough in the
+ * wallet, more than the debt still owes — with SQLSTATE P0001, and write the
+ * sentence the user should read. Anything else is a fault on our side.
+ */
+export function rpcError(error: { message: string; code?: string }): NextResponse {
+  return error.code === 'P0001' ? badRequest(error.message) : supabaseError(error)
+}
+
 export const noContent = () => new NextResponse(null, { status: 204 })
 
 // Wraps a route handler with the auth check every private route needs,
