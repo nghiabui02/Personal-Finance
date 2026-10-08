@@ -2,7 +2,7 @@
 
 import { formatVND } from '@/lib/utils/currency'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Pie as PieBase, PieChart, ResponsiveContainer, Sector } from 'recharts'
 import { CATEGORY_PALETTE } from '@/lib/utils/colors'
 
@@ -84,7 +84,7 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
           <div className="text-center px-2">
             {active ? (
               <>
-                <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[104px]">
+                <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-26">
                   {active.name}
                 </p>
                 <p className="mt-1 text-lg font-semibold leading-none text-gray-900 dark:text-gray-100 tabular-nums">
