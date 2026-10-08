@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
+import type { SystemCategoryKey, TransactionType } from '@/lib/constants'
 
 /**
  * Categories the app creates on the user's behalf, so a feature always has
@@ -11,7 +12,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 interface SystemCategoryDef {
   name: string
-  type: 'income' | 'expense'
+  type: TransactionType
   icon: string
   color: string
 }
@@ -34,14 +35,13 @@ const ADJUSTMENT_CATEGORIES = {
   adjust_down: { name: 'Balance Adjustment', type: 'expense', icon: '⚖️', color: '#64748b' },
 } as const satisfies Record<string, SystemCategoryDef>
 
-const ALL_SYSTEM_CATEGORIES: Record<string, SystemCategoryDef> = {
+// Typed by the key list rather than by these objects: a key added to
+// SYSTEM_CATEGORY_KEYS without a definition here is a compile error, instead of
+// a category the app can never create.
+const ALL_SYSTEM_CATEGORIES: Record<SystemCategoryKey, SystemCategoryDef> = {
   ...DEBT_CATEGORIES,
   ...ADJUSTMENT_CATEGORIES,
 }
-
-type DebtCategoryKey = keyof typeof DEBT_CATEGORIES
-type AdjustmentCategoryKey = keyof typeof ADJUSTMENT_CATEGORIES
-type SystemCategoryKey = DebtCategoryKey | AdjustmentCategoryKey
 
 /** Postgres unique_violation. Two callers creating the same system category at
  *  the same moment is the only way this route hits it. */

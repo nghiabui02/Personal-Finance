@@ -1,11 +1,12 @@
 import { apiFetch } from './client'
+import type { TransactionType } from '@/lib/constants'
 
 export type Transaction = {
   id: string
   user_id: string
   wallet_id: string | null
   category_id: string | null
-  type: 'income' | 'expense'
+  type: TransactionType
   amount: number
   note: string | null
   transaction_date: string
@@ -19,7 +20,7 @@ export type Transaction = {
 }
 
 type TransactionPayload = {
-  type: 'income' | 'expense'
+  type: TransactionType
   amount: number
   category_id?: string
   wallet_id?: string

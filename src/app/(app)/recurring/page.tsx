@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import RecurringClient from './_components/recurring-client'
-import { CATEGORY_COLUMNS } from '@/lib/api/categories'
-import { WALLET_COLUMNS } from '@/lib/api/wallets'
+import { categoriesQuery, walletsQuery } from '@/lib/server/queries'
 
 export const metadata: Metadata = { title: 'Recurring' }
 export const dynamic = 'force-dynamic'
@@ -16,16 +15,8 @@ export default async function RecurringPage() {
       .select('*, categories(id, name, icon, color), wallets(id, name)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
-    supabase
-      .from('categories')
-      .select(CATEGORY_COLUMNS)
-      .order('is_default', { ascending: false })
-      .order('name'),
-    supabase
-      .from('wallets')
-      .select(WALLET_COLUMNS)
-      .eq('user_id', user.id)
-      .order('is_default', { ascending: false }),
+    categoriesQuery(supabase),
+    walletsQuery(supabase, user.id),
   ])
 
   return (

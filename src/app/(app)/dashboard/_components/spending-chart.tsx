@@ -4,6 +4,7 @@ import { formatVND } from '@/lib/utils/currency'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
 import { useState } from 'react'
 import { Pie as PieBase, PieChart, ResponsiveContainer, Sector } from 'recharts'
+import { CATEGORY_PALETTE } from '@/lib/utils/colors'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Pie = PieBase as React.ComponentType<any>
@@ -16,10 +17,6 @@ type CategorySpend = {
   amount: number
 }
 
-const FALLBACK_COLORS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4',
-  '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#14b8a6',
-]
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderActiveShape = (props: any) => {
@@ -49,7 +46,7 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
 
   const chartData = data.map((d, i) => ({
     ...d,
-    fill: d.color ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length],
+    fill: d.color ?? CATEGORY_PALETTE[i % CATEGORY_PALETTE.length],
   }))
 
   const active = activeIndex !== null ? chartData[activeIndex] : null

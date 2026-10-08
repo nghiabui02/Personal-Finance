@@ -3,11 +3,8 @@
 import { useEffect, useState } from 'react'
 import { formatVND } from '@/lib/utils/currency'
 import type { CategoryData } from './types'
+import { CATEGORY_PALETTE } from '@/lib/utils/colors'
 
-const FALLBACK_COLORS = [
-  '#ef4444','#f97316','#eab308','#22c55e',
-  '#06b6d4','#3b82f6','#8b5cf6','#ec4899',
-]
 
 export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; totalExpense: number }) {
   const [ready, setReady] = useState(false)
@@ -39,7 +36,7 @@ export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; to
       ) : (
         <ul className="space-y-4">
           {data.map((item, i) => {
-            const color = item.color ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]
+            const color = item.color ?? CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]
             const pct = totalExpense > 0 ? (item.amount / totalExpense) * 100 : 0
             return (
               <li key={item.id} className="animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>

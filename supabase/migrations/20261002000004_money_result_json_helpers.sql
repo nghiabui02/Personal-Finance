@@ -223,3 +223,17 @@ begin
   );
 end;
 $$;
+
+-- Trimmed, or null when nothing is left.
+--
+-- `nullif(btrim(coalesce(x, '')), '')` appeared 27 times across the money
+-- functions. It is pure formatting — no locking, no balances — so naming it
+-- costs nothing a reader has to follow.
+create or replace function public.clean_text(p_value text)
+returns text
+language sql
+immutable
+set search_path to 'public'
+as $$
+  select nullif(btrim(coalesce(p_value, '')), '');
+$$;

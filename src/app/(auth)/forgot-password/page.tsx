@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useState } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 export default function ForgotPasswordPage() {
   const [isPending, setIsPending] = useState(false)
@@ -29,7 +30,7 @@ export default function ForgotPasswordPage() {
       }
       setSent(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(errorMessage(err))
     } finally {
       setIsPending(false)
     }

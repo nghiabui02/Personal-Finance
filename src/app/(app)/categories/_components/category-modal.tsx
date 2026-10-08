@@ -7,11 +7,9 @@ import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Category, categoriesApi } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { CATEGORY_PALETTE } from '@/lib/utils/colors'
+import { errorMessage } from '@/lib/utils/errors'
 
-const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4',
-  '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#14b8a6',
-]
 
 interface CategoryModalProps {
   editing: Category | null
@@ -24,7 +22,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [selectedColor, setSelectedColor] = useState(editing?.color ?? PRESET_COLORS[0])
+  const [selectedColor, setSelectedColor] = useState(editing?.color ?? CATEGORY_PALETTE[0])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -43,7 +41,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }
@@ -58,7 +56,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
         <div>
           <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</p>
           <div className="flex gap-2 flex-wrap">
-            {PRESET_COLORS.map(c => (
+            {CATEGORY_PALETTE.map(c => (
               <button key={c} type="button" onClick={() => setSelectedColor(c)}
                 className={`w-7 h-7 rounded-full transition-all ${selectedColor === c ? 'scale-110 ring-2 ring-offset-2 ring-gray-400' : 'hover:scale-105'}`}
                 style={{ backgroundColor: c }} />

@@ -12,6 +12,7 @@ import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { debtsApi, type Debt } from '@/lib/api/debts'
 import type { Wallet } from '@/lib/api/wallets'
+import { errorMessage } from '@/lib/utils/errors'
 
 // Records more money lent/borrowed against an existing debt — increases
 // remaining_amount. Shared between the debts list page and the debt detail
@@ -52,7 +53,7 @@ export function AdditionModal({
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }

@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 import { requireUser } from '@/lib/server/auth'
 import { WALLET_TX_PAGE_SIZE, type WalletTransaction, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
-import { CATEGORY_COLUMNS } from '@/lib/api/categories'
 import WalletDetailClient from './_components/wallet-detail-client'
+import { categoriesQuery } from '@/lib/server/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,11 +38,7 @@ export default async function WalletDetailPage({
       .eq('user_id', user.id),
     // Reconciling can file the gap under a real category — interest on a
     // savings pocket is income, not a bookkeeping correction.
-    supabase
-      .from('categories')
-      .select(CATEGORY_COLUMNS)
-      .order('is_default', { ascending: false })
-      .order('name'),
+    categoriesQuery(supabase),
   ])
 
   if (!wallet) notFound()

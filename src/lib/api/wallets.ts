@@ -1,11 +1,12 @@
 import { apiFetch } from './client'
 import type { CategoryRef } from '@/lib/types'
+import type { TransactionType, WalletType } from '@/lib/constants'
 
 export type Wallet = {
   id: string
   user_id: string
   name: string
-  type: 'cash' | 'bank' | 'e_wallet' | 'investment' | 'other' | 'credit'
+  type: WalletType
   balance: number
   color: string | null
   icon: string | null
@@ -36,7 +37,7 @@ export const WALLET_TYPE_ICONS: Record<Wallet['type'], string> = {
 
 export type WalletTransaction = {
   id: string
-  type: 'income' | 'expense'
+  type: TransactionType
   amount: number
   note: string | null
   bank_fee: number | null

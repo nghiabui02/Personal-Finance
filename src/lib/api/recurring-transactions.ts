@@ -1,14 +1,15 @@
 import { apiFetch } from './client'
+import type { RecurringFrequency, TransactionType } from '@/lib/constants'
 
 export type RecurringTransaction = {
   id: string
   user_id: string
   wallet_id: string | null
   category_id: string | null
-  type: 'income' | 'expense'
+  type: TransactionType
   amount: number
   note: string | null
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  frequency: RecurringFrequency
   start_date: string
   end_date: string | null
   next_run_date: string | null
@@ -27,7 +28,7 @@ export const FREQUENCY_LABELS: Record<RecurringTransaction['frequency'], string>
 
 export const recurringApi = {
   create(payload: {
-    type: 'income' | 'expense'
+    type: TransactionType
     amount: number
     frequency: RecurringTransaction['frequency']
     start_date: string

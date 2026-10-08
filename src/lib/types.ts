@@ -1,3 +1,4 @@
+import type { DebtType } from '@/lib/constants'
 // Shared view-model shapes used across pages, API routes and client components.
 // Full row types for API payloads live in src/lib/api/*.
 
@@ -12,7 +13,7 @@ export type CategoryRef = {
 // Minimal debt info the transaction modal needs to link a payment to a debt.
 export type DebtOption = {
   id: string
-  type: 'lend' | 'borrow'
+  type: DebtType
   person_name: string
   remaining_amount: number
 }

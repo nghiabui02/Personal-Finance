@@ -22,6 +22,7 @@ import { type Wallet } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { AdditionModal } from './addition-modal'
+import { errorMessage } from '@/lib/utils/errors'
 
 
 // ── Debt Modal ────────────────────────────────────────────────────────────────
@@ -88,7 +89,7 @@ function DebtModal({
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }
@@ -181,7 +182,7 @@ function PaymentModal({
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }

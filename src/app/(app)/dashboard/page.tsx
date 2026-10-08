@@ -15,7 +15,7 @@ import { DebtSummary } from './_components/debt-summary'
 import { NetWorthChart } from './_components/net-worth-chart'
 import { RecentTransactions } from './_components/recent-transactions'
 import { SpendingChart } from './_components/spending-chart'
-import { WALLET_COLUMNS } from '@/lib/api/wallets'
+import { walletsQuery } from '@/lib/server/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,7 +53,7 @@ export default async function DashboardPage({
       supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
       onlyOperatingTransactions(supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
       supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
-      supabase.from('wallets').select(WALLET_COLUMNS).eq('user_id', user.id).order('is_default', { ascending: false }).order('name'),
+      walletsQuery(supabase, user.id),
       supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
     ]),
     getBudgetsForMonth(supabase, user.id, month).then(rows => rows.filter(b => b.active)),

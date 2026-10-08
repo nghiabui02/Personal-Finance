@@ -8,6 +8,7 @@ import { type Budget, budgetsApi } from '@/lib/api/budgets'
 import { type Category } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 interface BudgetModalProps {
   editing: Budget | null
@@ -83,7 +84,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }

@@ -9,8 +9,7 @@ import {
 import TransactionsClient from './_components/transactions-client'
 import type { ViewMode } from './_components/period-navigator'
 import { localYMD, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
-import { CATEGORY_COLUMNS } from '@/lib/api/categories'
-import { WALLET_COLUMNS } from '@/lib/api/wallets'
+import { categoriesQuery, walletsQuery } from '@/lib/server/queries'
 
 export const metadata: Metadata = { title: 'Transactions' }
 export const dynamic = 'force-dynamic'
@@ -82,17 +81,8 @@ export default async function TransactionsPage({
     )
       .order('transaction_date', { ascending: false })
       .order('created_at', { ascending: false }),
-    supabase
-      .from('categories')
-      .select(CATEGORY_COLUMNS)
-      .order('is_default', { ascending: false })
-      .order('name'),
-    supabase
-      .from('wallets')
-      .select(WALLET_COLUMNS)
-      .eq('user_id', user.id)
-      .order('is_default', { ascending: false })
-      .order('name'),
+    categoriesQuery(supabase),
+    walletsQuery(supabase, user.id),
     supabase
       .from('debts')
       .select('id, type, person_name, remaining_amount')

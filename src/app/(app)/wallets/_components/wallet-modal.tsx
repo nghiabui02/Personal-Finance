@@ -9,11 +9,9 @@ import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Wallet, WALLET_TYPE_ICONS, WALLET_TYPE_LABELS, walletsApi } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { CATEGORY_PALETTE } from '@/lib/utils/colors'
+import { errorMessage } from '@/lib/utils/errors'
 
-const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4',
-  '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#14b8a6',
-]
 
 const TYPE_ORDER: Wallet['type'][] = ['cash', 'bank', 'credit', 'e_wallet', 'investment', 'other']
 
@@ -54,7 +52,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [selectedColor, setSelectedColor] = useState(editing?.color ?? PRESET_COLORS[5])
+  const [selectedColor, setSelectedColor] = useState(editing?.color ?? CATEGORY_PALETTE[5])
   const [type, setType] = useState<Wallet['type']>(editing?.type ?? 'cash')
 
   const isCredit = type === 'credit'
@@ -91,7 +89,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }
@@ -155,7 +153,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
         <div>
           <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</p>
           <div className="flex gap-2 flex-wrap">
-            {PRESET_COLORS.map(c => (
+            {CATEGORY_PALETTE.map(c => (
               <button
                 key={c}
                 type="button"

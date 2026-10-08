@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import type { DebtStatus, DebtType } from '@/lib/constants'
 
 export type DebtPayment = {
   id: string
@@ -12,13 +13,13 @@ export type Debt = {
   id: string
   user_id: string
   wallet_id: string | null
-  type: 'lend' | 'borrow'
+  type: DebtType
   person_name: string
   person_contact: string | null
   amount: number
   remaining_amount: number
   due_date: string | null
-  status: 'active' | 'completed' | 'overdue'
+  status: DebtStatus
   note: string | null
   debt_payments: DebtPayment[]
   wallets: { id: string; name: string } | null
@@ -26,7 +27,7 @@ export type Debt = {
 
 export const debtsApi = {
   create(payload: {
-    type: 'lend' | 'borrow'
+    type: DebtType
     person_name: string
     person_contact?: string
     amount: number

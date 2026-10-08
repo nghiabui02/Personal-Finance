@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { requireUser } from '@/lib/server/auth'
 import DebtDetailClient from './_components/debt-detail-client'
+import { walletsQuery } from '@/lib/server/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,11 +21,7 @@ export default async function DebtDetailPage({
       .eq('user_id', user.id)
       .order('paid_at', { referencedTable: 'debt_payments', ascending: true })
       .single(),
-    supabase
-      .from('wallets')
-      .select('id, name, color, is_default')
-      .eq('user_id', user.id)
-      .order('is_default', { ascending: false }),
+    walletsQuery(supabase, user.id),
   ])
 
   if (!debt) notFound()

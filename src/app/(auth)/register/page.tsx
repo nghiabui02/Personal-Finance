@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -25,7 +26,7 @@ export default function RegisterPage() {
       await authApi.signUp({ email, password })
       router.push('/login?message=check_email')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed.')
+      setError(errorMessage(err, 'Sign up failed.'))
       setIsPending(false)
     }
   }

@@ -23,6 +23,7 @@ import { type Wallet } from '@/lib/api/wallets'
 import { type RecurringTransaction, FREQUENCY_LABELS, recurringApi } from '@/lib/api/recurring-transactions'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 /** Rough per-month value of a rule, for comparing rules on different clocks. */
 const MONTHLY_MULTIPLIER: Record<RecurringTransaction['frequency'], number> = {
@@ -99,7 +100,7 @@ function RecurringModal({
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }

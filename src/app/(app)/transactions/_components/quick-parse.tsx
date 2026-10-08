@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { LOW_CONFIDENCE, parseTransactionText, type ParsedDraft } from '@/lib/api/parse-transaction'
+import { errorMessage } from '@/lib/utils/errors'
 
 /**
  * One line in, a filled-in form out — "cà phê 35k vcb", or a pasted bank SMS.
@@ -33,7 +34,7 @@ export function QuickParse({ onDraft }: { onDraft: (draft: ParsedDraft) => void 
           : null
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not read that.')
+      setError(errorMessage(err, 'Could not read that.'))
     } finally {
       setPending(false)
     }

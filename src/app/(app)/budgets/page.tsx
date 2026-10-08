@@ -4,7 +4,7 @@ import { localYM } from '@/lib/utils/date'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { getBudgetSuggestions } from '@/lib/server/budget-suggestions'
 import BudgetsClient from './_components/budgets-client'
-import { CATEGORY_COLUMNS } from '@/lib/api/categories'
+import { categoriesQuery } from '@/lib/server/queries'
 
 export const metadata: Metadata = { title: 'Budgets' }
 export const dynamic = 'force-dynamic'
@@ -25,12 +25,7 @@ export default async function BudgetsPage({
   const [budgets, suggestions, { data: categories }] = await Promise.all([
     getBudgetsForMonth(supabase, user.id, month),
     getBudgetSuggestions(supabase, user.id, month),
-    supabase
-      .from('categories')
-      .select(CATEGORY_COLUMNS)
-      .eq('type', 'expense')
-      .order('is_default', { ascending: false })
-      .order('name'),
+    categoriesQuery(supabase).eq('type', 'expense'),
   ])
 
   return (

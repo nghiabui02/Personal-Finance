@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -36,7 +37,7 @@ export default function ResetPasswordPage() {
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(errorMessage(err))
       setIsPending(false)
     }
   }

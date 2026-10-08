@@ -11,6 +11,7 @@ import { localYMD } from '@/lib/utils/date'
 import { type Wallet, WALLET_TYPE_ICONS } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 interface TransferModalProps {
   wallets: Wallet[]
@@ -56,7 +57,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
       router.refresh()
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(errorMessage(err))
     } finally {
       setSaving(false)
     }

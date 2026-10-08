@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import type { SavingGoalStatus } from '@/lib/constants'
 
 export type SavingGoal = {
   id: string
@@ -8,7 +9,7 @@ export type SavingGoal = {
   target_amount: number
   current_amount: number
   deadline: string | null
-  status: 'active' | 'completed' | 'cancelled'
+  status: SavingGoalStatus
   note: string | null
 }
 

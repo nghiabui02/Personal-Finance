@@ -19,6 +19,7 @@ import type { ParsedDraft } from '@/lib/api/parse-transaction'
 import { QuickParse } from './quick-parse'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 interface TransactionFormProps {
   editing: Transaction | null
@@ -284,7 +285,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
         router.refresh()
         onDone()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }

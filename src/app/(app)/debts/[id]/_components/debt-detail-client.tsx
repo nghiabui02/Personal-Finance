@@ -15,6 +15,7 @@ import { localYMD } from '@/lib/utils/date'
 import { debtsApi, type Debt, type DebtPayment } from '@/lib/api/debts'
 import type { Wallet } from '@/lib/api/wallets'
 import { AdditionModal } from '../../_components/addition-modal'
+import { errorMessage } from '@/lib/utils/errors'
 
 type DebtWithPayments = Debt & {
   debt_payments: DebtPayment[]
@@ -61,7 +62,7 @@ function PaymentModal({
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }

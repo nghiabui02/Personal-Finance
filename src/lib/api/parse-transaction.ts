@@ -1,11 +1,12 @@
 import { apiFetch } from './client'
+import type { TransactionType } from '@/lib/constants'
 
 /**
  * A transaction read out of free text. It is a suggestion: the modal fills in
  * from it and the user confirms, so a misread never reaches the ledger.
  */
 export interface ParsedDraft {
-  type: 'income' | 'expense'
+  type: TransactionType
   amount: number
   category_id: string | null
   wallet_id: string | null

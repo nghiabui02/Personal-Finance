@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { useRef, useState, useSyncExternalStore } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 interface SettingsClientProps {
   userId: string
@@ -121,7 +122,7 @@ export default function SettingsClient({
       setProfileMsg({ type: 'success', text: 'Profile updated.' })
       router.refresh()
     } catch (err) {
-      setProfileMsg({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
+      setProfileMsg({ type: 'error', text: errorMessage(err) })
     } finally {
       setSavingProfile(false)
     }
@@ -148,7 +149,7 @@ export default function SettingsClient({
       setProfileMsg({ type: 'success', text: 'Photo removed.' })
       router.refresh()
     } catch (err) {
-      setProfileMsg({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
+      setProfileMsg({ type: 'error', text: errorMessage(err) })
     } finally {
       setSavingProfile(false)
     }
@@ -168,7 +169,7 @@ export default function SettingsClient({
       setEmailMsg({ type: 'success', text: json.message })
       setNewEmail('')
     } catch (err) {
-      setEmailMsg({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
+      setEmailMsg({ type: 'error', text: errorMessage(err) })
     } finally {
       setSavingEmail(false)
     }
@@ -190,7 +191,7 @@ export default function SettingsClient({
       setNewPassword('')
       setConfirmPassword('')
     } catch (err) {
-      setPasswordMsg({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
+      setPasswordMsg({ type: 'error', text: errorMessage(err) })
     } finally {
       setSavingPassword(false)
     }

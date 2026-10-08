@@ -1,6 +1,7 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 /**
  * App-wide toast. Mount <Toaster /> once in the shell, then call `toast.error(…)`
@@ -44,9 +45,9 @@ export const toast = {
   success: (message: string) => push('success', message),
 }
 
-/** Turns an unknown thrown value into something worth showing a person. */
+/** Shows a thrown value as an error toast. */
 export function toastError(err: unknown, fallback: string) {
-  toast.error(err instanceof Error && err.message ? err.message : fallback)
+  toast.error(errorMessage(err, fallback))
 }
 
 const subscribe = (cb: () => void) => {

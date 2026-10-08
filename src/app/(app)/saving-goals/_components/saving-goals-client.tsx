@@ -18,6 +18,7 @@ import { formatVND } from '@/lib/utils/currency'
 import { type SavingGoal, savingGoalsApi } from '@/lib/api/saving-goals'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 // ── Goal Modal ────────────────────────────────────────────────────────────────
 
@@ -60,7 +61,7 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }
@@ -114,7 +115,7 @@ function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => v
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }

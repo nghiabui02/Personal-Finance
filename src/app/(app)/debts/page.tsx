@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import DebtsClient from './_components/debts-client'
+import { walletsQuery } from '@/lib/server/queries'
 
 export const metadata: Metadata = { title: 'Debts' }
 export const dynamic = 'force-dynamic'
@@ -14,11 +15,7 @@ export default async function DebtsPage() {
       .select('*, debt_payments(id, amount, note, paid_at), wallets(id, name)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
-    supabase
-      .from('wallets')
-      .select('id, name, color, is_default')
-      .eq('user_id', user.id)
-      .order('is_default', { ascending: false }),
+    walletsQuery(supabase, user.id),
   ])
 
   return (

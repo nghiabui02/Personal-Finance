@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 function LoginMessages() {
   const searchParams = useSearchParams()
@@ -48,7 +49,7 @@ function LoginForm() {
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign in failed.')
+      setError(errorMessage(err, 'Sign in failed.'))
       setIsPending(false)
     }
   }

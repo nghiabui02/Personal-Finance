@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
+import type { TransactionType } from '@/lib/constants'
 
 /**
  * The handful of transactions a person actually repeats — the daily coffee, the
@@ -18,7 +19,7 @@ const MAX_SUGGESTIONS = 5
 export interface FrequentTransaction {
   /** Stable identity for React keys and for remounting the amount field. */
   key: string
-  type: 'income' | 'expense'
+  type: TransactionType
   amount: number
   categoryId: string | null
   categoryName: string

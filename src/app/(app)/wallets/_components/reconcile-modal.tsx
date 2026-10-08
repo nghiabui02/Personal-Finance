@@ -13,6 +13,7 @@ import { localYMD } from '@/lib/utils/date'
 import { type Wallet, walletsApi, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { errorMessage } from '@/lib/utils/errors'
 
 /**
  * Type in the balance the bank actually shows; the gap is filed as one
@@ -74,7 +75,7 @@ export function ReconcileModal({
         router.refresh()
         onClose()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong.')
+        setError(errorMessage(err))
       }
     })
   }
