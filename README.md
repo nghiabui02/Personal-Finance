@@ -19,6 +19,8 @@ A personal finance app for a single user. Income/expense tracking, wallets, budg
 - One-tap chips for the spends you repeat, drawn from your own last 90 days
 - A wallet can't be spent past what it holds; the shortfall is shown as you type
 - Filter by direction, category, wallet and amount range; search notes across all time
+- Import a VCB CSV statement: map columns, review titles/categories, skip rows,
+  then confirm the batch before reconciling the bank wallet
 
 **Accounts**
 
@@ -139,6 +141,50 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Import VCB statements
+
+Open **Transactions → Import CSV**. Choose a bank wallet and a **CSV UTF-8**
+file (up to 1 MB and 500 transactions). Excel workbooks must first be exported
+as CSV; `.xls`/`.xlsx` files are not supported directly.
+
+Choose the separator and header row, then map transaction date, bank
+description, debit, credit, and preferably the bank reference. Dates accept
+`DD/MM/YYYY` or `YYYY-MM-DD`; choose the decimal separator to match the file.
+Blank records are ignored; remove statement totals/footer records beforehand.
+`tests/fixtures/vcb-statement.csv` is a synthetic example of the supported
+layout, not a verified export from Vietcombank.
+
+Review every selected row and enter its title. The title uses the existing
+transaction `note` field; original bank descriptions and references are retained
+separately. Uncheck transactions already entered manually, transfers, and debt
+payments: importing them as new rows would count them as income or spending.
+The importer does not automatically match manual entries or create transfers.
+
+Confirming the batch creates transactions through the existing money function.
+Transactions, duplicate identities, and wallet changes commit together or all
+roll back. The wallet must have sufficient funds as transactions are applied
+oldest first (income before expenses on the same day). Set the correct opening
+balance before importing a historical statement. The import never overwrites
+the wallet balance; reconciliation remains a separate confirmation against a
+bank balance from the same point in time.
+
+Bank reference keys prevent repeat imports into the same wallet, including
+after a recorded transaction is edited or deleted. Without references, keys use
+date, direction, amount, description, and the occurrence number of identical
+rows. Identical transactions across partially overlapping files cannot always
+be distinguished; review these files carefully and prefer bank references.
+
+Apply `supabase/migrations/20261023000000_bank_csv_import.sql` before using the
+importer. It adds an RLS-protected identity table and atomic import functions;
+it relies on the existing money functions and live schema described above.
+No bank credentials, API keys, or new environment variables are needed.
+
+Parser checks: `node --experimental-strip-types --test tests/bank-csv.test.mjs`.
+`tests/bank-import.sql` covers atomicity, retries, ownership, category checks,
+and deleted-entry retries. Run it as postgres only against a disposable local
+Supabase database with the complete schema and migrations; it rolls back its
+fixtures. Do not run it against the live database.
 
 ## Scripts
 

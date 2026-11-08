@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { toastError } from '@/components/ui/toast'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
@@ -476,6 +477,9 @@ export default function TransactionsClient({
 
           {/* Right buttons */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <Link href="/transactions/import" className="px-2 py-2 text-xs font-medium text-gray-500 hover:text-brand whitespace-nowrap">
+              Import CSV
+            </Link>
             <button
               onClick={searchOpen ? clearSearch : () => setSearchOpen(true)}
               className={`p-2 rounded-xl border transition-colors ${
