@@ -77,7 +77,7 @@ export function ReconcileModal({
     <Modal title={`Reconcile ${wallet.name}`} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="rounded-xl bg-gray-50 dark:bg-gray-800 border border-hairline px-4 py-3">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-1">
+          <p className="eyebrow text-gray-400 dark:text-gray-500 mb-1">
             {isCredit ? 'Recorded available credit' : 'Recorded balance'}
           </p>
           <p className="text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">

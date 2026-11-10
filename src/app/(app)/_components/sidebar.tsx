@@ -79,7 +79,7 @@ export default function Sidebar({ user }: { user: User }) {
         {NAV_GROUPS.map((group, i) => (
           <div key={group.heading ?? 'daily'} className={i === 0 ? '' : 'pt-6'}>
             {group.heading && (
-              <p className="px-3 pb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
+              <p className="px-3 pb-2 eyebrow text-gray-400 dark:text-gray-500">
                 {group.heading}
               </p>
             )}

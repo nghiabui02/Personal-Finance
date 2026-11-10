@@ -39,7 +39,7 @@ export function NetWorthChart({ snapshots }: { snapshots: Snapshot[] }) {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline dark:border-gray-800 p-5">
-      <h2 className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-4">
+      <h2 className="eyebrow text-gray-400 dark:text-gray-500 mb-4">
         Net worth · last 90 days
       </h2>
 

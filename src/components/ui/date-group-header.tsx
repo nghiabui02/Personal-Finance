@@ -4,7 +4,7 @@ import { formatVND } from '@/lib/utils/currency'
 export function DateGroupHeader({ label, net }: { label: string; net: number }) {
   return (
     <div className="flex items-center justify-between mb-2">
-      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
+      <p className="eyebrow text-gray-400 dark:text-gray-500">
         {label}
       </p>
       <p className={`text-xs tabular-nums font-medium ${

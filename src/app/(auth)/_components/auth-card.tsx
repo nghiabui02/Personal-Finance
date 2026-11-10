@@ -9,7 +9,7 @@ export function AuthCard({ children }: { children: React.ReactNode }) {
         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
           <span className="text-white font-bold text-base leading-none">₫</span>
         </div>
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">Personal Finance</p>
+        <p className="eyebrow text-slate-400">Personal Finance</p>
       </div>
       <div className="bg-white dark:bg-gray-900 px-6 py-6">{children}</div>
     </div>

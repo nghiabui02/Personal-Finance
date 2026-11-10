@@ -87,7 +87,7 @@ export default function RecurringClient({
         <div className="space-y-6">
           {active.length > 0 && (
             <section>
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">Active ({active.length})</p>
+              <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">Active ({active.length})</p>
               <div className="space-y-2">
                 {active.map(item => (
                   <RecurringCard key={item.id} item={item}
@@ -99,7 +99,7 @@ export default function RecurringClient({
           )}
           {expired.length > 0 && (
             <section>
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">Ended ({expired.length})</p>
+              <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">Ended ({expired.length})</p>
               <div className="space-y-2">
                 {expired.map(item => (
                   <RecurringCard key={item.id} item={item}

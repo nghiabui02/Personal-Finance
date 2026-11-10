@@ -150,7 +150,7 @@ export function DashboardHero({
         {/* Net cash flow */}
         <div className="rounded-2xl bg-white dark:bg-gray-900 border border-hairline dark:border-gray-800 p-5 sm:p-6 flex flex-col">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">Net cash flow</p>
+            <p className="eyebrow text-gray-400 dark:text-gray-500">Net cash flow</p>
             {savingRate !== null && (
               <span className={`text-[11px] font-semibold tabular-nums ${
                 netPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'
@@ -182,7 +182,7 @@ export function DashboardHero({
 
         {/* Net worth */}
         <div className="rounded-2xl bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 p-5 sm:p-6 flex flex-col">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/45">Net worth</p>
+          <p className="eyebrow text-white/45">Net worth</p>
           <p className={`mt-2.5 text-[2rem] sm:text-[2.5rem] leading-none font-semibold tabular-nums tracking-tight ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
             {formatVND(netWorth)}
           </p>

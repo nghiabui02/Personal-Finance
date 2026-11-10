@@ -38,7 +38,7 @@ export function AIInsights({ periodLabel, period, start, totalIncome, totalExpen
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-base">✨</span>
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/45">AI Insights</p>
+        <p className="eyebrow text-white/45">AI Insights</p>
         <span className="ml-auto text-[10px] text-slate-700">Groq · GPT-OSS</span>
         {state === 'done' && (
           <button onClick={() => analyze(true)} title="Refresh" className="text-slate-700 hover:text-slate-400 transition-colors">

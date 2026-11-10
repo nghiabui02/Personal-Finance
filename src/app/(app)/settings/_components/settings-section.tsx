@@ -2,7 +2,7 @@
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-6">
-      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-5">{title}</p>
+      <p className="eyebrow text-gray-400 dark:text-gray-500 mb-5">{title}</p>
       {children}
     </div>
   )

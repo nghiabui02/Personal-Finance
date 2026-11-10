@@ -140,6 +140,14 @@ input, textarea, select {
   /* Account for 56px bottom nav + safe area on mobile */
   padding-bottom: calc(3.5rem + max(env(safe-area-inset-bottom), 0.5rem));
 }
+@utility eyebrow {
+  /* The small capitals label above a figure or a section. Colour is left to
+     the caller: it sits on light cards, dark panels and tinted tiles. */
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
 @utility bottom-above-nav {
   /* Floating action buttons: clear the bottom nav + safe area, plus a gap.
      Pair with md:bottom-* — desktop has a sidebar, no bottom nav. */

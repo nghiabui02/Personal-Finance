@@ -122,11 +122,11 @@ export default function WalletDetailClient({
         <div className="flex items-end justify-between gap-4 mt-4 pt-4 border-t border-white/20">
           <div className="flex gap-5">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] opacity-60 mb-0.5">In</p>
+            <p className="eyebrow opacity-60 mb-0.5">In</p>
             <p className="text-sm font-semibold tabular-nums">+{formatVND(totalIncome)}</p>
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] opacity-60 mb-0.5">Out</p>
+            <p className="eyebrow opacity-60 mb-0.5">Out</p>
             <p className="text-sm font-semibold tabular-nums">−{formatVND(totalExpense)}</p>
           </div>
           </div>

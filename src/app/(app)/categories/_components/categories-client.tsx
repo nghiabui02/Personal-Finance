@@ -74,29 +74,19 @@ export default function CategoriesClient({
         />
       ) : (
         <div className="space-y-6">
-          {custom.length > 0 && (
-            <section>
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">Custom</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {custom.map(cat => (
-                  <CategoryCard key={cat.id} category={cat}
-                    onEdit={() => openModal(cat)} onDelete={() => ask(cat.id)}
-                    isDeleting={isPending && confirmId === cat.id} />
-                ))}
-              </div>
-            </section>
-          )}
-          {defaults.length > 0 && (
-            <section>
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">Default</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {defaults.map(cat => (
-                  <CategoryCard key={cat.id} category={cat}
-                    onEdit={() => openModal(cat)} onDelete={() => ask(cat.id)}
-                    isDeleting={isPending && confirmId === cat.id} />
-                ))}
-              </div>
-            </section>
+          {[{ title: 'Custom', list: custom }, { title: 'Default', list: defaults }].map(({ title, list }) =>
+            list.length > 0 && (
+              <section key={title}>
+                <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">{title}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {list.map(cat => (
+                    <CategoryCard key={cat.id} category={cat}
+                      onEdit={() => openModal(cat)} onDelete={() => ask(cat.id)}
+                      isDeleting={isPending && confirmId === cat.id} />
+                  ))}
+                </div>
+              </section>
+            )
           )}
         </div>
       )}

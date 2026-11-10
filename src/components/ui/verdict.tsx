@@ -38,7 +38,7 @@ export function Verdict({ eyebrow, headline, support, action, className = '' }: 
   return (
     <section className={`pt-1 pb-1 ${className}`}>
       {eyebrow && (
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-2">
+        <p className="eyebrow text-gray-400 dark:text-gray-500 mb-2">
           {eyebrow}
         </p>
       )}

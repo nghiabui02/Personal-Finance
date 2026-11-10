@@ -151,7 +151,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
               ))}
             </div>
           ) : (
-            <p className="px-3 pb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 shrink-0">
+            <p className="px-3 pb-2 eyebrow text-gray-400 dark:text-gray-500 shrink-0">
               {sectionLabel}
             </p>
           )}

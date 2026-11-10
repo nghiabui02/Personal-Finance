@@ -100,7 +100,7 @@ export default function DebtDetailClient({
       </div>
 
       {/* Timeline */}
-      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-3">History</p>
+      <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">History</p>
 
       {events.length === 0 ? (
         <div className="py-10 text-center">
