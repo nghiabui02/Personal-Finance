@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -73,7 +74,7 @@ export default function ResetPasswordPage() {
             required
             placeholder="••••••••"
           />
-          {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+          <FormError message={error} />
           <Button type="submit" disabled={isPending} fullWidth>
             {isPending ? 'Saving...' : 'Set new password'}
           </Button>

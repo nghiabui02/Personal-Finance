@@ -3,7 +3,6 @@
 import { amountSuggestions, formatWithDots } from '@/components/ui/amount-input'
 import { BankFeeField } from '@/components/ui/bank-fee-field'
 import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
-import { Button } from '@/components/ui/button'
 import { CategorySelect } from '@/components/ui/category-select'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { TabGroup } from '@/components/ui/tab-group'
@@ -24,6 +23,8 @@ import { QuickParse } from './quick-parse'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
+import { ModalActions } from '@/components/ui/modal-actions'
 
 interface TransactionFormProps {
   editing: Transaction | null
@@ -501,14 +502,15 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
         </p>
       )}
 
-      {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+      <FormError message={error} />
 
-      <div className="flex gap-2 pt-1">
-        <Button type="button" variant="secondary" fullWidth onClick={onCancel}>Cancel</Button>
-        <Button type="submit" variant="success" disabled={isPending || overdrawn} fullWidth>
-          {isPending ? 'Saving...' : 'Save transaction'}
-        </Button>
-      </div>
+      <ModalActions
+        isPending={isPending}
+        disabled={overdrawn}
+        submitLabel="Save transaction"
+        submitVariant="success"
+        onCancel={onCancel}
+      />
   </form>
   )
 }

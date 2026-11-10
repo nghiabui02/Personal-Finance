@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
@@ -11,6 +10,8 @@ import { type Wallet } from '@/lib/api/wallets'
 import { localYMD } from '@/lib/utils/date'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { FormError } from '@/components/ui/form-error'
+import { ModalActions } from '@/components/ui/modal-actions'
 
 interface CreditPaymentModalProps {
   creditWallet: Wallet
@@ -101,14 +102,15 @@ export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPay
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">No outstanding balance — credit is fully available.</p>
         )}
 
-        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+        <FormError message={error} />
 
-        <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
-          <Button type="submit" disabled={isPending || amountOwed <= 0} fullWidth>
-            {isPending ? 'Processing...' : 'Pay'}
-          </Button>
-        </div>
+        <ModalActions
+          isPending={isPending}
+          disabled={amountOwed <= 0}
+          submitLabel="Pay"
+          pendingLabel="Processing..."
+          onCancel={close}
+        />
       </form>
     </Modal>
   )

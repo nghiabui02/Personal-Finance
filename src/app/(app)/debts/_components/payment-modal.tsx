@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { AmountInput } from '@/components/ui/amount-input'
-import { Button } from '@/components/ui/button'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
@@ -13,6 +12,8 @@ import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
+import { ModalActions } from '@/components/ui/modal-actions'
 
 /** Records a payment against a debt — from the debts list and from a debt's
  *  own page. Never more than what is still owed. */
@@ -90,11 +91,12 @@ export function PaymentModal({
         </div>
         <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
         <Input label="Note (optional)" name="note" placeholder="e.g. Bank transfer" />
-        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
-        <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
-          <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Record'}</Button>
-        </div>
+        <FormError message={error} />
+        <ModalActions
+          isPending={isPending}
+          submitLabel="Record"
+          onCancel={close}
+        />
       </form>
     </Modal>
   )

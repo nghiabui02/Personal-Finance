@@ -1,7 +1,6 @@
 'use client'
 
 import { Modal, useModalClose } from '@/components/ui/modal'
-import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -12,6 +11,8 @@ import { type Wallet, WALLET_TYPE_ICONS } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
+import { ModalActions } from '@/components/ui/modal-actions'
 
 interface TransferModalProps {
   wallets: Wallet[]
@@ -178,14 +179,15 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
           </p>
         )}
 
-        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+        <FormError message={error} />
 
-        <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" className="flex-1" onClick={close}>Cancel</Button>
-          <Button type="submit" disabled={saving || !amount || fromId === toId || !!insufficient} className="flex-1">
-            {saving ? 'Transferring…' : 'Transfer'}
-          </Button>
-        </div>
+        <ModalActions
+          isPending={saving}
+          disabled={!amount || fromId === toId || !!insufficient}
+          submitLabel="Transfer"
+          pendingLabel="Transferring…"
+          onCancel={close}
+        />
       </form>
     </Modal>
   )

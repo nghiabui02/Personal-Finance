@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { AmountInput } from '@/components/ui/amount-input'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -13,6 +12,8 @@ import { localYMD } from '@/lib/utils/date'
 import { debtsApi, type Debt } from '@/lib/api/debts'
 import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
+import { ModalActions } from '@/components/ui/modal-actions'
 
 // Records more money lent/borrowed against an existing debt — increases
 // remaining_amount. Shared between the debts list page and the debt detail
@@ -78,11 +79,12 @@ export function AdditionModal({
         </div>
         <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
         <Input label="Note (optional)" name="note" placeholder="e.g. Dinner at Pizza Hut" />
-        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
-        <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
-          <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Add'}</Button>
-        </div>
+        <FormError message={error} />
+        <ModalActions
+          isPending={isPending}
+          submitLabel="Add"
+          onCancel={close}
+        />
       </form>
     </Modal>
   )

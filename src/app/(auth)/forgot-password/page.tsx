@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useState } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
 
 export default function ForgotPasswordPage() {
   const [isPending, setIsPending] = useState(false)
@@ -78,7 +79,7 @@ export default function ForgotPasswordPage() {
                 required
                 placeholder="you@example.com"
               />
-              {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+              <FormError message={error} />
               <Button type="submit" disabled={isPending} fullWidth>
                 {isPending ? 'Sending...' : 'Send reset link'}
               </Button>

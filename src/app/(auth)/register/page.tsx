@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -49,7 +50,7 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" />
           <Input label="Password" name="password" type="password" autoComplete="new-password" required placeholder="At least 6 characters" />
-          {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+          <FormError message={error} />
           <Button type="submit" disabled={isPending} fullWidth>
             {isPending ? 'Creating account...' : 'Create account'}
           </Button>

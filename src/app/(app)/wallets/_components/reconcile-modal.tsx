@@ -1,7 +1,6 @@
 'use client'
 
 import { AmountInput } from '@/components/ui/amount-input'
-import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -14,6 +13,8 @@ import { type Wallet, walletsApi, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
+import { ModalActions } from '@/components/ui/modal-actions'
 
 /**
  * Type in the balance the bank actually shows; the gap is filed as one
@@ -141,14 +142,15 @@ export function ReconcileModal({
           />
         </div>
 
-        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+        <FormError message={error} />
 
-        <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" onClick={close} className="flex-1">Cancel</Button>
-          <Button type="submit" disabled={isPending || delta === 0} className="flex-1">
-            {isPending ? 'Saving…' : 'Reconcile'}
-          </Button>
-        </div>
+        <ModalActions
+          isPending={isPending}
+          disabled={delta === 0}
+          submitLabel="Reconcile"
+          pendingLabel="Saving…"
+          onCancel={close}
+        />
       </form>
     </Modal>
   )

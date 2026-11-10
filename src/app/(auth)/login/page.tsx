@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
 
 function LoginMessages() {
   const searchParams = useSearchParams()
@@ -65,7 +66,7 @@ function LoginForm() {
           </Link>
         </div>
       </div>
-      {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+      <FormError message={error} />
       <Button type="submit" disabled={isPending} fullWidth>
         {isPending ? 'Signing in...' : 'Sign in'}
       </Button>

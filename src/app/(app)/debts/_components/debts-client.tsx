@@ -24,6 +24,8 @@ import { useState, useTransition } from 'react'
 import { AdditionModal } from './addition-modal'
 import { PaymentModal } from './payment-modal'
 import { errorMessage } from '@/lib/utils/errors'
+import { FormError } from '@/components/ui/form-error'
+import { ModalActions } from '@/components/ui/modal-actions'
 
 
 // ── Debt Modal ────────────────────────────────────────────────────────────────
@@ -128,11 +130,12 @@ function DebtModal({
 
         <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="Purpose..." />
 
-        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
-        <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
-          <Button type="submit" disabled={isPending} fullWidth>{isPending ? 'Saving...' : 'Save'}</Button>
-        </div>
+        <FormError message={error} />
+        <ModalActions
+          isPending={isPending}
+          submitLabel="Save"
+          onCancel={close}
+        />
       </form>
     </Modal>
   )

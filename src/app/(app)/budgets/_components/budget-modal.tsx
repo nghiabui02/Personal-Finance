@@ -1,7 +1,6 @@
 'use client'
 
 import { AmountInput } from '@/components/ui/amount-input'
-import { Button } from '@/components/ui/button'
 import { CategorySelect } from '@/components/ui/category-select'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
@@ -10,6 +9,8 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
 import { formatMonthYear } from '@/lib/utils/date'
+import { FormError } from '@/components/ui/form-error'
+import { ModalActions } from '@/components/ui/modal-actions'
 
 interface BudgetModalProps {
   editing: Budget | null
@@ -148,14 +149,13 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
           </label>
         )}
 
-        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+        <FormError message={error} />
 
-        <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={close}>Cancel</Button>
-          <Button type="submit" disabled={isPending} fullWidth>
-            {isPending ? 'Saving...' : 'Save'}
-          </Button>
-        </div>
+        <ModalActions
+          isPending={isPending}
+          submitLabel="Save"
+          onCancel={close}
+        />
       </form>
     </Modal>
   )
