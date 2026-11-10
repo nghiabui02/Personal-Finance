@@ -101,6 +101,16 @@ export const walletsApi = {
     return apiFetch(`/api/wallets/${id}/transactions?offset=${offset}&limit=${WALLET_TX_PAGE_SIZE}`)
   },
 
+  /** Moves money from one wallet to another as a pair of linked transactions. */
+  transfer(payload: { from_wallet_id: string; to_wallet_id: string; amount: number; note: string | null; transfer_date: string }): Promise<{ success: true; transfer_pair_id: string | null }> {
+    return apiFetch('/api/transfers', { method: 'POST', body: JSON.stringify(payload) })
+  },
+
+  /** Pays a credit card's balance down from another wallet. */
+  payCreditCard(id: string, payload: { from_wallet_id: string; amount: number; note: string; date: string }): Promise<{ ok: true; new_credit_balance: number }> {
+    return apiFetch(`/api/wallets/${id}/pay`, { method: 'POST', body: JSON.stringify(payload) })
+  },
+
   /** Files an adjustment transaction for the gap against the real bank balance. */
   reconcile(id: string, payload: { actual_balance: number; note?: string; date?: string; category_id?: string }): Promise<ReconcileResult> {
     return apiFetch(`/api/wallets/${id}/reconcile`, {

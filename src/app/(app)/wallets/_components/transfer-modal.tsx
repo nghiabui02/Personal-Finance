@@ -7,12 +7,11 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { formatWithDots } from '@/components/ui/amount-input'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
-import { type Wallet, WALLET_TYPE_ICONS } from '@/lib/api/wallets'
-import { useRouter } from 'next/navigation'
+import { type Wallet, WALLET_TYPE_ICONS, walletsApi } from '@/lib/api/wallets'
 import { useState } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 interface TransferModalProps {
   wallets: Wallet[]
@@ -22,7 +21,6 @@ interface TransferModalProps {
 
 export function TransferModal({ wallets, defaultFromId, onClose }: TransferModalProps) {
   const close = useModalClose()
-  const router = useRouter()
   const [fromId, setFromId] = useState(defaultFromId ?? wallets[0]?.id ?? '')
   const [toId, setToId] = useState(
     wallets.find(w => w.id !== (defaultFromId ?? wallets[0]?.id))?.id ?? ''
@@ -30,38 +28,23 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
   const [amountDisplay, setAmountDisplay] = useState('')
   const [date, setDate] = useState(localYMD())
   const [note, setNote] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
 
   const fromWallet = wallets.find(w => w.id === fromId)
   const toWallet = wallets.find(w => w.id === toId)
   const amount = Number(amountDisplay.replace(/\./g, ''))
   const insufficient = amount > 0 && fromWallet && amount > Number(fromWallet.balance)
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!fromId || !toId) return setError('Select both wallets.')
     if (fromId === toId) return setError('Source and destination must be different.')
     if (!Number.isFinite(amount) || amount <= 0) return setError('Enter a valid amount.')
     if (insufficient) return setError('Insufficient balance in source wallet.')
 
-    setSaving(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/transfers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from_wallet_id: fromId, to_wallet_id: toId, amount, note: note.trim() || null, transfer_date: date }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error)
-      router.refresh()
-      onClose()
-    } catch (err) {
-      setError(errorMessage(err))
-    } finally {
-      setSaving(false)
-    }
+    submit(async () => {
+      await walletsApi.transfer({ from_wallet_id: fromId, to_wallet_id: toId, amount, note: note.trim() || null, transfer_date: date })
+    })
   }
 
   // The balance lives under each select instead of in the option label — at half
@@ -182,7 +165,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
         <FormError message={error} />
 
         <ModalActions
-          isPending={saving}
+          isPending={isPending}
           disabled={!amount || fromId === toId || !!insufficient}
           submitLabel="Transfer"
           pendingLabel="Transferring…"

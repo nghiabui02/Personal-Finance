@@ -6,12 +6,12 @@ import { Modal, useModalClose } from '@/components/ui/modal'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { AmountInput } from '@/components/ui/amount-input'
 import { formatVND } from '@/lib/utils/currency'
-import { type Wallet } from '@/lib/api/wallets'
+import { type Wallet, walletsApi } from '@/lib/api/wallets'
 import { localYMD } from '@/lib/utils/date'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 interface CreditPaymentModalProps {
   creditWallet: Wallet
@@ -21,9 +21,7 @@ interface CreditPaymentModalProps {
 
 export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPaymentModalProps) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [date, setDate] = useState(localYMD())
 
   const sourceWallets = wallets.filter(w => w.type !== 'credit' && w.id !== creditWallet.id)
@@ -41,24 +39,8 @@ export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPay
     if (!amount || amount <= 0) { setError('Enter a valid amount.'); return }
     if (!fromId) { setError('Select a source wallet.'); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        const res = await fetch(`/api/wallets/${creditWallet.id}/pay`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from_wallet_id: fromId, amount, note, date }),
-        })
-        if (!res.ok) {
-          const d = await res.json()
-          setError(d.error ?? 'Payment failed.')
-          return
-        }
-        router.refresh()
-        onClose()
-      } catch {
-        setError('Something went wrong.')
-      }
+    submit(async () => {
+      await walletsApi.payCreditCard(creditWallet.id, { from_wallet_id: fromId, amount, note, date })
     })
   }
 
