@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Em } from '@/components/ui/verdict'
@@ -12,6 +11,7 @@ import { useState } from 'react'
 import { CategoryCard } from './category-card'
 import { CategoryModal } from './category-modal'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
+import { AddButton } from '@/components/ui/add-button'
 
 export default function CategoriesClient({
   categories,
@@ -63,12 +63,7 @@ export default function CategoriesClient({
           />
         }
         action={
-          <Button onClick={() => openModal()}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-            New category
-          </Button>
+          <AddButton onClick={() => openModal()}>New category</AddButton>
         }
       />
 

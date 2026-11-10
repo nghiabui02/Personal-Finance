@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
 import { ScreenHeader } from '@/components/ui/screen-header'
@@ -15,6 +14,7 @@ import { TransferModal } from './transfer-modal'
 import { CreditPaymentModal } from './credit-payment-modal'
 import { plural } from '@/lib/utils/plural'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
+import { AddButton } from '@/components/ui/add-button'
 
 export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const [modalOpen, setModalOpen] = useState(false)
@@ -54,12 +54,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
           : undefined}
         segments={MONEY_SEGMENTS}
         action={
-          <Button onClick={() => openModal()}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-            New wallet
-          </Button>
+          <AddButton onClick={() => openModal()}>New wallet</AddButton>
         }
       />
 

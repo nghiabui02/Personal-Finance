@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
@@ -15,6 +14,7 @@ import { useState } from 'react'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 import { RecurringModal } from './recurring-modal'
 import { RecurringCard } from './recurring-card'
+import { AddButton } from '@/components/ui/add-button'
 
 /** Rough per-month value of a rule, for comparing rules on different clocks. */
 const MONTHLY_MULTIPLIER: Record<RecurringTransaction['frequency'], number> = {
@@ -74,12 +74,7 @@ export default function RecurringClient({
         }
         segments={MONEY_SEGMENTS}
         action={
-          <Button onClick={() => { setEditingItem(null); setModalOpen(true) }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            New rule
-          </Button>
+          <AddButton onClick={() => { setEditingItem(null); setModalOpen(true) }}>New rule</AddButton>
         }
       />
 

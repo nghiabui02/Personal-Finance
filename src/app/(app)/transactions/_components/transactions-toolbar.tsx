@@ -2,24 +2,21 @@
 
 import Link from 'next/link'
 import { useEffect, useRef } from 'react'
-import { Button } from '@/components/ui/button'
 import { ViewSelector, type ViewMode } from './period-navigator'
 import type { NoteSearch } from './use-note-search'
+import { AddButton } from '@/components/ui/add-button'
 
 const ICON_BUTTON_IDLE =
   'text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700'
 
 const SEARCH_PATH = 'm21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z'
 const CLOSE_PATH = 'M6 18 18 6M6 6l12 12'
-const PLUS_PATH = 'M12 4.5v15m7.5-7.5h-15'
 const FILTER_PATH =
   'M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z'
 
-function Icon({ path, size = 15, strokeWidth = 2, className }: {
-  path: string; size?: number; strokeWidth?: number; className?: string
-}) {
+function Icon({ path, size = 15, className }: { path: string; size?: number; className?: string }) {
   return (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={strokeWidth} aria-hidden="true">
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d={path} />
     </svg>
   )
@@ -131,10 +128,9 @@ export function TransactionsToolbar({
             The wrapper carries the visibility: Button sets its own
             `inline-flex`, which outranks a `hidden` passed via className. */}
         <div className="hidden md:block">
-          <Button onClick={onAdd}>
-            <Icon path={PLUS_PATH} strokeWidth={2.5} />
+          <AddButton onClick={onAdd}>
             <span className="hidden sm:inline">Add</span>
-          </Button>
+          </AddButton>
         </div>
       </div>
     </div>

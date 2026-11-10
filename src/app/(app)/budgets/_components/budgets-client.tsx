@@ -20,6 +20,7 @@ import { SuggestBudgetsModal } from './suggest-budgets-modal'
 import type { BudgetSuggestion } from '@/lib/server/budget-suggestions'
 import { formatMonthYear } from '@/lib/utils/date'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
+import { AddButton } from '@/components/ui/add-button'
 
 interface BudgetsClientProps {
   budgets: Budget[]
@@ -175,12 +176,7 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
                 <span className="hidden sm:inline">Suggest</span>
               </Button>
             )}
-          <Button onClick={() => { setEditingBudget(null); setModalOpen(true) }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            New budget
-          </Button>
+          <AddButton onClick={() => { setEditingBudget(null); setModalOpen(true) }}>New budget</AddButton>
           </div>
         }
       />

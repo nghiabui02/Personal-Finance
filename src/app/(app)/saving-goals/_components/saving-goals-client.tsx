@@ -2,7 +2,6 @@
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
-import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -21,6 +20,7 @@ import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
+import { AddButton } from '@/components/ui/add-button'
 
 // ── Goal Modal ────────────────────────────────────────────────────────────────
 
@@ -241,12 +241,7 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
           />
         }
         action={
-          <Button onClick={() => { setEditingGoal(null); setModalOpen(true) }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            New goal
-          </Button>
+          <AddButton onClick={() => { setEditingGoal(null); setModalOpen(true) }}>New goal</AddButton>
         }
       />
 
