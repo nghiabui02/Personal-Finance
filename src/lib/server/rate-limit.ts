@@ -6,6 +6,8 @@ type Bucket = { count: number; resetAt: number }
 // Supabase Auth's own rate limits. State is per server instance and resets
 // on cold start, so treat this as best-effort under serverless autoscaling,
 // not a hard guarantee.
+export const ONE_MINUTE_MS = 60_000
+
 const buckets = new Map<string, Bucket>()
 const MAX_BUCKETS = 5000
 

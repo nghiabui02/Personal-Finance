@@ -1,7 +1,7 @@
-import Groq from 'groq-sdk'
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, jsonError, tooManyRequests } from '@/lib/server/route'
-import { isRateLimited } from '@/lib/server/rate-limit'
+import { isRateLimited, ONE_MINUTE_MS } from '@/lib/server/rate-limit'
+import { askForJson, createGroqClient } from '@/lib/server/groq'
 import { CATEGORY_COLUMNS } from '@/lib/api/categories'
 import { localYMD } from '@/lib/utils/date'
 
@@ -21,7 +21,6 @@ const MAX_INPUT_CHARS = 600
 // Every call is a paid model request. Far above what typing one line at a time
 // reaches; low enough that a stuck client cannot drain the quota.
 const PARSES_PER_MINUTE = 30
-const ONE_MINUTE_MS = 60_000
 
 const SYSTEM_PROMPT = `You extract a single financial transaction from a short piece of text.
 
@@ -53,8 +52,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     return tooManyRequests('Too many requests. Wait a minute, or fill the form in by hand.')
   }
 
-  const apiKey = process.env.GROQ_API_KEY
-  if (!apiKey) return jsonError(500, 'Groq is not configured.')
+  const groq = createGroqClient()
+  if (!groq) return jsonError(500, 'Groq is not configured.')
 
   const { text } = await request.json()
   const input = typeof text === 'string' ? text.trim() : ''
@@ -70,28 +69,18 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const categoryList = (categories ?? []).map(c => ({ id: c.id, name: c.name, type: c.type }))
   const walletList = (wallets ?? []).map(w => ({ id: w.id, name: w.name, type: w.type }))
 
-  const groq = new Groq({ apiKey })
-
   let draft: Record<string, unknown>
   try {
-    const completion = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-120b',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            text: input,
-            today: localYMD(),
-            categories: categoryList,
-            wallets: walletList,
-          }),
-        },
-      ],
-      response_format: { type: 'json_object' },
+    draft = await askForJson(groq, {
+      system: SYSTEM_PROMPT,
+      user: JSON.stringify({
+        text: input,
+        today: localYMD(),
+        categories: categoryList,
+        wallets: walletList,
+      }),
       temperature: 0.1,
     })
-    draft = JSON.parse(completion.choices[0]?.message?.content ?? '{}')
   } catch (err) {
     console.error('[api] parse-transaction: groq failed:', err)
     return jsonError(502, 'Could not read that. Try rewording it, or enter the transaction manually.')

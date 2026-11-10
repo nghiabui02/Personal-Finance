@@ -1,8 +1,8 @@
 import { getNonOperatingCategoryIds, onlyOperatingTransactions } from '@/lib/server/transaction-reporting'
-import Groq from 'groq-sdk'
 import { NextResponse } from 'next/server'
 import { withAuth, jsonError, tooManyRequests } from '@/lib/server/route'
-import { isRateLimited } from '@/lib/server/rate-limit'
+import { isRateLimited, ONE_MINUTE_MS } from '@/lib/server/rate-limit'
+import { askForJson, createGroqClient } from '@/lib/server/groq'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
@@ -10,7 +10,6 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 // Every uncached call is a paid model request, retried up to three times.
 // Browsing periods stays well under this; a stuck client does not.
 const ANALYSES_PER_MINUTE = 20
-const ONE_MINUTE_MS = 60_000
 
 // Days actually covered by a period starting at `start` — used for the
 // per-day average. Months/quarters vary in length, so 30/91 constants would
@@ -33,8 +32,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     return tooManyRequests('Too many requests. Try again in a minute.')
   }
 
-  const apiKey = process.env.GROQ_API_KEY
-  if (!apiKey) return jsonError(500, 'Groq not configured')
+  const groq = createGroqClient()
+  if (!groq) return jsonError(500, 'Groq is not configured.')
 
   const { periodLabel, period, start, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo, force } = await request.json()
   const periodType: 'week' | 'month' | 'quarter' | 'year' = period ?? 'month'
@@ -99,8 +98,6 @@ export const POST = withAuth(async (request, { supabase, user }) => {
       .single()
     if (cached?.result) return NextResponse.json(cached.result)
   }
-
-  const groq = new Groq({ apiKey })
 
   const net = totalIncome - totalExpense
   const fmt = (n: number) => n.toLocaleString('vi-VN')
@@ -360,16 +357,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const completion = await groq.chat.completions.create({
-        model: 'openai/gpt-oss-120b',
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: userMsg },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.4,
-      })
-      const data = JSON.parse(completion.choices[0].message.content ?? '{}')
+      const data = await askForJson(groq, { system, user: userMsg, temperature: 0.4 })
 
       await supabase.from('ai_insights_cache').upsert({
         user_id: user.id,
