@@ -9,6 +9,7 @@ import { monthRange } from '@/lib/utils/date'
 import type { BudgetSuggestion } from '@/lib/server/budget-suggestions'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { plural } from '@/lib/utils/plural'
 
 /**
  * Review the proposed budgets before they exist. Each row can be dropped; the
@@ -54,7 +55,7 @@ export function SuggestBudgetsModal({
             month: monthRange(month).startDate,
           })
         }
-        toast.success(`Created ${chosen.length} budget${chosen.length === 1 ? '' : 's'}. Edit any of them anytime.`)
+        toast.success(`Created ${plural(chosen.length, 'budget')}. Edit any of them anytime.`)
         router.refresh()
         onClose()
       } catch (err) {
@@ -94,7 +95,7 @@ export function SuggestBudgetsModal({
                       {s.category.name}
                     </span>
                     <span className="block text-xs text-gray-400 dark:text-gray-500">
-                      from {s.monthsObserved} month{s.monthsObserved === 1 ? '' : 's'} of spending
+                      from {plural(s.monthsObserved, 'month')} of spending
                     </span>
                   </span>
                   <span className={`text-sm font-semibold tabular-nums shrink-0 ${isSkipped ? 'opacity-40 line-through' : 'text-gray-900 dark:text-gray-100'}`}>
@@ -108,7 +109,7 @@ export function SuggestBudgetsModal({
 
         <div className="flex items-baseline justify-between gap-4 text-sm">
           <span className="text-gray-500 dark:text-gray-400">
-            {chosen.length} budget{chosen.length === 1 ? '' : 's'}
+            {plural(chosen.length, 'budget')}
           </span>
           <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
             {formatVND(total)} total

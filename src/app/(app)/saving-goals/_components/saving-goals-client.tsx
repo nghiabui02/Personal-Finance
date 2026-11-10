@@ -19,6 +19,7 @@ import { type SavingGoal, savingGoalsApi } from '@/lib/api/saving-goals'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { plural } from '@/lib/utils/plural'
 
 // ── Goal Modal ────────────────────────────────────────────────────────────────
 
@@ -246,7 +247,7 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
         headline={
           active.length === 0
             ? <>No goals running — set one and every contribution has somewhere to go.</>
-            : <>You&rsquo;ve saved <Em tone="good">{savedPct}%</Em> of what your {active.length} goal{active.length === 1 ? '' : 's'} need{active.length === 1 ? 's' : ''}.</>
+            : <>You&rsquo;ve saved <Em tone="good">{savedPct}%</Em> of what your {plural(active.length, 'goal')} need{active.length === 1 ? 's' : ''}.</>
         }
         support={active.length > 0
           ? <><span>{formatVND(totalSaved)} of {formatVND(totalTarget)}</span><Dot /><span>{formatVND(totalTarget - totalSaved)} to go</span></>

@@ -15,6 +15,7 @@ import { WalletCard } from './wallet-card'
 import { WalletModal } from './wallet-modal'
 import { TransferModal } from './transfer-modal'
 import { CreditPaymentModal } from './credit-payment-modal'
+import { plural } from '@/lib/utils/plural'
 
 export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   const router = useRouter()
@@ -56,7 +57,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
         headline={
           wallets.length === 0
             ? <>No wallets yet — add one to start tracking where your money sits.</>
-            : <>You hold <Em>{formatVND(totalAssets)}</Em> across {spendable.length} wallet{spendable.length === 1 ? '' : 's'}.</>
+            : <>You hold <Em>{formatVND(totalAssets)}</Em> across {plural(spendable.length, 'wallet')}.</>
         }
         support={creditOwed > 0
           ? <><span className="text-rose-600 dark:text-rose-400">{formatVND(creditOwed)} owed on cards</span><Dot /><span>{wallets.length} accounts total</span></>
