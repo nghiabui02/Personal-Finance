@@ -5,24 +5,23 @@ import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Dot, Em } from '@/components/ui/verdict'
-import { toastError } from '@/components/ui/toast'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatVND } from '@/lib/utils/currency'
 import { type Wallet, walletsApi } from '@/lib/api/wallets'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { WalletCard } from './wallet-card'
 import { WalletModal } from './wallet-modal'
 import { TransferModal } from './transfer-modal'
 import { CreditPaymentModal } from './credit-payment-modal'
 import { plural } from '@/lib/utils/plural'
+import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 
 export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
+    id => walletsApi.delete(id), 'Could not delete the wallet.',
+  )
   const [transferOpen, setTransferOpen] = useState(false)
   const [transferFromId, setTransferFromId] = useState<string | undefined>(undefined)
   const [payingCreditId, setPayingCreditId] = useState<string | null>(null)
@@ -39,15 +38,6 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   function openModal(wallet: Wallet | null = null) {
     setEditingWallet(wallet)
     setModalOpen(true)
-  }
-
-  function handleDeleteConfirmed() {
-    if (!confirmId) return
-    startTransition(async () => {
-      try { await walletsApi.delete(confirmId); router.refresh() }
-      catch (err) { toastError(err, 'Could not delete the wallet.') }
-      finally { setConfirmId(null) }
-    })
   }
 
   return (
@@ -86,7 +76,7 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
               key={wallet.id}
               wallet={wallet}
               onEdit={() => openModal(wallet)}
-              onDelete={() => setConfirmId(wallet.id)}
+              onDelete={() => ask(wallet.id)}
               onTransfer={() => { setTransferFromId(wallet.id); setTransferOpen(true) }}
               onPay={() => setPayingCreditId(wallet.id)}
               isDeleting={isPending && confirmId === wallet.id}
@@ -134,8 +124,8 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
           }
           confirmLabel="Delete wallet"
           isPending={isPending}
-          onConfirm={handleDeleteConfirmed}
-          onClose={() => setConfirmId(null)}
+          onConfirm={confirm}
+          onClose={cancel}
         />
       )}
     </>

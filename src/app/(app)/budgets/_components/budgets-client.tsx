@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { toastError } from '@/components/ui/toast'
 import { BRAND_HEX, MONEY_OUT, WARNING } from '@/lib/utils/colors'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
@@ -15,11 +14,12 @@ import { formatVND } from '@/lib/utils/currency'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
 import { type Category } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { BudgetModal } from './budget-modal'
 import { SuggestBudgetsModal } from './suggest-budgets-modal'
 import type { BudgetSuggestion } from '@/lib/server/budget-suggestions'
 import { formatMonthYear } from '@/lib/utils/date'
+import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 
 interface BudgetsClientProps {
   budgets: Budget[]
@@ -111,10 +111,11 @@ function BudgetCard({
 
 export default function BudgetsClient({ budgets, suggestions, expenseCategories, month }: BudgetsClientProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
+    id => budgetsApi.delete(id), 'Could not delete the budget.',
+  )
   const [tab, setTab] = useState<'active' | 'inactive'>('active')
   const [suggestOpen, setSuggestOpen] = useState(false)
 
@@ -135,15 +136,6 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
     const d = new Date(y, m - 1 + dir, 1)
     const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     router.replace(`/budgets?month=${next}`, { scroll: false })
-  }
-
-  function handleDeleteConfirmed() {
-    if (!confirmId) return
-    startTransition(async () => {
-      try { await budgetsApi.delete(confirmId); router.refresh() }
-      catch (err) { toastError(err, 'Could not delete the budget.') }
-      finally { setConfirmId(null) }
-    })
   }
 
   return (
@@ -224,7 +216,7 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
               <BudgetCard
                 budget={b}
                 onEdit={() => { setEditingBudget(b); setModalOpen(true) }}
-                onDelete={() => setConfirmId(b.id)}
+                onDelete={() => ask(b.id)}
               />
             </div>
           ))}
@@ -256,8 +248,8 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
           description="This budget will be removed. Your transactions won't be affected."
           confirmLabel="Delete"
           isPending={isPending}
-          onConfirm={handleDeleteConfirmed}
-          onClose={() => setConfirmId(null)}
+          onConfirm={confirm}
+          onClose={cancel}
         />
       )}
     </>

@@ -23,10 +23,11 @@ import { type Category } from '@/lib/api/categories'
 import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
 import { type RecurringTransaction, FREQUENCY_LABELS, recurringApi } from '@/lib/api/recurring-transactions'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 
 /** Rough per-month value of a rule, for comparing rules on different clocks. */
 const MONTHLY_MULTIPLIER: Record<RecurringTransaction['frequency'], number> = {
@@ -286,11 +287,11 @@ export default function RecurringClient({
   categories: Category[]
   wallets: Wallet[]
 }) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<RecurringTransaction | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
+    id => recurringApi.delete(id), 'Could not delete the recurring rule.',
+  )
 
   const active  = items.filter(i => !i.end_date || i.end_date >= localYMD())
   const expired = items.filter(i => i.end_date && i.end_date < localYMD())
@@ -306,15 +307,6 @@ export default function RecurringClient({
     .map(i => i.next_run_date)
     .filter((d): d is string => !!d)
     .sort()[0]
-
-  function handleDeleteConfirmed() {
-    if (!confirmId) return
-    startTransition(async () => {
-      try { await recurringApi.delete(confirmId); router.refresh() }
-      catch (err) { toastError(err, 'Could not delete the recurring rule.') }
-      finally { setConfirmId(null) }
-    })
-  }
 
   return (
     <>
@@ -359,7 +351,7 @@ export default function RecurringClient({
                 {active.map(item => (
                   <RecurringCard key={item.id} item={item}
                     onEdit={() => { setEditingItem(item); setModalOpen(true) }}
-                    onDelete={() => setConfirmId(item.id)} />
+                    onDelete={() => ask(item.id)} />
                 ))}
               </div>
             </section>
@@ -371,7 +363,7 @@ export default function RecurringClient({
                 {expired.map(item => (
                   <RecurringCard key={item.id} item={item}
                     onEdit={() => { setEditingItem(item); setModalOpen(true) }}
-                    onDelete={() => setConfirmId(item.id)} />
+                    onDelete={() => ask(item.id)} />
                 ))}
               </div>
             </section>
@@ -391,8 +383,8 @@ export default function RecurringClient({
           description="Future transactions won't be created. Past transactions already created are kept."
           confirmLabel="Delete"
           isPending={isPending}
-          onConfirm={handleDeleteConfirmed}
-          onClose={() => setConfirmId(null)} />
+          onConfirm={confirm}
+          onClose={cancel} />
       )}
     </>
   )

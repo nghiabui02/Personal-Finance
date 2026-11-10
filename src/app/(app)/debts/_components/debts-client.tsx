@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { toastError } from '@/components/ui/toast'
 import { BRAND_HEX, MONEY_IN } from '@/lib/utils/colors'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { Button } from '@/components/ui/button'
@@ -19,13 +18,13 @@ import { formatVND } from '@/lib/utils/currency'
 import { formatMonthDayYear, localYMD } from '@/lib/utils/date'
 import { type Debt, debtsApi } from '@/lib/api/debts'
 import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { AdditionModal } from './addition-modal'
 import { PaymentModal } from './payment-modal'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 
 
 // ── Debt Modal ────────────────────────────────────────────────────────────────
@@ -297,14 +296,14 @@ export default function DebtsClient({
   debts: Debt[]
   wallets: WalletChoice[]
 }) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null)
   const [defaultType, setDefaultType] = useState<'lend' | 'borrow'>('lend')
   const [payingDebt, setPayingDebt] = useState<Debt | null>(null)
   const [addingDebt, setAddingDebt] = useState<Debt | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
+    id => debtsApi.delete(id), 'Could not delete the debt.',
+  )
 
   const [tab, setTab] = useState<'active' | 'completed'>('active')
 
@@ -325,15 +324,6 @@ export default function DebtsClient({
     setDefaultType(type)
     setEditingDebt(null)
     setModalOpen(true)
-  }
-
-  function handleDeleteConfirmed() {
-    if (!confirmId) return
-    startTransition(async () => {
-      try { await debtsApi.delete(confirmId); router.refresh() }
-      catch (err) { toastError(err, 'Could not delete the debt.') }
-      finally { setConfirmId(null) }
-    })
   }
 
   return (
@@ -385,7 +375,7 @@ export default function DebtsClient({
           debts={lendDebts}
           totalActive={totalLent}
           onEdit={d => { setEditingDebt(d); setModalOpen(true) }}
-          onDelete={id => setConfirmId(id)}
+          onDelete={id => ask(id)}
           onPay={d => setPayingDebt(d)}
           onAddMore={d => setAddingDebt(d)}
           onAdd={() => openNew('lend')}
@@ -396,7 +386,7 @@ export default function DebtsClient({
           debts={borrowDebts}
           totalActive={totalBorrowed}
           onEdit={d => { setEditingDebt(d); setModalOpen(true) }}
-          onDelete={id => setConfirmId(id)}
+          onDelete={id => ask(id)}
           onPay={d => setPayingDebt(d)}
           onAddMore={d => setAddingDebt(d)}
           onAdd={() => openNew('borrow')}
@@ -424,8 +414,8 @@ export default function DebtsClient({
           description="The debt and its payment history will be permanently deleted. Wallet transactions already recorded stay — the money really did move."
           confirmLabel="Delete"
           isPending={isPending}
-          onConfirm={handleDeleteConfirmed}
-          onClose={() => setConfirmId(null)}
+          onConfirm={confirm}
+          onClose={cancel}
         />
       )}
     </>

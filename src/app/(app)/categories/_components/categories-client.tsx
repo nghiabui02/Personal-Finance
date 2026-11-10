@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { toastError } from '@/components/ui/toast'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Em } from '@/components/ui/verdict'
@@ -9,9 +8,10 @@ import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
 import { type Category, categoriesApi } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { CategoryCard } from './category-card'
 import { CategoryModal } from './category-modal'
+import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 
 export default function CategoriesClient({
   categories,
@@ -21,11 +21,12 @@ export default function CategoriesClient({
   initialTab: 'income' | 'expense'
 }) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const [tab, setTab] = useState<'income' | 'expense'>(initialTab)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
+    id => categoriesApi.delete(id), 'Could not delete the category.',
+  )
 
   const confirmCategory = categories.find(c => c.id === confirmId)
 
@@ -41,15 +42,6 @@ export default function CategoriesClient({
   function openModal(category: Category | null = null) {
     setEditingCategory(category)
     setModalOpen(true)
-  }
-
-  function handleDeleteConfirmed() {
-    if (!confirmId) return
-    startTransition(async () => {
-      try { await categoriesApi.delete(confirmId); router.refresh() }
-      catch (err) { toastError(err, 'Could not delete the category.') }
-      finally { setConfirmId(null) }
-    })
   }
 
   return (
@@ -93,7 +85,7 @@ export default function CategoriesClient({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {custom.map(cat => (
                   <CategoryCard key={cat.id} category={cat}
-                    onEdit={() => openModal(cat)} onDelete={() => setConfirmId(cat.id)}
+                    onEdit={() => openModal(cat)} onDelete={() => ask(cat.id)}
                     isDeleting={isPending && confirmId === cat.id} />
                 ))}
               </div>
@@ -105,7 +97,7 @@ export default function CategoriesClient({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {defaults.map(cat => (
                   <CategoryCard key={cat.id} category={cat}
-                    onEdit={() => openModal(cat)} onDelete={() => setConfirmId(cat.id)}
+                    onEdit={() => openModal(cat)} onDelete={() => ask(cat.id)}
                     isDeleting={isPending && confirmId === cat.id} />
                 ))}
               </div>
@@ -125,8 +117,8 @@ export default function CategoriesClient({
           description="This category will be permanently deleted. Transactions using it will become uncategorized."
           confirmLabel="Delete category"
           isPending={isPending}
-          onConfirm={handleDeleteConfirmed}
-          onClose={() => setConfirmId(null)}
+          onConfirm={confirm}
+          onClose={cancel}
         />
       )}
     </>

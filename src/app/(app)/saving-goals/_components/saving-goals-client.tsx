@@ -1,7 +1,6 @@
 'use client'
 
 import { AmountInput } from '@/components/ui/amount-input'
-import { toastError } from '@/components/ui/toast'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -16,12 +15,12 @@ import { ScreenHeader } from '@/components/ui/screen-header'
 import { Dot, Em } from '@/components/ui/verdict'
 import { formatVND } from '@/lib/utils/currency'
 import { type SavingGoal, savingGoalsApi } from '@/lib/api/saving-goals'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { plural } from '@/lib/utils/plural'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 
 // ── Goal Modal ────────────────────────────────────────────────────────────────
 
@@ -199,12 +198,12 @@ function GoalCard({
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingGoal, setEditingGoal] = useState<SavingGoal | null>(null)
   const [contributingGoal, setContributingGoal] = useState<SavingGoal | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
+    id => savingGoalsApi.delete(id), 'Could not delete the goal.',
+  )
   const [tab, setTab] = useState<'active' | 'completed'>('active')
   // Capture once at mount — stable across re-renders, avoids React Compiler impure warning
   const [nowMs] = useState(() => new Date().setHours(0, 0, 0, 0))
@@ -216,15 +215,6 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
   const totalSaved = active.reduce((s, g) => s + Number(g.current_amount), 0)
   const totalTarget = active.reduce((s, g) => s + Number(g.target_amount), 0)
   const savedPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0
-
-  function handleDeleteConfirmed() {
-    if (!confirmId) return
-    startTransition(async () => {
-      try { await savingGoalsApi.delete(confirmId); router.refresh() }
-      catch (err) { toastError(err, 'Could not delete the goal.') }
-      finally { setConfirmId(null) }
-    })
-  }
 
   return (
     <>
@@ -273,7 +263,7 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
                 goal={g}
                 nowMs={nowMs}
                 onEdit={() => { setEditingGoal(g); setModalOpen(true) }}
-                onDelete={() => setConfirmId(g.id)}
+                onDelete={() => ask(g.id)}
                 onContribute={() => setContributingGoal(g)}
               />
             </div>
@@ -293,8 +283,8 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
           description="This saving goal will be permanently deleted."
           confirmLabel="Delete"
           isPending={isPending}
-          onConfirm={handleDeleteConfirmed}
-          onClose={() => setConfirmId(null)}
+          onConfirm={confirm}
+          onClose={cancel}
         />
       )}
     </>
