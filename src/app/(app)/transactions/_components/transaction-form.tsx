@@ -1,29 +1,27 @@
 'use client'
 
-import { amountSuggestions, formatWithDots } from '@/components/ui/amount-input'
 import { BankFeeField } from '@/components/ui/bank-fee-field'
-import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
-import { CategorySelect } from '@/components/ui/category-select'
 import { CustomSelect } from '@/components/ui/custom-select'
-import { TabGroup } from '@/components/ui/tab-group'
 import { DatePicker } from '@/components/ui/date-picker'
+import { FormError } from '@/components/ui/form-error'
 import { Input } from '@/components/ui/input'
+import { ModalActions } from '@/components/ui/modal-actions'
+import { TabGroup } from '@/components/ui/tab-group'
 import { type Category } from '@/lib/api/categories'
+import { debtsApi } from '@/lib/api/debts'
 import { type Transaction, transactionsApi } from '@/lib/api/transactions'
 import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
-import { formatVND } from '@/lib/utils/currency'
-import { localYMD } from '@/lib/utils/date'
-import type { DebtOption } from '@/lib/types'
-import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
-import {
-  findDuplicate, suggestCategoryId, type HistoryTransaction,
-} from '@/lib/transaction-matching'
-import type { ParsedDraft } from '@/lib/api/parse-transaction'
-import { QuickParse } from './quick-parse'
-import { useState } from 'react'
-import { FormError } from '@/components/ui/form-error'
-import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
+import type { HistoryTransaction } from '@/lib/transaction-matching'
+import type { DebtOption } from '@/lib/types'
+import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
+import { formatVND } from '@/lib/utils/currency'
+import { CategoryTiles } from './category-tiles'
+import { CenteredAmountInput } from './centered-amount-input'
+import { FrequentChips } from './frequent-chips'
+import { QuickParse } from './quick-parse'
+import { useTransactionForm } from './use-transaction-form'
 
 interface TransactionFormProps {
   editing: Transaction | null
@@ -42,217 +40,18 @@ interface TransactionFormProps {
   onCancel: () => void
 }
 
-/** Big centered amount display, tinted by transaction type */
-/**
- * Stops a click from moving focus out of whatever field the user was typing in.
- *
- * Without it the mousedown blurs the input and the browser scrolls the newly
- * focused button into view inside the modal's scrollport. The element under the
- * pointer shifts before mouseup, so no click is dispatched at all and the first
- * press appears to do nothing but unfocus.
- */
-const keepFocus = (e: React.MouseEvent) => e.preventDefault()
-
-function CenteredAmountInput({
-  name,
-  defaultValue,
-  txType,
-  onValueChange,
-  autoFocus,
-}: {
-  name: string
-  defaultValue?: number
-  txType: 'income' | 'expense'
-  onValueChange?: (value: number) => void
-  autoFocus?: boolean
-}) {
-  const [display, setDisplay] = useState(
-    defaultValue ? formatWithDots(String(defaultValue)) : ''
-  )
-  const rawValue = display.replace(/\./g, '')
-  const isExpense = txType === 'expense'
-
-  function handleChange(next: string) {
-    setDisplay(next)
-    onValueChange?.(Number(next.replace(/\./g, '')) || 0)
-  }
-
-  // The field grows with its content, so long amounts have to shrink instead
-  // of pushing the modal open. Digits are already capped by formatWithDots.
-  const sizeClass =
-    display.length > 13 ? 'text-2xl'
-    : display.length > 10 ? 'text-3xl'
-    : 'text-4xl'
-
-  const suggestions = amountSuggestions(display)
-
-  return (
-    <div className="text-center">
-      <input type="hidden" name={name} value={rawValue} />
-      <div className={`inline-flex items-baseline gap-1.5 max-w-full ${isExpense ? 'text-rose-500' : 'text-emerald-500'}`}>
-        <input
-          type="text"
-          inputMode="numeric"
-          value={display}
-          onChange={e => handleChange(formatWithDots(e.target.value))}
-          placeholder="0"
-          autoFocus={autoFocus}
-          size={1}
-          style={{ width: `${Math.max(display.length, 1)}ch`, maxWidth: '100%' }}
-          className={`bg-transparent ${sizeClass} font-bold tabular-nums text-center outline-none placeholder:text-current caret-current min-w-0`}
-        />
-        <span className="text-xl font-semibold shrink-0">đ</span>
-      </div>
-      <div className={`mx-auto mt-2 h-0.5 w-36 rounded-full ${isExpense ? 'bg-rose-400' : 'bg-emerald-400'}`} />
-
-      {/* Shortcuts to the same digits one, two and three zeros longer.
-          onMouseDown keeps the caret in the field, so typing can carry on. */}
-      {suggestions.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-          {suggestions.map(s => (
-            <button
-              key={s}
-              type="button"
-              onMouseDown={keepFocus}
-              onClick={() => handleChange(s)}
-              className="rounded-full border border-hairline px-2.5 py-1 text-xs tabular-nums text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand transition-colors"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 export function TransactionForm({ editing, categories, wallets, debts, frequent = [], recent = [], defaultDate, onDone, onCancel }: TransactionFormProps) {
   const { error, setError, isPending, submit } = useFormSubmit(onDone)
-  const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
-  const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
-  const [walletId, setWalletId] = useState(
-    editing ? (editing.wallet_id ?? '') : (wallets.find(w => w.is_default)?.id ?? '')
-  )
-  const [date, setDate] = useState(
-    editing?.transaction_date ?? defaultDate ?? localYMD()
-  )
-  const [showFee, setShowFee] = useState(Number(editing?.bank_fee) > 0)
-  const [amountValue, setAmountValue] = useState(
-    editing ? Number(editing.amount) - Number(editing.bank_fee ?? 0) : 0
-  )
-  const [feeValue, setFeeValue] = useState(Number(editing?.bank_fee) || 0)
-  const [selectedDebtId, setSelectedDebtId] = useState('')
-  const [moreOpen, setMoreOpen] = useState(false)
-  // Bumping this remounts the amount field so a picked chip replaces whatever
-  // was typed, instead of the uncontrolled input keeping its old value.
-  const [preset, setPreset] = useState<FrequentTransaction | null>(null)
-  const [note, setNote] = useState(editing?.note ?? '')
-
-  function applyFrequent(f: FrequentTransaction) {
-    setTxType(f.type)
-    setCategoryId(f.categoryId ?? '')
-    if (f.walletId) setWalletId(f.walletId)
-    setSelectedDebtId('')
-    setAmountValue(f.amount)
-    setPreset(f)
-  }
-
-  /** Fills the form from a parsed draft. Nothing is saved until the user submits. */
-  function applyDraft(d: ParsedDraft) {
-    setTxType(d.type)
-    if (d.category_id) setCategoryId(d.category_id)
-    if (d.wallet_id) setWalletId(d.wallet_id)
-    if (d.date) setDate(d.date)
-    setNote(d.note ?? '')
-    setSelectedDebtId('')
-    setAmountValue(d.amount)
-    setPreset({
-      key: `draft-${d.amount}-${d.category_id ?? ''}`,
-      type: d.type,
-      amount: d.amount,
-      categoryId: d.category_id,
-      categoryName: '',
-      categoryIcon: null,
-      walletId: d.wallet_id,
-      note: d.note,
-      count: 0,
-    })
-  }
+  const {
+    txType, categoryId, walletId, date, note, amountValue, feeValue, showFee, selectedDebtId, preset, moreOpen,
+    setWalletId, setDate, setNote, setAmountValue, setFeeValue, setShowFee, setSelectedDebtId, setMoreOpen,
+    applyFrequent, applyDraft, changeType, changeCategory,
+    isRepay, showDebtSelector, debtOptions, selectedDebt,
+    selectedWallet, spendTotal, overdrawn, overdraftMessage,
+    suggestedCategory, duplicate, canAddFee,
+  } = useTransactionForm({ editing, categories, wallets, debts, recent, defaultDate })
 
   const walletOptions = toWalletOptions(wallets)
-
-  // Detect if selected category is a debt-related one — by system_key, not
-  // display name, so renaming a category (or i18n) never breaks this.
-  const selectedCat = categories.find(c => c.id === categoryId)
-  const isRepay   = selectedCat?.system_key === 'repay_debt'
-  const isCollect = selectedCat?.system_key === 'collect_debt'
-  const showDebtSelector = (isRepay || isCollect) && !editing
-
-  // Filter debts by direction: repay=borrow debts, collect=lend debts
-  const relevantDebts = showDebtSelector
-    ? debts.filter(d => isRepay ? d.type === 'borrow' : d.type === 'lend')
-    : []
-
-  const debtOptions = [
-    { value: '', label: 'Not linked' },
-    ...relevantDebts.map(d => ({
-      value: d.id,
-      label: `${d.person_name} — ${formatVND(d.remaining_amount)} remaining`,
-    })),
-  ]
-
-  const selectedDebt = relevantDebts.find(d => d.id === selectedDebtId)
-
-  function handleTypeChange(t: 'income' | 'expense') {
-    setTxType(t)
-    setCategoryId('')
-    setSelectedDebtId('')
-    setMoreOpen(false)
-    setPreset(null)
-  }
-
-  function handleCategoryChange(id: string) {
-    setCategoryId(id)
-    setSelectedDebtId('')
-  }
-
-  // Category tile grid: first 7 of the current type + a "More" tile
-  const typeCategories = categories.filter(c => c.type === txType)
-  const visibleCategories = typeCategories.slice(0, 3)
-  const selectedInGrid = visibleCategories.some(c => c.id === categoryId)
-  const overflowSelected = !selectedInGrid && selectedCat ? selectedCat : null
-
-  // Balances come down with the form, so overspending is caught as the user
-  // types. Editing only needs to cover the *extra* spend: the original amount
-  // is handed back to the same wallet first.
-  const selectedWallet = wallets.find(w => w.id === walletId)
-  const spendTotal = amountValue + (showFee ? feeValue : 0)
-  const alreadyDeducted =
-    editing && editing.wallet_id === walletId && editing.type === 'expense'
-      ? Number(editing.amount)
-      : 0
-  const shortfall =
-    txType === 'expense' && selectedWallet && !selectedDebtId
-      ? spendTotal - alreadyDeducted - Number(selectedWallet.balance)
-      : 0
-  const overdrawn = shortfall > 0
-  const overdraftMessage = overdrawn && selectedWallet
-    ? `${selectedWallet.name} only has ${formatVND(Number(selectedWallet.balance))} — short by ${formatVND(shortfall)}.`
-    : null
-
-  // Offered, never applied on its own: a wrong silent tag is harder to notice
-  // than an empty category, and the user is looking at the field anyway.
-  const suggestedId = categoryId ? null : suggestCategoryId(note, recent)
-  const suggestedCategory = suggestedId
-    ? categories.find(c => c.id === suggestedId && c.type === txType) ?? null
-    : null
-
-  // The same spend typed twice, or typed once and then imported. Editing is
-  // exempt: a row always matches itself.
-  const duplicate = editing ? null : findDuplicate(
-    { type: txType, amount: spendTotal, transaction_date: date, wallet_id: walletId || null },
-    recent,
-  )
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -283,34 +82,21 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
         await transactionsApi.update(editing.id, base)
       } else if (selectedDebtId && amount > 0) {
         // Debt payment: the payments API creates the transaction + adjusts balance atomically
-        const res = await fetch(`/api/debts/${selectedDebtId}/payments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, note: note || undefined, wallet_id: walletId || undefined, date }),
-        })
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.error || 'Failed to record debt payment.')
-        }
+        await debtsApi.addPayment(selectedDebtId, { amount, note: note || undefined, wallet_id: walletId || undefined, date })
       } else {
         await transactionsApi.create(base)
       }
-
     })
   }
 
-  const canAddFee = txType === 'expense' && !!walletId && !showDebtSelector
-
-
   return (
-  <form onSubmit={handleSubmit} className="space-y-3">
-
+    <form onSubmit={handleSubmit} className="space-y-3">
       {!editing && <QuickParse onDraft={applyDraft} />}
 
       <TabGroup
         tabs={[{ key: 'expense', label: '− Expense' }, { key: 'income', label: '+ Income' }]}
         value={txType}
-        onChange={handleTypeChange}
+        onChange={changeType}
         activeTextColors={{ expense: MONEY_OUT, income: MONEY_IN }}
       />
 
@@ -328,104 +114,19 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
         )}
       </div>
 
-      {/* One-tap repeats — the same spend logged the same way before */}
       {!editing && frequent.length > 0 && !amountValue && (
-        <div className="-mx-1 px-1 overflow-x-auto no-scrollbar">
-          <div className="flex gap-2 w-max">
-            {frequent.map(f => {
-              const active = preset?.key === f.key
-              return (
-                <button
-                  key={f.key}
-                  type="button"
-                  onMouseDown={keepFocus}
-                  onClick={() => applyFrequent(f)}
-                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-colors ${
-                    active
-                      ? 'border-brand bg-brand-soft text-brand'
-                      : 'border-hairline bg-gray-50 text-gray-600 hover:border-gray-300 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  <span className="leading-none">{f.categoryIcon ?? '🏷️'}</span>
-                  <span className="font-medium">{f.categoryName}</span>
-                  <span className="tabular-nums opacity-70">{formatVND(f.amount)}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
+        <FrequentChips frequent={frequent} activeKey={preset?.key} onPick={applyFrequent} />
       )}
 
-      {/* Category tiles */}
-      <div>
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Category</p>
-        <div className="grid grid-cols-4 gap-2">
-          {visibleCategories.map(c => {
-            const active = c.id === categoryId
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onMouseDown={keepFocus}
-                onClick={() => handleCategoryChange(active ? '' : c.id)}
-                className={`flex flex-col items-center gap-1.5 rounded-xl border px-1 py-2.5 transition-colors ${
-                  active
-                    ? txType === 'expense'
-                      ? 'border-rose-400 bg-rose-50 dark:border-rose-500/60 dark:bg-rose-950/30'
-                      : 'border-emerald-400 bg-emerald-50 dark:border-emerald-500/60 dark:bg-emerald-950/30'
-                    : 'border-gray-200 bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:border-gray-600'
-                }`}
-              >
-                <span className="text-xl leading-none">{c.icon ?? '🏷️'}</span>
-                <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 truncate w-full text-center">
-                  {c.name}
-                </span>
-              </button>
-            )
-          })}
-          <button
-            type="button"
-            onMouseDown={keepFocus}
-            onClick={() => setMoreOpen(o => !o)}
-            className={`flex flex-col items-center gap-1.5 rounded-xl border px-1 py-2.5 transition-colors ${
-              overflowSelected
-                ? txType === 'expense'
-                  ? 'border-rose-400 bg-rose-50 dark:border-rose-500/60 dark:bg-rose-950/30'
-                  : 'border-emerald-400 bg-emerald-50 dark:border-emerald-500/60 dark:bg-emerald-950/30'
-                : 'border-gray-200 bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:border-gray-600'
-            }`}
-          >
-            {overflowSelected ? (
-              <span className="text-xl leading-none">{overflowSelected.icon ?? '🏷️'}</span>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} className="text-gray-900 dark:text-gray-100">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-              </svg>
-            )}
-            <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 truncate w-full text-center">
-              {overflowSelected ? overflowSelected.name : 'More'}
-            </span>
-          </button>
-        </div>
-        {suggestedCategory && !moreOpen && (
-          <button
-            type="button"
-            onMouseDown={keepFocus}
-            onClick={() => handleCategoryChange(suggestedCategory.id)}
-            className="mt-2 flex items-center gap-1.5 rounded-full border border-dashed border-hairline px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand transition-colors"
-          >
-            <span className="leading-none">{suggestedCategory.icon ?? '🏷️'}</span>
-            <span>Last time this was <span className="font-medium">{suggestedCategory.name}</span> — use it</span>
-          </button>
-        )}
-        {moreOpen && (
-          <div className="mt-2.5">
-            <CategorySelect
-              categories={categories} filterType={txType} label=""
-              value={categoryId} onChange={handleCategoryChange} searchable autoOpen />
-          </div>
-        )}
-      </div>
+      <CategoryTiles
+        categories={categories}
+        txType={txType}
+        categoryId={categoryId}
+        suggestedCategory={suggestedCategory}
+        moreOpen={moreOpen}
+        onToggleMore={() => setMoreOpen(open => !open)}
+        onChange={changeCategory}
+      />
 
       <div className="grid grid-cols-2 gap-3">
         {wallets.length > 0
@@ -501,6 +202,6 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
         submitVariant="success"
         onCancel={onCancel}
       />
-  </form>
+    </form>
   )
 }
