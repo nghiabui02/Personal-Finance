@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { CATEGORY_COLUMNS } from '@/lib/api/categories'
-import { WALLET_COLUMNS } from '@/lib/api/wallets'
+import { WALLET_COLUMNS, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
 
 /**
  * The two lists almost every page loads, with their ordering attached.
@@ -39,4 +39,18 @@ export function walletsQuery(supabase: SupabaseClient, userId: string) {
     .eq('user_id', userId)
     .order('is_default', { ascending: false })
     .order('name')
+}
+
+/** One wallet's transactions, newest first. The detail screen takes the first
+ *  page of this on the server and the history route takes the later ones, so
+ *  both must order and filter identically or a row could appear twice or never.
+ *  The caller adds `.range(...)`. */
+export function walletTransactionsQuery(supabase: SupabaseClient, userId: string, walletId: string) {
+  return supabase
+    .from('transactions')
+    .select(WALLET_TX_COLUMNS)
+    .eq('wallet_id', walletId)
+    .eq('user_id', userId)
+    .order('transaction_date', { ascending: false })
+    .order('created_at', { ascending: false })
 }

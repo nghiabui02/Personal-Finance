@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 import { requireUser } from '@/lib/server/auth'
-import { WALLET_TX_PAGE_SIZE, type WalletTransaction, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
+import { WALLET_TX_PAGE_SIZE, type WalletTransaction } from '@/lib/api/wallets'
 import WalletDetailClient from './_components/wallet-detail-client'
-import { categoriesQuery } from '@/lib/server/queries'
+import { categoriesQuery, walletTransactionsQuery } from '@/lib/server/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,14 +22,7 @@ export default async function WalletDetailPage({
       .eq('user_id', user.id)
       .single(),
     // First page only — the rest is lazy-loaded client-side as the user scrolls
-    supabase
-      .from('transactions')
-      .select(WALLET_TX_COLUMNS)
-      .eq('wallet_id', id)
-      .eq('user_id', user.id)
-      .order('transaction_date', { ascending: false })
-      .order('created_at', { ascending: false })
-      .range(0, WALLET_TX_PAGE_SIZE - 1),
+    walletTransactionsQuery(supabase, user.id, id).range(0, WALLET_TX_PAGE_SIZE - 1),
     // Totals must cover ALL transactions, not just the loaded page
     supabase
       .from('transactions')

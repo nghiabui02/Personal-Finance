@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
-import { WALLET_TX_PAGE_SIZE, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
+import { WALLET_TX_PAGE_SIZE } from '@/lib/api/wallets'
+import { walletTransactionsQuery } from '@/lib/server/queries'
 
 // Paginated transaction history for a wallet — powers lazy-loading on the detail screen.
 export const GET = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
@@ -12,14 +13,7 @@ export const GET = withAuth<{ id: string }>(async (request, { supabase, user, pa
     return badRequest('Invalid offset or limit.')
   }
 
-  const { data, error } = await supabase
-    .from('transactions')
-    .select(WALLET_TX_COLUMNS)
-    .eq('wallet_id', id)
-    .eq('user_id', user.id)
-    .order('transaction_date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1)
+  const { data, error } = await walletTransactionsQuery(supabase, user.id, id).range(offset, offset + limit - 1)
 
   if (error) return supabaseError(error)
   return NextResponse.json({ transactions: data, hasMore: data.length === limit })
