@@ -205,6 +205,8 @@ fixtures. Do not run it against the live database.
 ```bash
 node --experimental-strip-types --test tests/bank-csv.test.mjs          # CSV parser
 node --experimental-strip-types --test tests/transaction-matching.test.mjs  # category suggestion, duplicate check
+node --experimental-strip-types --test tests/rpc-params.test.mjs         # request body → money function arguments
+node --experimental-strip-types --test tests/totals.test.mjs             # income/expense totals, net, debts owed
 ```
 
 `tests/bank-import.sql` and `tests/bulk-delete.sql` cover the money functions —
