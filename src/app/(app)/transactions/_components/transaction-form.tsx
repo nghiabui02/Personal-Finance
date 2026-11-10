@@ -1,6 +1,7 @@
 'use client'
 
-import { AmountInput, amountSuggestions, formatWithDots } from '@/components/ui/amount-input'
+import { amountSuggestions, formatWithDots } from '@/components/ui/amount-input'
+import { BankFeeField } from '@/components/ui/bank-fee-field'
 import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
 import { Button } from '@/components/ui/button'
 import { CategorySelect } from '@/components/ui/category-select'
@@ -476,34 +477,17 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
         placeholder="e.g. Lunch with colleagues" />
 
       {canAddFee && (
-        <div className="border-t border-hairline pt-3">
-          {!showFee ? (
-            <button type="button" onClick={() => setShowFee(true)}
-              className="text-xs text-gray-400 hover:text-brand transition-colors flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-              </svg>
-              Add bank fee (for international transactions)
-            </button>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Bank fee</p>
-                <button type="button" onClick={() => setShowFee(false)}
-                  className="text-xs text-gray-400 hover:text-rose-500 transition-colors">
-                  Remove
-                </button>
-              </div>
-              <AmountInput label="" name="fee" defaultValue={Number(editing?.bank_fee) || 0} onValueChange={setFeeValue} autoFocus />
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                Included in this transaction — total charged will be{' '}
-                <span className="font-medium text-gray-600 dark:text-gray-300 tabular-nums">
-                  {formatVND(amountValue + feeValue)}
-                </span>.
-              </p>
-            </div>
-          )}
-        </div>
+        <BankFeeField
+          isOpen={showFee}
+          onOpenChange={setShowFee}
+          defaultValue={Number(editing?.bank_fee) || 0}
+          onValueChange={setFeeValue}
+        >
+          Included in this transaction — total charged will be{' '}
+          <span className="font-medium text-gray-600 dark:text-gray-300 tabular-nums">
+            {formatVND(amountValue + feeValue)}
+          </span>.
+        </BankFeeField>
       )}
 
       {duplicate && (

@@ -1,6 +1,7 @@
 'use client'
 
 import { AmountInput } from '@/components/ui/amount-input'
+import { BankFeeField } from '@/components/ui/bank-fee-field'
 import { toastError } from '@/components/ui/toast'
 import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
@@ -156,31 +157,9 @@ function RecurringModal({
         {/* Bank fee — persisted on the rule, then folded into every generated
             transaction (amount + fee), same as the transaction modal */}
         {txType === 'expense' && !!walletId && (
-          <div className="border-t border-hairline pt-3">
-            {!showFee ? (
-              <button type="button" onClick={() => setShowFee(true)}
-                className="text-xs text-gray-400 hover:text-brand transition-colors flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                </svg>
-                Add bank fee (for international transactions)
-              </button>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Bank fee</p>
-                  <button type="button" onClick={() => setShowFee(false)}
-                    className="text-xs text-gray-400 hover:text-rose-500 transition-colors">
-                    Remove
-                  </button>
-                </div>
-                <AmountInput label="" name="fee" defaultValue={editing?.bank_fee ?? 0} autoFocus />
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Included in each generated transaction — the total charged will be amount + fee.
-                </p>
-              </div>
-            )}
-          </div>
+          <BankFeeField isOpen={showFee} onOpenChange={setShowFee} defaultValue={editing?.bank_fee ?? 0}>
+            Included in each generated transaction — the total charged will be amount + fee.
+          </BankFeeField>
         )}
 
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
