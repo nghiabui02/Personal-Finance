@@ -90,13 +90,9 @@ export function TransactionList({
   selectedIds,
   onToggleSelect,
   onClearSelection,
-  scrollableBody = false,
-  hideSummary = false,
 }: {
   transactions: Transaction[]
   filter: Filter
-  hideSummary?: boolean
-  scrollableBody?: boolean
   onFilter: (f: Filter) => void
   onEdit: (tx: Transaction) => void
   onDelete: (id: string) => void
@@ -140,28 +136,9 @@ export function TransactionList({
     return () => observer.disconnect()
   }, [hasMore])
 
-  const income  = transactions.filter(tx => tx.type === 'income').reduce((s, tx) => s + Number(tx.amount), 0)
-  const expense = transactions.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0)
-  const net = income - expense
-
   return (
-    <div className={scrollableBody ? 'flex flex-col min-h-0 flex-1' : ''}>
-      {!hideSummary && (
-        <div className={`grid grid-cols-3 gap-2 mb-4 ${scrollableBody ? 'shrink-0' : ''}`}>
-          {[
-            { label: 'Income',  value: income,  cls: 'text-emerald-600 dark:text-emerald-400' },
-            { label: 'Expense', value: expense, cls: 'text-rose-600 dark:text-rose-400' },
-            { label: 'Net',     value: net,     cls: net >= 0 ? 'text-brand' : 'text-rose-600 dark:text-rose-400' },
-          ].map(item => (
-            <div key={item.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-3 py-2.5">
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 mb-0.5">{item.label}</p>
-              <p className={`text-xs font-semibold tabular-nums ${item.cls}`}>{formatVND(item.value)}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className={`space-y-3 mb-4 ${scrollableBody ? 'shrink-0' : ''}`}>
+    <div className="flex flex-col min-h-0 flex-1">
+      <div className="space-y-3 mb-4 shrink-0">
         <TabGroup
           tabs={[
             { key: 'all',     label: 'All'     },
@@ -179,7 +156,7 @@ export function TransactionList({
         />
       </div>
 
-      <div className={scrollableBody ? 'flex-1 overflow-y-auto min-h-0' : ''}>
+      <div className="flex-1 overflow-y-auto min-h-0">
         {filtered.length === 0 ? (
           <EmptyState
             message={filter === 'all' && !selectedCategoryId ? 'No transactions.' : 'No transactions match this filter.'}

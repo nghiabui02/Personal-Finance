@@ -96,8 +96,6 @@ export default function TransactionsClient({
     selectedIds: selection.selectedIds,
     onToggleSelect: selection.toggle,
     onClearSelection: selection.clearPicks,
-    scrollableBody: true,
-    hideSummary: true,
   }
 
   return (
