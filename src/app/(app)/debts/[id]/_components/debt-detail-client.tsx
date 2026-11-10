@@ -9,6 +9,7 @@ import { type Debt, type DebtPayment } from '@/lib/api/debts'
 import type { WalletChoice } from '@/lib/api/wallets'
 import { AdditionModal } from '../../_components/addition-modal'
 import { PaymentModal } from '../../_components/payment-modal'
+import { formatMonthDayYear } from '@/lib/utils/date'
 
 type DebtWithPayments = Debt & {
   debt_payments: DebtPayment[]
@@ -79,7 +80,7 @@ export default function DebtDetailClient({
               <div className="flex items-center gap-3 mt-0.5">
                 {debt.due_date && (
                   <p className={`text-xs ${isOverdue ? 'text-rose-500' : 'text-gray-400'}`}>
-                    Due {new Date(debt.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    Due {formatMonthDayYear(new Date(debt.due_date))}
                     {isOverdue && ' · Overdue'}
                   </p>
                 )}
@@ -166,7 +167,7 @@ export default function DebtDetailClient({
                         </p>
                         {ev.note && <p className="text-xs text-gray-400 truncate mt-0.5">{ev.note}</p>}
                         <p className="text-[10px] text-gray-400 mt-0.5">
-                          {new Date(ev.paid_at + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {formatMonthDayYear(new Date(ev.paid_at + 'T00:00:00'))}
                         </p>
                       </div>
                       <p className={`text-sm font-semibold tabular-nums shrink-0 ${

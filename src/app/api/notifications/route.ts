@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { badRequest, noContent, withAuth } from '@/lib/server/route'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { formatVND } from '@/lib/utils/currency'
-import { localYM, localYMD, shiftLocalDate } from '@/lib/utils/date'
+import { formatMonthDay, localYM, localYMD, shiftLocalDate } from '@/lib/utils/date'
 
 export type NotificationSeverity = 'alert' | 'warning' | 'info' | 'success'
 
@@ -29,7 +29,7 @@ type CategoryRef = { name: string; icon: string | null } | null
 
 function shortDate(ymd: string): string {
   const [y, m, d] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return formatMonthDay(new Date(y, m - 1, d))
 }
 
 export const GET = withAuth(async (_request, { supabase, user }) => {

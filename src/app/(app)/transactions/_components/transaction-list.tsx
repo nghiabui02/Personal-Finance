@@ -5,7 +5,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { TabGroup } from '@/components/ui/tab-group'
 import { type Transaction } from '@/lib/api/transactions'
 import { formatVND } from '@/lib/utils/currency'
-import { localYMD, shiftLocalDate } from '@/lib/utils/date'
+import { formatWeekdayMonthDay, localYMD, shiftLocalDate } from '@/lib/utils/date'
 import { TransactionRow } from './transaction-row'
 
 export type Filter = 'all' | 'income' | 'expense'
@@ -18,7 +18,7 @@ function formatDateHeader(dateStr: string): string {
   if (dateStr === today) return 'Today'
   if (dateStr === yesterday) return 'Yesterday'
   const [y, m, d] = dateStr.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  return formatWeekdayMonthDay(new Date(y, m - 1, d))
 }
 
 function groupByDate(transactions: Transaction[]): [string, Transaction[]][] {

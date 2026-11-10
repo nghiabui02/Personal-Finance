@@ -9,6 +9,7 @@ import { type Category } from '@/lib/api/categories'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { formatMonthYear } from '@/lib/utils/date'
 
 interface BudgetModalProps {
   editing: Budget | null
@@ -25,7 +26,7 @@ function MonthPicker({ value, onChange }: { value: string; onChange: (v: string)
     onChange(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
   const [y, m] = value.split('-').map(Number)
-  const label = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const label = formatMonthYear(new Date(y, m - 1, 1))
 
   return (
     <div>

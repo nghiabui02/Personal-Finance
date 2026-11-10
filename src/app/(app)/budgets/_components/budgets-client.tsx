@@ -19,6 +19,7 @@ import { useState, useTransition } from 'react'
 import { BudgetModal } from './budget-modal'
 import { SuggestBudgetsModal } from './suggest-budgets-modal'
 import type { BudgetSuggestion } from '@/lib/server/budget-suggestions'
+import { formatMonthYear } from '@/lib/utils/date'
 
 interface BudgetsClientProps {
   budgets: Budget[]
@@ -128,7 +129,7 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
   const spentPct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0
 
   const [y, m] = month.split('-').map(Number)
-  const monthLabel = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const monthLabel = formatMonthYear(new Date(y, m - 1, 1))
 
   function navigate(dir: -1 | 1) {
     const d = new Date(y, m - 1 + dir, 1)

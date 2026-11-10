@@ -1,5 +1,6 @@
 import { formatVND } from '@/lib/utils/currency'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
+import { formatMonthDay } from '@/lib/utils/date'
 
 type Transaction = {
   id: string
@@ -11,7 +12,7 @@ type Transaction = {
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return formatMonthDay(new Date(dateStr))
 }
 
 export function RecentTransactions({ transactions }: { transactions: Transaction[] }) {

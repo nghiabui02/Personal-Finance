@@ -1,7 +1,7 @@
 'use client'
 
 import { formatVND } from '@/lib/utils/currency'
-import { localYM } from '@/lib/utils/date'
+import { formatMonthYear, localYM } from '@/lib/utils/date'
 import { Dot, Em, Verdict } from '@/components/ui/verdict'
 import type { SpendingPace } from '@/lib/server/spending-pace'
 import Link from 'next/link'
@@ -96,10 +96,7 @@ export function DashboardHero({
   }
 
   const [year, monthNum] = month.split('-').map(Number)
-  const monthLabel = new Date(year, monthNum - 1, 1).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  })
+  const monthLabel = formatMonthYear(new Date(year, monthNum - 1, 1))
 
   const net = totalIncome - totalExpense
   const netPositive = net >= 0

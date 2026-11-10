@@ -2,27 +2,26 @@
 
 import { useRouter } from 'next/navigation'
 import { TabGroup } from '@/components/ui/tab-group'
-import { localYMD, localYM, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
+import {
+  formatMonthDay, formatMonthYear, formatWeekdayMonthDay,
+  localYMD, localYM, getMondayOfLocalWeek, shiftLocalDate,
+} from '@/lib/utils/date'
 
 export type ViewMode = 'month' | 'week' | 'day'
 
 function getPeriodLabel(view: ViewMode, period: string): string {
   if (view === 'month') {
     const [y, m] = period.split('-').map(Number)
-    return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    return formatMonthYear(new Date(y, m - 1, 1))
   }
   if (view === 'week') {
     const start = new Date(period + 'T00:00:00')
     const end = new Date(start)
     end.setDate(end.getDate() + 6)
-    const s = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    const e = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    return `${s} – ${e}`
+    return `${formatMonthDay(start)} – ${formatMonthDay(end)}`
   }
   const [y, m, d] = period.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric',
-  })
+  return formatWeekdayMonthDay(new Date(y, m - 1, d))
 }
 
 function shiftPeriod(view: ViewMode, period: string, dir: -1 | 1): string {

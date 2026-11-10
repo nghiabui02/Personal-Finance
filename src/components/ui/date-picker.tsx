@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAnchoredPanel, useOutsideClose } from './use-anchored-panel'
-import { toYMD } from '@/lib/utils/date'
+import { formatMonthYear, toYMD } from '@/lib/utils/date'
 
 // Week starts Monday
 const DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
@@ -97,9 +97,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
   const today        = todayYMD()
   const calendarDays = getCalendarDays(viewYear, viewMonth)
-  const monthLabel   = new Date(viewYear, viewMonth - 1, 1).toLocaleDateString('en-US', {
-    month: 'long', year: 'numeric',
-  })
+  const monthLabel   = formatMonthYear(new Date(viewYear, viewMonth - 1, 1))
 
   return (
     <div ref={ref} className="relative">

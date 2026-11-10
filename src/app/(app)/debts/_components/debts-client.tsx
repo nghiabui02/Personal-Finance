@@ -16,7 +16,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { formatVND } from '@/lib/utils/currency'
-import { localYMD } from '@/lib/utils/date'
+import { formatMonthDayYear, localYMD } from '@/lib/utils/date'
 import { type Debt, debtsApi } from '@/lib/api/debts'
 import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
@@ -191,7 +191,7 @@ function DebtCard({
             <div className="flex items-center gap-2">
               {debt.due_date && (
                 <p className={`text-xs ${isOverdue ? 'text-rose-500' : 'text-gray-400'}`}>
-                  Due {new Date(debt.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  Due {formatMonthDayYear(new Date(debt.due_date))}
                   {isOverdue && ' · Overdue'}
                 </p>
               )}

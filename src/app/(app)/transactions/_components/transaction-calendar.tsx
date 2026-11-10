@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { type Transaction } from '@/lib/api/transactions'
-import { localYMD } from '@/lib/utils/date'
+import { formatMonthYear, formatWeekdayMonthDay, localYMD } from '@/lib/utils/date'
 
 interface TransactionCalendarProps {
   transactions: Transaction[]
@@ -57,10 +57,7 @@ export function TransactionCalendar({
     onSelectDate(null)
   }
 
-  const monthLabel = new Date(year, month - 1, 1).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  })
+  const monthLabel = formatMonthYear(new Date(year, month - 1, 1))
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-3 sm:p-4 lg:sticky">
@@ -151,9 +148,7 @@ export function TransactionCalendar({
       {selectedDate && (
         <div className="mt-3 pt-3 border-t border-hairline flex items-center justify-between">
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
-              weekday: 'short', month: 'short', day: 'numeric',
-            })}
+            {formatWeekdayMonthDay(new Date(selectedDate + 'T00:00:00'))}
           </span>
           <button
             onClick={() => onSelectDate(null)}
