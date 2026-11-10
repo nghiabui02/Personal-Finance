@@ -53,3 +53,5 @@ CLAUDE.md
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+# local planning notes — not shared in the repo
+/doc/
