@@ -8,6 +8,7 @@ import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { useRef, useState, useSyncExternalStore } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
+import { Avatar } from '@/components/ui/avatar'
 
 interface SettingsClientProps {
   userId: string
@@ -59,7 +60,6 @@ export default function SettingsClient({
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState(initialAvatarUrl)
-  const [imgError, setImgError] = useState(false)
 
   // Sync from server data (e.g. after router.refresh()) — adjust state during render
   // instead of in an effect: https://react.dev/learn/you-might-not-need-an-effect
@@ -69,7 +69,6 @@ export default function SettingsClient({
     if (!avatarFile) {
       setAvatarUrl(initialAvatarUrl)
       setAvatarPreview(initialAvatarUrl)
-      setImgError(false)
     }
   }
 
@@ -89,7 +88,6 @@ export default function SettingsClient({
     if (!file) return
     setAvatarFile(file)
     setAvatarPreview(URL.createObjectURL(file))
-    setImgError(false)
   }
 
   async function handleSaveProfile() {
@@ -199,7 +197,6 @@ export default function SettingsClient({
 
   const { theme, setTheme } = useTheme()
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
-  const initials = (name || currentEmail)[0]?.toUpperCase() ?? 'U'
 
   const themeOptions = [
     { value: 'light',  label: 'Light',  Icon: SunIcon  },
@@ -217,19 +214,7 @@ export default function SettingsClient({
       <Section title="Profile">
         <div className="flex items-center gap-4 mb-5">
           <div className="relative shrink-0">
-            {avatarPreview && !imgError ? (
-              // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
-              <img
-                src={avatarPreview}
-                alt="Avatar"
-                className="w-16 h-16 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-800"
-                onError={() => setImgError(true)}
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-brand-fill flex items-center justify-center text-white text-xl font-semibold ring-2 ring-gray-100 dark:ring-gray-800">
-                {initials}
-              </div>
-            )}
+            <Avatar src={avatarPreview} name={name || currentEmail} size="xl" tone="brand" alt="Avatar" />
             <button
               type="button"
               onClick={() => fileRef.current?.click()}

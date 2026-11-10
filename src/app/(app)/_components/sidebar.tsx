@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
 import { User } from '@supabase/supabase-js'
+import { Avatar } from '@/components/ui/avatar'
 
 /**
  * Grouped to match the mobile bottom nav: the same four buckets, so the two
@@ -54,12 +54,10 @@ function NavItem({ item, active }: { item: NavGroupItem; active: boolean }) {
 
 export default function Sidebar({ user }: { user: User }) {
   const pathname = usePathname()
-  const [avatarErr, setAvatarErr] = useState(false)
 
   const meta = user.user_metadata ?? {}
   const avatarUrl = meta.avatar_url as string | undefined
   const displayName = (meta.full_name as string) || user.email?.split('@')[0] || 'User'
-  const initials = displayName[0]?.toUpperCase() ?? 'U'
 
   const isActive = (href: string) =>
     pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
@@ -96,19 +94,7 @@ export default function Sidebar({ user }: { user: User }) {
 
       {/* User */}
       <div className="shrink-0 border-t border-hairline px-4 py-4 flex items-center gap-3">
-        {avatarUrl && !avatarErr ? (
-          // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
-          <img
-            src={avatarUrl}
-            alt="Avatar"
-            className="w-9 h-9 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 shrink-0"
-            onError={() => setAvatarErr(true)}
-          />
-        ) : (
-          <div className="w-9 h-9 rounded-full bg-gray-900 dark:bg-gray-200 flex items-center justify-center text-white dark:text-gray-900 text-sm font-semibold shrink-0">
-            {initials}
-          </div>
-        )}
+        <Avatar src={avatarUrl} name={displayName} alt="Avatar" />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">{displayName}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 truncate leading-tight">{user.email}</p>

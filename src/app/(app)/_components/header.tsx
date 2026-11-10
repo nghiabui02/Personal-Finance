@@ -2,8 +2,8 @@
 
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { useState } from 'react'
 import { NotificationBell } from './notification-bell'
+import { Avatar } from '@/components/ui/avatar'
 
 export default function Header({
   user,
@@ -17,8 +17,6 @@ export default function Header({
   const meta = user.user_metadata ?? {}
   const avatarUrl = meta.avatar_url as string | undefined
   const displayName = (meta.full_name as string) || user.email?.split('@')[0] || 'User'
-  const initials = displayName[0]?.toUpperCase() ?? 'U'
-  const [avatarErr, setAvatarErr] = useState(false)
 
   return (
     <header className="shrink-0 pt-safe w-full bg-gray-50/90 dark:bg-gray-950/90 backdrop-blur-sm md:border-b md:border-gray-200 md:dark:border-gray-800">
@@ -54,19 +52,7 @@ export default function Header({
             It is also the way into Categories and Settings now that the bottom
             nav spends its slots on the four daily screens. */}
         <Link href="/more" aria-label="Account" className="flex md:hidden items-center gap-2 rounded-full">
-          {avatarUrl && !avatarErr ? (
-            // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
-            <img
-              src={avatarUrl}
-              alt=""
-              className="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 shrink-0"
-              onError={() => setAvatarErr(true)}
-            />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-gray-900 dark:bg-gray-200 flex items-center justify-center text-white dark:text-gray-900 text-xs font-semibold shrink-0">
-              {initials}
-            </div>
-          )}
+          <Avatar src={avatarUrl} name={displayName} size="sm" />
           <span className="hidden sm:block text-sm font-medium text-gray-600 dark:text-gray-300 max-w-36 truncate">
             {displayName}
           </span>

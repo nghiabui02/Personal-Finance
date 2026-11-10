@@ -1,5 +1,6 @@
 import { requireUser } from '@/lib/server/auth'
 import Link from 'next/link'
+import { Avatar } from '@/components/ui/avatar'
 
 const CHEVRON = (
   <svg className="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -39,7 +40,6 @@ export default async function MorePage() {
   const displayName = (meta.full_name as string) || user.email?.split('@')[0] || 'User'
   const email = user.email ?? ''
   const avatarUrl = meta.avatar_url as string | undefined
-  const initials = displayName[0]?.toUpperCase() ?? 'U'
 
   return (
     <div className="space-y-3 pb-2">
@@ -48,14 +48,7 @@ export default async function MorePage() {
         href="/settings"
         className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-hairline px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
       >
-        {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- tiny remote avatar, host varies per auth provider
-          <img src={avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 shrink-0" />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-gray-200 flex items-center justify-center text-white dark:text-gray-900 text-lg font-semibold shrink-0">
-            {initials}
-          </div>
-        )}
+        <Avatar src={avatarUrl} name={displayName} size="lg" />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{displayName}</p>
           <p className="text-sm text-gray-400 truncate">{email}</p>
