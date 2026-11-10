@@ -19,6 +19,17 @@ export type Transaction = {
   wallets: { id: string; name: string } | null
 }
 
+/**
+ * A transfer leg and a debt repayment are owned by the record they belong to:
+ * their direction and category follow it, and re-creating one from a list
+ * would leave that record pointing at nothing. They can still be deleted —
+ * the database function reverses the whole relationship — but not restored
+ * from here, and not recategorised in bulk.
+ */
+export function isStandalone(tx: Transaction): boolean {
+  return !tx.transfer_pair_id && !tx.debt_payment_id
+}
+
 type TransactionPayload = {
   type: TransactionType
   amount: number
