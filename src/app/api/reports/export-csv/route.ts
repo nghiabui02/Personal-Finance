@@ -3,6 +3,7 @@ import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { NextResponse } from 'next/server'
 import { withAuth } from '@/lib/server/route'
 import { toYMD } from '@/lib/utils/date'
+import { sumByType } from '@/lib/utils/totals'
 
 function esc(v: string | number | null | undefined): string {
   const s = String(v ?? '')
@@ -76,8 +77,8 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const flowTxs = txs.filter(tx => getReportingGroup(tx) === 'operating')
   const nonOperatingFlows = summarizeNonOperatingFlows(txs)
 
-  const totalIncome  = flowTxs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
-  const totalExpense = flowTxs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+  const totalIncome  = sumByType(flowTxs, 'income')
+  const totalExpense = sumByType(flowTxs, 'expense')
   const net          = totalIncome - totalExpense
   const savingsRate  = totalIncome > 0 ? ((net / totalIncome) * 100).toFixed(1) : '0'
 

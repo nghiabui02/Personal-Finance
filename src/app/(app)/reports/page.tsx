@@ -9,6 +9,7 @@ import type { PeriodType } from '@/lib/utils/period'
 import type { CategoryRef, NetWorthSnapshot } from '@/lib/types'
 import ReportsClient from './_components/reports-client'
 import type { ChartPoint, CategoryData } from './_components/types'
+import { sumByType } from '@/lib/utils/totals'
 
 export const metadata: Metadata = { title: 'Reports' }
 export const dynamic = 'force-dynamic'
@@ -45,16 +46,13 @@ type RawTx = {
 }
 
 function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): ChartPoint[] {
-  const sum = (list: RawTx[], type: 'income' | 'expense') =>
-    list.filter(t => t.type === type).reduce((s, t) => s + Number(t.amount), 0)
-
   if (period === 'week') {
     return Array.from({ length: 7 }, (_, i) => {
       const ymd = shiftLocalDate(startDate, i)
       const [y, m, d] = ymd.split('-').map(Number)
       const label = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short' })
       const day   = txs.filter(t => t.transaction_date === ymd)
-      return { label, income: sum(day, 'income'), expense: sum(day, 'expense') }
+      return { label, income: sumByType(day, 'income'), expense: sumByType(day, 'expense') }
     })
   }
 
@@ -65,7 +63,7 @@ function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): Ch
       const d   = i + 1
       const ymd = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
       const day = txs.filter(t => t.transaction_date === ymd)
-      return { label: String(d), income: sum(day, 'income'), expense: sum(day, 'expense') }
+      return { label: String(d), income: sumByType(day, 'income'), expense: sumByType(day, 'expense') }
     })
   }
 
@@ -76,7 +74,7 @@ function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): Ch
       const mi     = m + i
       const prefix = `${y}-${String(mi).padStart(2, '0')}`
       const month  = txs.filter(t => t.transaction_date.startsWith(prefix))
-      return { label: MONTHS[mi - 1], income: sum(month, 'income'), expense: sum(month, 'expense') }
+      return { label: MONTHS[mi - 1], income: sumByType(month, 'income'), expense: sumByType(month, 'expense') }
     })
   }
 
@@ -86,7 +84,7 @@ function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): Ch
   return Array.from({ length: 12 }, (_, i) => {
     const prefix = `${y}-${String(i + 1).padStart(2, '0')}`
     const month  = txs.filter(t => t.transaction_date.startsWith(prefix))
-    return { label: MONTHS[i], income: sum(month, 'income'), expense: sum(month, 'expense') }
+    return { label: MONTHS[i], income: sumByType(month, 'income'), expense: sumByType(month, 'expense') }
   })
 }
 

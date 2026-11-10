@@ -4,6 +4,7 @@ import { withAuth, jsonError, tooManyRequests } from '@/lib/server/route'
 import { isRateLimited, ONE_MINUTE_MS } from '@/lib/server/rate-limit'
 import { askForJson, createGroqClient } from '@/lib/server/groq'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
+import { sumAmounts, sumRemaining } from '@/lib/utils/totals'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
@@ -76,10 +77,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const creditWallets = wallets.filter(w => w.type === 'credit' && Number(w.credit_limit) > 0)
   const creditLimitTotal = creditWallets.reduce((s, w) => s + Number(w.credit_limit), 0)
   const creditUsed = creditWallets.reduce((s, w) => s + Math.max(0, Number(w.credit_limit) - Number(w.balance)), 0)
-  const receivable = (debtRows ?? []).filter(d => d.type === 'lend')
-    .reduce((s, d) => s + Number(d.remaining_amount), 0)
-  const payable = (debtRows ?? []).filter(d => d.type === 'borrow')
-    .reduce((s, d) => s + Number(d.remaining_amount), 0)
+  const receivable = sumRemaining(debtRows ?? [], 'lend')
+  const payable = sumRemaining(debtRows ?? [], 'borrow')
   const netWorth = liquidAssets + investments + receivable - creditUsed - payable
 
   // Check DB cache (skip if force-refresh). Version prefix invalidates old
@@ -139,7 +138,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
 
   // Monthly run rate from the trailing 90 days of real spending, so the
   // emergency-fund figure stays stable no matter which period is being viewed.
-  const last90Expense = (recentExpenseRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
+  const last90Expense = sumAmounts(recentExpenseRows ?? [])
   const monthlyExpense = Math.round(last90Expense / 3)
   const runwayMonths = monthlyExpense > 0 ? liquidAssets / monthlyExpense : null
   const creditUtilPct = creditLimitTotal > 0 ? Math.round((creditUsed / creditLimitTotal) * 100) : null
@@ -195,7 +194,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
       .eq('user_id', user.id).eq('type', 'expense')
       .gte('transaction_date', prevWeekStart)
       .lt('transaction_date', weekStart), excludedCategoryIds)
-    const prevExpense = (prevWeekRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
+    const prevExpense = sumAmounts(prevWeekRows ?? [])
     const expenseChange = prevExpense > 0 ? (totalExpense - prevExpense) / prevExpense : null
     suggestedScore =
       expenseChange === null ? 60 :

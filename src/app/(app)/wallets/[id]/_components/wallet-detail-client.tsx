@@ -8,6 +8,8 @@ import { type Category } from '@/lib/api/categories'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_ICONS, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
+import { DateGroupHeader } from '@/components/ui/date-group-header'
+import { netOf } from '@/lib/utils/totals'
 
 function formatDateHeader(dateStr: string): string {
   const today = localYMD()
@@ -155,18 +157,7 @@ export default function WalletDetailClient({
         <div className="space-y-4">
           {groups.map(([date, txs]) => (
             <div key={date}>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
-                  {formatDateHeader(date)}
-                </p>
-                <p className={`text-xs tabular-nums font-medium ${
-                  txs.reduce((s, t) => s + (t.type === 'income' ? Number(t.amount) : -Number(t.amount)), 0) >= 0
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
-                }`}>
-                  {formatVND(txs.reduce((s, t) => s + (t.type === 'income' ? Number(t.amount) : -Number(t.amount)), 0))}
-                </p>
-              </div>
+              <DateGroupHeader label={formatDateHeader(date)} net={netOf(txs)} />
 
               <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline divide-y divide-hairline">
                 {txs.map(tx => {

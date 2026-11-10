@@ -11,6 +11,7 @@ import { formatVND } from '@/lib/utils/currency'
 import { ImportReview, type ReviewedRow } from './import-review'
 import { ImportSource } from './import-source'
 import { useCsvSource, useStatementReview } from './use-bank-import'
+import { netOf } from '@/lib/utils/totals'
 
 /** Review is local; saving is a single atomic request, safe to retry after a lost response. */
 export function BankImportClient({ wallets, categories, recent }: {
@@ -69,7 +70,7 @@ function ImportSuccess({ result, wallet }: { result: ImportResult; wallet: Walle
 
 function ReviewActions({ rows, busy, onBack }: { rows: ReviewedRow[]; busy: boolean; onBack: () => void }) {
   const selected = rows.filter(row => row.selected)
-  const net = selected.reduce((total, row) => total + (row.type === 'income' ? row.amount : -row.amount), 0)
+  const net = netOf(selected)
   const canSave = selected.length > 0 && selected.every(row => row.title.trim()) && !rows.some(row => row.conflict)
   return (
     <div className="sticky bottom-0 rounded-xl border border-hairline bg-white dark:bg-gray-900 p-4 space-y-3">

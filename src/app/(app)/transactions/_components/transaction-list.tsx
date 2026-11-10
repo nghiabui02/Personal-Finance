@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { TabGroup } from '@/components/ui/tab-group'
 import { type Transaction } from '@/lib/api/transactions'
-import { formatVND } from '@/lib/utils/currency'
 import { formatWeekdayMonthDay, localYMD, shiftLocalDate } from '@/lib/utils/date'
 import { TransactionRow } from './transaction-row'
+import { DateGroupHeader } from '@/components/ui/date-group-header'
+import { netOf } from '@/lib/utils/totals'
 
 export type Filter = 'all' | 'income' | 'expense'
 
@@ -166,18 +167,7 @@ export function TransactionList({
           <div className="space-y-4">
             {groups.map(([date, txs], groupIdx) => (
               <div key={date} className="animate-fade-up" style={{ animationDelay: `${groupIdx * 40}ms` }}>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
-                    {formatDateHeader(date)}
-                  </p>
-                  <p className={`text-xs tabular-nums font-medium ${
-                    txs.reduce((s, tx) => s + (tx.type === 'income' ? Number(tx.amount) : -Number(tx.amount)), 0) >= 0
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-rose-600 dark:text-rose-400'
-                  }`}>
-                    {formatVND(txs.reduce((s, tx) => s + (tx.type === 'income' ? Number(tx.amount) : -Number(tx.amount)), 0))}
-                  </p>
-                </div>
+                <DateGroupHeader label={formatDateHeader(date)} net={netOf(txs)} />
 
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline divide-y divide-hairline">
                   {txs.map(tx => (

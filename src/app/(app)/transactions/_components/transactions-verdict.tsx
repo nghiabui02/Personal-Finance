@@ -2,10 +2,7 @@ import { Dot, Em, Verdict } from '@/components/ui/verdict'
 import { type Transaction } from '@/lib/api/transactions'
 import { formatVND } from '@/lib/utils/currency'
 import { plural } from '@/lib/utils/plural'
-
-function sumOf(transactions: Transaction[], type: Transaction['type']): number {
-  return transactions.filter(tx => tx.type === type).reduce((sum, tx) => sum + Number(tx.amount), 0)
-}
+import { sumByType } from '@/lib/utils/totals'
 
 /** The sentence the transactions screen opens with; the figures under it are
  *  the evidence. */
@@ -18,8 +15,8 @@ export function TransactionsVerdict({
    *  "nothing recorded". */
   isNarrowed: boolean
 }) {
-  const totalIncome = sumOf(transactions, 'income')
-  const totalExpense = sumOf(transactions, 'expense')
+  const totalIncome = sumByType(transactions, 'income')
+  const totalExpense = sumByType(transactions, 'expense')
   const totalNet = totalIncome - totalExpense
   const biggestExpense = transactions
     .filter(tx => tx.type === 'expense')

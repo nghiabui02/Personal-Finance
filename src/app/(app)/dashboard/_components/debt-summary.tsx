@@ -1,5 +1,6 @@
 import { formatVND } from '@/lib/utils/currency'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
+import { sumRemaining } from '@/lib/utils/totals'
 
 type DebtItem = {
   type: 'lend' | 'borrow'
@@ -9,8 +10,8 @@ type DebtItem = {
 
 export function DebtSummary({ debts }: { debts: DebtItem[] }) {
   const active = debts.filter(d => d.status === 'active')
-  const totalLend = active.filter(d => d.type === 'lend').reduce((s, d) => s + Number(d.remaining_amount), 0)
-  const totalBorrow = active.filter(d => d.type === 'borrow').reduce((s, d) => s + Number(d.remaining_amount), 0)
+  const totalLend = sumRemaining(active, 'lend')
+  const totalBorrow = sumRemaining(active, 'borrow')
 
   const net = totalLend - totalBorrow
 

@@ -16,6 +16,7 @@ import { NetWorthChart } from './_components/net-worth-chart'
 import { RecentTransactions } from './_components/recent-transactions'
 import { SpendingChart } from './_components/spending-chart'
 import { walletsQuery } from '@/lib/server/queries'
+import { sumAmounts } from '@/lib/utils/totals'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,7 +64,7 @@ export default async function DashboardPage({
     computeNetWorth(walletRows ?? [], debtRows ?? [])
   await recordNetWorthSnapshot(supabase, user.id, netWorth)
 
-  const totalIncome = (incomeRows ?? []).reduce((s, r) => s + Number(r.amount), 0)
+  const totalIncome = sumAmounts(incomeRows ?? [])
 
   let totalExpense = 0
   const catMap = new Map<string, CategoryRef & { amount: number }>()

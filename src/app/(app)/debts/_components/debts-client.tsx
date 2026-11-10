@@ -25,6 +25,7 @@ import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
+import { sumRemaining } from '@/lib/utils/totals'
 
 
 // ── Debt Modal ────────────────────────────────────────────────────────────────
@@ -313,8 +314,9 @@ export default function DebtsClient({
   const activeCount = debts.filter(d => d.status !== 'completed').length
   const completedCount = debts.filter(d => d.status === 'completed').length
 
-  const totalLent = debts.filter(d => d.type === 'lend' && d.status !== 'completed').reduce((s, d) => s + d.remaining_amount, 0)
-  const totalBorrowed = debts.filter(d => d.type === 'borrow' && d.status !== 'completed').reduce((s, d) => s + d.remaining_amount, 0)
+  const outstanding = debts.filter(d => d.status !== 'completed')
+  const totalLent = sumRemaining(outstanding, 'lend')
+  const totalBorrowed = sumRemaining(outstanding, 'borrow')
   const netPosition = totalLent - totalBorrowed
   const nextDue = debts
     .filter(d => d.status !== 'completed' && d.due_date)
