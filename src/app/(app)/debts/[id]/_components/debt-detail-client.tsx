@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { formatVND } from '@/lib/utils/currency'
 import { type Debt, type DebtPayment } from '@/lib/api/debts'
-import type { Wallet } from '@/lib/api/wallets'
+import type { WalletChoice } from '@/lib/api/wallets'
 import { AdditionModal } from '../../_components/addition-modal'
 import { PaymentModal } from '../../_components/payment-modal'
 
@@ -22,7 +22,7 @@ export default function DebtDetailClient({
   wallets,
 }: {
   debt: DebtWithPayments
-  wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
+  wallets: WalletChoice[]
 }) {
   const [payOpen, setPayOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)

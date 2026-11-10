@@ -48,6 +48,17 @@ export type WalletTransaction = {
 }
 
 /** Columns a `Wallet` needs — keep in sync with the type above. */
+/** The few wallet fields a picker needs. */
+export type WalletChoice = Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>
+
+/** Options for a wallet picker, led by the entry that means "none". */
+export function toWalletOptions(wallets: Pick<Wallet, 'id' | 'name' | 'color'>[], emptyLabel = 'No wallet') {
+  return [
+    { value: '', label: emptyLabel },
+    ...wallets.map(wallet => ({ value: wallet.id, label: wallet.name, color: wallet.color })),
+  ]
+}
+
 export const WALLET_COLUMNS = 'id, user_id, name, type, balance, color, icon, is_default, credit_limit, statement_day, payment_due_day'
 
 /** Columns a `WalletTransaction` needs. */

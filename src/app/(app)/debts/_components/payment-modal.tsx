@@ -9,7 +9,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Debt, debtsApi } from '@/lib/api/debts'
-import { type Wallet } from '@/lib/api/wallets'
+import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { errorMessage } from '@/lib/utils/errors'
@@ -22,7 +22,7 @@ export function PaymentModal({
   onClose,
 }: {
   debt: Debt
-  wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
+  wallets: WalletChoice[]
   onClose: () => void
 }) {
   const close = useModalClose()
@@ -33,10 +33,7 @@ export function PaymentModal({
   const [date, setDate] = useState(localYMD())
   const [amount, setAmount] = useState(0)
 
-  const walletOptions = [
-    { value: '', label: 'No wallet' },
-    ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
-  ]
+  const walletOptions = toWalletOptions(wallets)
 
   const overpaying = amount > debt.remaining_amount
   const remainingAfter = Math.max(0, debt.remaining_amount - amount)

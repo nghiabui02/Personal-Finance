@@ -20,7 +20,7 @@ import { Modal, useModalClose } from '@/components/ui/modal'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { type Category } from '@/lib/api/categories'
-import { type Wallet } from '@/lib/api/wallets'
+import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
 import { type RecurringTransaction, FREQUENCY_LABELS, recurringApi } from '@/lib/api/recurring-transactions'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -59,10 +59,7 @@ function RecurringModal({
   const [endDate, setEndDate] = useState(editing?.end_date ?? '')
   const [showFee, setShowFee] = useState(Number(editing?.bank_fee) > 0)
 
-  const walletOptions = [
-    { value: '', label: 'No wallet' },
-    ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
-  ]
+  const walletOptions = toWalletOptions(wallets)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()

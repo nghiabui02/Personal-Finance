@@ -6,7 +6,7 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { TabGroup } from '@/components/ui/tab-group'
 import { type Category } from '@/lib/api/categories'
-import { type Wallet } from '@/lib/api/wallets'
+import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
 import type { TransactionFilters } from '@/lib/server/transaction-filters'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
@@ -56,10 +56,7 @@ export function FilterModal({
     { value: '', label: 'Any category' },
     ...selectableCategories.map(c => ({ value: c.id, label: `${c.icon ?? ''} ${c.name}`.trim() })),
   ]
-  const walletOptions = [
-    { value: '', label: 'Any wallet' },
-    ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color ?? undefined })),
-  ]
+  const walletOptions = toWalletOptions(wallets, 'Any wallet')
 
   function apply() {
     router.push(buildFilterUrl(new URLSearchParams(searchParams.toString()), {

@@ -11,7 +11,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { type Category } from '@/lib/api/categories'
 import { type Transaction, transactionsApi } from '@/lib/api/transactions'
-import { type Wallet } from '@/lib/api/wallets'
+import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import type { DebtOption } from '@/lib/types'
@@ -181,10 +181,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
     })
   }
 
-  const walletOptions = [
-    { value: '', label: 'No wallet' },
-    ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
-  ]
+  const walletOptions = toWalletOptions(wallets)
 
   // Detect if selected category is a debt-related one — by system_key, not
   // display name, so renaming a category (or i18n) never breaks this.

@@ -18,7 +18,7 @@ import { Modal, useModalClose } from '@/components/ui/modal'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { type Debt, debtsApi } from '@/lib/api/debts'
-import { type Wallet } from '@/lib/api/wallets'
+import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { AdditionModal } from './addition-modal'
@@ -36,7 +36,7 @@ function DebtModal({
 }: {
   editing: Debt | null
   defaultType?: 'lend' | 'borrow'
-  wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
+  wallets: WalletChoice[]
   onClose: () => void
 }) {
   const close = useModalClose()
@@ -50,10 +50,7 @@ function DebtModal({
     editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? ''
   )
 
-  const walletOptions = [
-    { value: '', label: 'No wallet' },
-    ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
-  ]
+  const walletOptions = toWalletOptions(wallets)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -304,7 +301,7 @@ export default function DebtsClient({
   wallets,
 }: {
   debts: Debt[]
-  wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
+  wallets: WalletChoice[]
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()

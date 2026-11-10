@@ -11,7 +11,7 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { debtsApi, type Debt } from '@/lib/api/debts'
-import type { Wallet } from '@/lib/api/wallets'
+import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
 import { errorMessage } from '@/lib/utils/errors'
 
 // Records more money lent/borrowed against an existing debt — increases
@@ -23,7 +23,7 @@ export function AdditionModal({
   onClose,
 }: {
   debt: Debt
-  wallets: Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>[]
+  wallets: WalletChoice[]
   onClose: () => void
 }) {
   const close = useModalClose()
@@ -34,10 +34,7 @@ export function AdditionModal({
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
   const [amount, setAmount] = useState(0)
 
-  const walletOptions = [
-    { value: '', label: 'No wallet' },
-    ...wallets.map(w => ({ value: w.id, label: w.name, color: w.color })),
-  ]
+  const walletOptions = toWalletOptions(wallets)
 
   const remainingAfter = debt.remaining_amount + amount
 
