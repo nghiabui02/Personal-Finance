@@ -19,6 +19,15 @@ A personal finance app for a single user. Income/expense tracking, wallets, budg
 - One-tap chips for the spends you repeat, drawn from your own last 90 days
 - A wallet can't be spent past what it holds; the shortfall is shown as you type
 - Filter by direction, category, wallet and amount range; search notes across all time
+- The category a note was filed under last time is offered as you type — in the
+  form and on each row of a CSV import. Offered, never applied on its own
+- Same day, same wallet, same amount as something already recorded? The form
+  says so before you save it twice
+- Deleting a plain transaction happens at once, with **Undo** in the toast.
+  Transfers and debt repayments still ask first: undo cannot rebuild the record
+  on the other side
+- **Select** turns the list into checkboxes — move a batch to one category, or
+  delete a batch in a single database transaction
 - Import a VCB CSV statement: map columns, review titles/categories, skip rows,
   then confirm the batch before reconciling the bank wallet
 
@@ -92,6 +101,11 @@ Supabase directly too.
 Creating a transaction opens a **full page** on a phone (`/transactions/new`)
 and a **dialog** on desktop. The form is one shared component; only the wrapper
 differs. Editing is always a dialog.
+
+**On a phone**
+
+- Installable to the home screen, where it opens without browser chrome. Add it
+  from the browser's share menu; no store, no build step
 
 ## Getting Started
 
@@ -185,6 +199,22 @@ Parser checks: `node --experimental-strip-types --test tests/bank-csv.test.mjs`.
 and deleted-entry retries. Run it as postgres only against a disposable local
 Supabase database with the complete schema and migrations; it rolls back its
 fixtures. Do not run it against the live database.
+
+## Tests
+
+```bash
+node --experimental-strip-types --test tests/bank-csv.test.mjs          # CSV parser
+node --experimental-strip-types --test tests/transaction-matching.test.mjs  # category suggestion, duplicate check
+```
+
+`tests/bank-import.sql` and `tests/bulk-delete.sql` cover the money functions —
+atomicity, retries, ownership, and the balance after a refused batch. Run them
+as postgres against a disposable local Supabase database with the full schema;
+each rolls its fixtures back. Do not run them against the live database.
+
+Apply `supabase/migrations/20261110000000_bulk_delete_transactions.sql` before
+using batch delete. It adds `delete_transactions(uuid[])`, which loops the
+existing `delete_transaction` inside one transaction.
 
 ## Scripts
 
