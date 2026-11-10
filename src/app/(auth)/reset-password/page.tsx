@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
 import { FormError } from '@/components/ui/form-error'
 import { useAuthForm } from '../use-auth-form'
+import { AuthCard, AuthHeading } from '../_components/auth-card'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -36,42 +37,31 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-hairline shadow-sm">
-      {/* Brand header */}
-      <div className="bg-panel px-6 py-5">
-        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
-          <span className="text-white font-bold text-base leading-none">₫</span>
-        </div>
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">Personal Finance</p>
-      </div>
+    <AuthCard>
+      <AuthHeading title="Set new password">Choose a strong password for your account.</AuthHeading>
 
-      <div className="bg-white dark:bg-gray-900 px-6 py-6">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1">Set new password</h1>
-        <p className="text-sm text-gray-400 mb-6">Choose a strong password for your account.</p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="New password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            placeholder="••••••••"
-          />
-          <Input
-            label="Confirm password"
-            name="confirm"
-            type="password"
-            autoComplete="new-password"
-            required
-            placeholder="••••••••"
-          />
-          <FormError message={error} />
-          <Button type="submit" disabled={isPending} fullWidth>
-            {isPending ? 'Saving...' : 'Set new password'}
-          </Button>
-        </form>
-      </div>
-    </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="New password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          placeholder="••••••••"
+        />
+        <Input
+          label="Confirm password"
+          name="confirm"
+          type="password"
+          autoComplete="new-password"
+          required
+          placeholder="••••••••"
+        />
+        <FormError message={error} />
+        <Button type="submit" disabled={isPending} fullWidth>
+          {isPending ? 'Saving...' : 'Set new password'}
+        </Button>
+      </form>
+    </AuthCard>
   )
 }
