@@ -1,7 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { CATEGORY_COLUMNS, type Category } from '@/lib/api/categories'
-import { WALLET_COLUMNS, type Wallet } from '@/lib/api/wallets'
-import { getFrequentTransactions, type FrequentTransaction } from './frequent-transactions'
+import type { Category } from '@/lib/api/categories'
+import type { Wallet } from '@/lib/api/wallets'
+import { categoriesQuery, walletsQuery } from './queries'
+import { getRecentTransactions, type RecentTransaction } from './recent-transactions'
+import { toFrequentTransactions, type FrequentTransaction } from './frequent-transactions'
 import type { DebtOption } from '@/lib/types'
 
 /** Everything the transaction form needs to render before the user types. */
@@ -10,32 +12,34 @@ export interface QuickAddData {
   wallets: Wallet[]
   debts: DebtOption[]
   frequent: FrequentTransaction[]
+  /** Powers the category suggestion and the duplicate warning as the user types. */
+  recent: RecentTransaction[]
 }
 
 export async function getQuickAddData(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<QuickAddData> {
-  const [{ data: categories }, { data: wallets }, { data: debts }, frequent] = await Promise.all([
-    supabase.from('categories').select(CATEGORY_COLUMNS)
-      .order('is_default', { ascending: false }).order('name'),
-    supabase.from('wallets').select(WALLET_COLUMNS)
-      .eq('user_id', userId).order('is_default', { ascending: false }).order('name'),
+  const [{ data: categories }, { data: wallets }, { data: debts }, recent] = await Promise.all([
+    categoriesQuery(supabase),
+    walletsQuery(supabase, userId),
     // Only debts a payment can still be recorded against.
     supabase.from('debts').select('id, type, person_name, remaining_amount')
-      .eq('user_id', userId).eq('status', 'active').gt('remaining_amount', 0),
-    getFrequentTransactions(supabase, userId),
+      .eq('user_id', userId).eq('status', 'active').gt('remaining_amount', 0)
+      .order('person_name'),
+    getRecentTransactions(supabase, userId),
   ])
 
   return {
     categories: (categories ?? []) as Category[],
-    wallets: (wallets ?? []) as Wallet[],
+    wallets: (wallets ?? []) as unknown as Wallet[],
     debts: (debts ?? []).map(d => ({
       id: d.id,
       type: d.type as 'lend' | 'borrow',
       person_name: d.person_name,
       remaining_amount: Number(d.remaining_amount),
     })),
-    frequent,
+    frequent: toFrequentTransactions(recent),
+    recent,
   }
 }

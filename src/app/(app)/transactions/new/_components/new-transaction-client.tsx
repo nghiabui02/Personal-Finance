@@ -22,6 +22,7 @@ export function NewTransactionClient({ data, defaultDate }: { data: QuickAddData
       wallets={data.wallets}
       debts={data.debts}
       frequent={data.frequent}
+      recent={data.recent}
       defaultDate={defaultDate}
       onDone={leave}
       onCancel={leave}

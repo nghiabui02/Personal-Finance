@@ -18,6 +18,7 @@ import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 import type { DebtOption } from '@/lib/types'
 import { TransactionModal } from './transaction-modal'
 import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
+import type { HistoryTransaction } from '@/lib/transaction-matching'
 import { countActiveFilters, type TransactionFilters } from '@/lib/server/transaction-filters'
 import { FilterModal } from './filter-modal'
 import { PeriodNavigator, ViewSelector, type ViewMode } from './period-navigator'
@@ -50,6 +51,7 @@ interface TransactionsClientProps {
   wallets: Wallet[]
   debts: DebtOption[]
   frequent: FrequentTransaction[]
+  recent: HistoryTransaction[]
   view: ViewMode
   period: string
   searchQuery?: string
@@ -317,6 +319,7 @@ export default function TransactionsClient({
   wallets,
   debts,
   frequent,
+  recent,
   view,
   period,
   searchQuery = '',
@@ -616,6 +619,7 @@ export default function TransactionsClient({
           wallets={wallets}
           debts={debts}
           frequent={frequent}
+          recent={recent}
           defaultDate={editingTx ? undefined : defaultDate}
           onClose={() => { setModalOpen(false); setEditingTx(null) }}
         />

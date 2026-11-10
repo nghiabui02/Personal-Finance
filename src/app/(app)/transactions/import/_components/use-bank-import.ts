@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { bankImportApi, type ImportFile, type ImportResult } from '@/lib/api/bank-import'
+import { bankImportApi, type ImportFile, type ImportPreviewRow, type ImportResult } from '@/lib/api/bank-import'
 import { MAX_CSV_BYTES, parseCsv, readStatement } from '@/lib/imports/bank-csv'
 import { errorMessage } from '@/lib/utils/errors'
 import { EMPTY_MAPPING } from './csv-column-mapping'
@@ -42,7 +42,12 @@ export function useCsvSource() {
 }
 
 /** Saving uses one atomic request; double clicks and lost responses are safe to retry. */
-export function useStatementReview(file: ImportFile, records: string[][]) {
+export function useStatementReview(
+  file: ImportFile,
+  records: string[][],
+  /** Category this row's description was filed under before, or null. */
+  suggestCategory: (row: ImportPreviewRow) => string | null,
+) {
   const router = useRouter()
   const [rows, setRows] = useState<ReviewedRow[] | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
@@ -62,7 +67,12 @@ export function useStatementReview(file: ImportFile, records: string[][]) {
     return run(async () => {
       readStatement(records, file.mapping)
       const preview = await bankImportApi.preview(file)
-      setRows(preview.rows.map(row => ({ ...row, selected: !row.duplicate && !row.conflict, title: '', category_id: null })))
+      setRows(preview.rows.map(row => ({
+        ...row,
+        selected: !row.duplicate && !row.conflict,
+        title: '',
+        category_id: suggestCategory(row),
+      })))
     })
   }
 

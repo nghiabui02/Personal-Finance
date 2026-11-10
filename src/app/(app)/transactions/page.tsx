@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
-import { getFrequentTransactions } from '@/lib/server/frequent-transactions'
+import { getQuickAddData } from '@/lib/server/quick-add-data'
 import {
   applyTransactionFilters,
   parseTransactionFilters,
@@ -9,7 +9,6 @@ import {
 import TransactionsClient from './_components/transactions-client'
 import type { ViewMode } from './_components/period-navigator'
 import { localYMD, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
-import { categoriesQuery, walletsQuery } from '@/lib/server/queries'
 
 export const metadata: Metadata = { title: 'Transactions' }
 export const dynamic = 'force-dynamic'
@@ -54,13 +53,9 @@ export default async function TransactionsPage({
 
   const { supabase, user } = await requireUser()
 
-  const [
-    { data: transactions },
-    { data: categories },
-    { data: wallets },
-    { data: debts },
-    frequent,
-  ] = await Promise.all([
+  // The form's own data — categories, wallets, debts, repeats, recent history —
+  // is the same bundle the standalone /transactions/new page loads.
+  const [{ data: transactions }, quickAdd] = await Promise.all([
     // A note search looks across all time; otherwise the visible period bounds
     // it. Either way the same filters narrow the result.
     applyTransactionFilters(
@@ -81,25 +76,17 @@ export default async function TransactionsPage({
     )
       .order('transaction_date', { ascending: false })
       .order('created_at', { ascending: false }),
-    categoriesQuery(supabase),
-    walletsQuery(supabase, user.id),
-    supabase
-      .from('debts')
-      .select('id, type, person_name, remaining_amount')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .gt('remaining_amount', 0)
-      .order('person_name'),
-    getFrequentTransactions(supabase, user.id),
+    getQuickAddData(supabase, user.id),
   ])
 
   return (
     <TransactionsClient
       transactions={(transactions ?? []) as unknown as Parameters<typeof TransactionsClient>[0]['transactions']}
-      categories={categories ?? []}
-      wallets={(wallets ?? []) as unknown as Parameters<typeof TransactionsClient>[0]['wallets']}
-      debts={(debts ?? []) as { id: string; type: 'lend' | 'borrow'; person_name: string; remaining_amount: number }[]}
-      frequent={frequent}
+      categories={quickAdd.categories}
+      wallets={quickAdd.wallets}
+      debts={quickAdd.debts}
+      frequent={quickAdd.frequent}
+      recent={quickAdd.recent}
       view={view}
       period={period}
       searchQuery={q}

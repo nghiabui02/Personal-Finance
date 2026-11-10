@@ -15,6 +15,9 @@ import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import type { DebtOption } from '@/lib/types'
 import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
+import {
+  findDuplicate, suggestCategoryId, type HistoryTransaction,
+} from '@/lib/transaction-matching'
 import type { ParsedDraft } from '@/lib/api/parse-transaction'
 import { QuickParse } from './quick-parse'
 import { useRouter } from 'next/navigation'
@@ -28,6 +31,9 @@ interface TransactionFormProps {
   debts: DebtOption[]
   /** Repeats offered as one-tap chips. Empty until there is enough history. */
   frequent?: FrequentTransaction[]
+  /** Recent transactions, read for the category suggestion and the duplicate
+   *  warning. Empty disables both rather than breaking anything. */
+  recent?: HistoryTransaction[]
   defaultDate?: string
   /** Called after a successful save. */
   onDone: () => void
@@ -119,7 +125,7 @@ function CenteredAmountInput({
   )
 }
 
-export function TransactionForm({ editing, categories, wallets, debts, frequent = [], defaultDate, onDone, onCancel }: TransactionFormProps) {
+export function TransactionForm({ editing, categories, wallets, debts, frequent = [], recent = [], defaultDate, onDone, onCancel }: TransactionFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -237,6 +243,20 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
   const overdraftMessage = overdrawn && selectedWallet
     ? `${selectedWallet.name} only has ${formatVND(Number(selectedWallet.balance))} — short by ${formatVND(shortfall)}.`
     : null
+
+  // Offered, never applied on its own: a wrong silent tag is harder to notice
+  // than an empty category, and the user is looking at the field anyway.
+  const suggestedId = categoryId ? null : suggestCategoryId(note, recent)
+  const suggestedCategory = suggestedId
+    ? categories.find(c => c.id === suggestedId && c.type === txType) ?? null
+    : null
+
+  // The same spend typed twice, or typed once and then imported. Editing is
+  // exempt: a row always matches itself.
+  const duplicate = editing ? null : findDuplicate(
+    { type: txType, amount: spendTotal, transaction_date: date, wallet_id: walletId || null },
+    recent,
+  )
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -398,6 +418,17 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
             </span>
           </button>
         </div>
+        {suggestedCategory && !moreOpen && (
+          <button
+            type="button"
+            onMouseDown={keepFocus}
+            onClick={() => handleCategoryChange(suggestedCategory.id)}
+            className="mt-2 flex items-center gap-1.5 rounded-full border border-dashed border-hairline px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand transition-colors"
+          >
+            <span className="leading-none">{suggestedCategory.icon ?? '🏷️'}</span>
+            <span>Last time this was <span className="font-medium">{suggestedCategory.name}</span> — use it</span>
+          </button>
+        )}
         {moreOpen && (
           <div className="mt-2.5">
             <CategorySelect
@@ -473,6 +504,13 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
             </div>
           )}
         </div>
+      )}
+
+      {duplicate && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
+          {selectedWallet?.name} already has {formatVND(spendTotal)} on this day
+          {duplicate.note ? ` — “${duplicate.note}”` : ''}. Saving records it a second time.
+        </p>
       )}
 
       {editing?.debt_payment_id && (

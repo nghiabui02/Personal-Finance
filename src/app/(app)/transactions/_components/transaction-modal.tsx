@@ -6,6 +6,7 @@ import { type Transaction } from '@/lib/api/transactions'
 import { type Wallet } from '@/lib/api/wallets'
 import type { DebtOption } from '@/lib/types'
 import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
+import type { HistoryTransaction } from '@/lib/transaction-matching'
 import { TransactionForm } from './transaction-form'
 
 /**
@@ -20,6 +21,7 @@ export function TransactionModal({
   wallets,
   debts,
   frequent,
+  recent,
   defaultDate,
   onClose,
 }: {
@@ -28,6 +30,7 @@ export function TransactionModal({
   wallets: Wallet[]
   debts: DebtOption[]
   frequent?: FrequentTransaction[]
+  recent?: HistoryTransaction[]
   defaultDate?: string
   onClose: () => void
 }) {
@@ -41,6 +44,7 @@ export function TransactionModal({
         wallets={wallets}
         debts={debts}
         frequent={frequent}
+        recent={recent}
         defaultDate={defaultDate}
         onDone={onClose}
         onCancel={close}

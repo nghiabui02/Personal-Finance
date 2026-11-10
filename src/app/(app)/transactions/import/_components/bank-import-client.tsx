@@ -3,19 +3,33 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import type { ImportResult } from '@/lib/api/bank-import'
+import type { ImportPreviewRow, ImportResult } from '@/lib/api/bank-import'
 import type { Category } from '@/lib/api/categories'
 import type { Wallet } from '@/lib/api/wallets'
+import { suggestCategoryId, type HistoryTransaction } from '@/lib/transaction-matching'
 import { formatVND } from '@/lib/utils/currency'
 import { ImportReview, type ReviewedRow } from './import-review'
 import { ImportSource } from './import-source'
 import { useCsvSource, useStatementReview } from './use-bank-import'
 
 /** Review is local; saving is a single atomic request, safe to retry after a lost response. */
-export function BankImportClient({ wallets, categories }: { wallets: Wallet[]; categories: Category[] }) {
+export function BankImportClient({ wallets, categories, recent }: {
+  wallets: Wallet[]; categories: Category[]; recent: HistoryTransaction[]
+}) {
   const [walletId, setWalletId] = useState(wallets[0]?.id ?? '')
   const source = useCsvSource()
-  const review = useStatementReview({ csv: source.csv, delimiter: source.delimiter, mapping: source.mapping, wallet_id: walletId }, source.records)
+  // Debt and transfer categories are driven by their own records, so they are
+  // not offered here — and a suggestion that lands on one is dropped too.
+  const importable = categories.filter(category => !category.system_key)
+  const suggestCategory = (row: ImportPreviewRow) => {
+    const id = suggestCategoryId(row.description, recent)
+    return importable.some(category => category.id === id && category.type === row.type) ? id : null
+  }
+  const review = useStatementReview(
+    { csv: source.csv, delimiter: source.delimiter, mapping: source.mapping, wallet_id: walletId },
+    source.records,
+    suggestCategory,
+  )
   const { rows, result, busy } = review
   const error = review.error ?? source.error
   const wallet = wallets.find(item => item.id === walletId)
@@ -32,7 +46,7 @@ export function BankImportClient({ wallets, categories }: { wallets: Wallet[]; c
           <>
             <ImportSource source={source} wallets={wallets} walletId={walletId} disabled={busy || !!rows} onWalletChange={setWalletId} />
             {rows ? <form onSubmit={review.confirm} className="space-y-4">
-              <ImportReview rows={rows} categories={categories.filter(category => !category.system_key)} disabled={busy} onChange={review.updateRow} />
+              <ImportReview rows={rows} categories={importable} disabled={busy} onChange={review.updateRow} />
               <ReviewActions rows={rows} busy={busy} onBack={review.back} />
             </form> : <Button disabled={busy || !source.csv || !!source.parseError} onClick={review.preview}>{busy ? 'Checking…' : 'Review transactions'}</Button>}
           </>
