@@ -18,6 +18,14 @@ export const metadata: Metadata = {
     default: 'Finance',
   },
   description: 'Personal finance manager',
+  manifest: '/manifest.webmanifest',
+  // iOS reads these rather than the manifest: without them an icon added to
+  // the home screen still opens inside Safari's chrome.
+  appleWebApp: {
+    capable: true,
+    title: 'Finance',
+    statusBarStyle: 'default',
+  },
 };
 
 export default function RootLayout({

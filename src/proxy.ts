@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   '/reset-password',
   '/auth',   // Supabase callback (email confirm, password recovery, OAuth)
   '/api',    // guards itself via withAuth/withRoute and returns JSON, not redirects
+  '/manifest.webmanifest', // read before sign-in, when installing to the home screen
 ]
 
 export async function proxy(request: NextRequest) {
