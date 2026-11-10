@@ -3,20 +3,16 @@ import { withAuth, rpcError } from '@/lib/server/route'
 import { ensureSystemCategory } from '@/lib/server/system-categories'
 import { localYMD } from '@/lib/utils/date'
 import { debtMovementRpcParams } from '@/lib/server/rpc-params'
+import { getOwnedDebtType } from '@/lib/server/debts'
 
 export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
   const body = await request.json()
 
-  const { data: debt } = await supabase
-    .from('debts')
-    .select('type')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single()
+  const debtType = await getOwnedDebtType(supabase, user.id, id)
 
-  const categoryId = debt && body.wallet_id
-    ? await ensureSystemCategory(supabase, user.id, debt.type === 'lend' ? 'lend_out' : 'borrow_in')
+  const categoryId = debtType && body.wallet_id
+    ? await ensureSystemCategory(supabase, user.id, debtType === 'lend' ? 'lend_out' : 'borrow_in')
     : null
 
   // The addition record, the new totals and the wallet move together, so a

@@ -3,6 +3,7 @@ import { withAuth, rpcError, supabaseError } from '@/lib/server/route'
 import { ensureSystemCategory } from '@/lib/server/system-categories'
 import { localYMD } from '@/lib/utils/date'
 import { debtMovementRpcParams } from '@/lib/server/rpc-params'
+import { getOwnedDebtType } from '@/lib/server/debts'
 
 export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
@@ -11,15 +12,10 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
   // Which direction this lands in depends on the debt, so the category has to
   // be resolved before the money moves. Creating it changes no balance, so it
   // is safe to leave outside the transaction below.
-  const { data: debt } = await supabase
-    .from('debts')
-    .select('type')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single()
+  const debtType = await getOwnedDebtType(supabase, user.id, id)
 
-  const categoryId = debt
-    ? await ensureSystemCategory(supabase, user.id, debt.type === 'lend' ? 'collect_debt' : 'repay_debt')
+  const categoryId = debtType
+    ? await ensureSystemCategory(supabase, user.id, debtType === 'lend' ? 'collect_debt' : 'repay_debt')
     : null
 
   // The wallet is checked before the payment record and the debt change, so a

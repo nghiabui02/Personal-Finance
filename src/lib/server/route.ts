@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 
-type ServerClient = Awaited<ReturnType<typeof createClient>>
+export type ServerClient = Awaited<ReturnType<typeof createClient>>
 
 type AuthedContext<P> = {
   supabase: ServerClient

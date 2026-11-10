@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { withAuth, notFound, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
+import { withAuth, notFound, deleteOwnedRow, updateOwnedRow, type ServerClient } from '@/lib/server/route'
 import { localYMD, toYMD } from '@/lib/utils/date'
 
 // Advances a YYYY-MM-DD by one occurrence of the given frequency — mirrors
@@ -17,6 +17,15 @@ function nextOccurrence(current: string, frequency: string): string {
   return toYMD(date)
 }
 
+/** Where a rule stands in its schedule, or null when it is not the caller's. */
+async function getSchedule(supabase: ServerClient, userId: string, id: string) {
+  const { data } = await supabase
+    .from('recurring_transactions')
+    .select('next_run_date, frequency')
+    .eq('id', id).eq('user_id', userId).single()
+  return data
+}
+
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
 
@@ -24,10 +33,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
 
   // Skip mode: advance next_run_date by one occurrence, no transaction created.
   if (body.skip) {
-    const { data: current } = await supabase
-      .from('recurring_transactions')
-      .select('next_run_date, frequency')
-      .eq('id', id).eq('user_id', user.id).single()
+    const current = await getSchedule(supabase, user.id, id)
 
     if (!current) return notFound('Recurring transaction not found.')
     if (!current.next_run_date) return NextResponse.json(current)
@@ -44,10 +50,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   // cron backfill everything that piled up during the pause.
   let resumedNextRunDate: string | undefined
   if (active === true) {
-    const { data: current } = await supabase
-      .from('recurring_transactions')
-      .select('next_run_date, frequency')
-      .eq('id', id).eq('user_id', user.id).single()
+    const current = await getSchedule(supabase, user.id, id)
 
     if (!current) return notFound('Recurring transaction not found.')
 
