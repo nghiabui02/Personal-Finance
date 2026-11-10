@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { BRAND_HEX, MONEY_IN } from '@/lib/utils/colors'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { formatVND } from '@/lib/utils/currency'
@@ -9,6 +8,7 @@ import { type Debt, type DebtPayment } from '@/lib/api/debts'
 import type { WalletChoice } from '@/lib/api/wallets'
 import { AdditionModal } from '../../_components/addition-modal'
 import { PaymentModal } from '../../_components/payment-modal'
+import { DebtAvatar, DebtBadges, DebtDueDate, describeDebt } from '../../_components/debt-presentation'
 import { formatMonthDayYear } from '@/lib/utils/date'
 
 type DebtWithPayments = Debt & {
@@ -28,12 +28,7 @@ export default function DebtDetailClient({
   const [payOpen, setPayOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
 
-  const isLend = debt.type === 'lend'
-  const isCompleted = debt.status === 'completed'
-  const isOverdue = debt.due_date && !isCompleted && new Date(debt.due_date) < new Date()
-  const paidAmount = debt.amount - debt.remaining_amount
-  const pct = debt.amount > 0 ? Math.min((paidAmount / debt.amount) * 100, 100) : 0
-  const barColor = isCompleted ? MONEY_IN : isLend ? BRAND_HEX : '#f97316'
+  const { isLend, isCompleted, isOverdue, paidAmount, pct, barColor } = describeDebt(debt)
 
   const events = [...debt.debt_payments].sort(
     (a, b) => new Date(a.paid_at).getTime() - new Date(b.paid_at).getTime()
@@ -56,34 +51,14 @@ export default function DebtDetailClient({
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5 mb-5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0 ${
-              isLend
-                ? 'bg-brand-soft text-brand'
-                : 'bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400'
-            }`}>
-              {debt.person_name[0].toUpperCase()}
-            </div>
+            <DebtAvatar name={debt.person_name} isLend={isLend} size="lg" />
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{debt.person_name}</p>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                  isLend
-                    ? 'bg-brand-soft text-brand'
-                    : 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400'
-                }`}>
-                  {isLend ? 'Lent' : 'Borrowed'}
-                </span>
-                {isCompleted && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold">Done</span>
-                )}
+                <DebtBadges isLend={isLend} isCompleted={isCompleted} />
               </div>
               <div className="flex items-center gap-3 mt-0.5">
-                {debt.due_date && (
-                  <p className={`text-xs ${isOverdue ? 'text-rose-500' : 'text-gray-400'}`}>
-                    Due {formatMonthDayYear(new Date(debt.due_date))}
-                    {isOverdue && ' · Overdue'}
-                  </p>
-                )}
+                {debt.due_date && <DebtDueDate dueDate={debt.due_date} isOverdue={isOverdue} />}
                 {debt.wallets && <p className="text-xs text-gray-400">{debt.wallets.name}</p>}
               </div>
             </div>
