@@ -1,6 +1,7 @@
 import Groq from 'groq-sdk'
 import { NextResponse } from 'next/server'
-import { withAuth, badRequest, jsonError } from '@/lib/server/route'
+import { withAuth, badRequest, jsonError, tooManyRequests } from '@/lib/server/route'
+import { isRateLimited } from '@/lib/server/rate-limit'
 import { CATEGORY_COLUMNS } from '@/lib/api/categories'
 import { localYMD } from '@/lib/utils/date'
 
@@ -16,6 +17,11 @@ import { localYMD } from '@/lib/utils/date'
  */
 
 const MAX_INPUT_CHARS = 600
+
+// Every call is a paid model request. Far above what typing one line at a time
+// reaches; low enough that a stuck client cannot drain the quota.
+const PARSES_PER_MINUTE = 30
+const ONE_MINUTE_MS = 60_000
 
 const SYSTEM_PROMPT = `You extract a single financial transaction from a short piece of text.
 
@@ -43,6 +49,10 @@ Respond with JSON only:
 {"type":"expense|income","amount":number,"category_id":string|null,"wallet_id":string|null,"note":string|null,"date":"YYYY-MM-DD"|null,"confidence":number}`
 
 export const POST = withAuth(async (request, { supabase, user }) => {
+  if (isRateLimited(request, { key: `ai-parse:${user.id}`, limit: PARSES_PER_MINUTE, windowMs: ONE_MINUTE_MS })) {
+    return tooManyRequests('Too many requests. Wait a minute, or fill the form in by hand.')
+  }
+
   const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) return jsonError(500, 'Groq is not configured.')
 

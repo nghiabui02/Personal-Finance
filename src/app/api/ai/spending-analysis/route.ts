@@ -1,10 +1,16 @@
 import { getNonOperatingCategoryIds, onlyOperatingTransactions } from '@/lib/server/transaction-reporting'
 import Groq from 'groq-sdk'
 import { NextResponse } from 'next/server'
-import { withAuth, jsonError } from '@/lib/server/route'
+import { withAuth, jsonError, tooManyRequests } from '@/lib/server/route'
+import { isRateLimited } from '@/lib/server/rate-limit'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+
+// Every uncached call is a paid model request, retried up to three times.
+// Browsing periods stays well under this; a stuck client does not.
+const ANALYSES_PER_MINUTE = 20
+const ONE_MINUTE_MS = 60_000
 
 // Days actually covered by a period starting at `start` — used for the
 // per-day average. Months/quarters vary in length, so 30/91 constants would
@@ -23,6 +29,10 @@ function periodLengthInDays(periodType: 'week' | 'month' | 'quarter' | 'year', s
 }
 
 export const POST = withAuth(async (request, { supabase, user }) => {
+  if (isRateLimited(request, { key: `ai-analysis:${user.id}`, limit: ANALYSES_PER_MINUTE, windowMs: ONE_MINUTE_MS })) {
+    return tooManyRequests('Too many requests. Try again in a minute.')
+  }
+
   const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) return jsonError(500, 'Groq not configured')
 
