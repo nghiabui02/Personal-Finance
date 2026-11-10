@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { withAuth, badRequest, noContent, rpcError, supabaseError } from '@/lib/server/route'
+import { withAuth, badRequest, noContent, rpcError, updateOwnedRow } from '@/lib/server/route'
 import { localYMD } from '@/lib/utils/date'
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
@@ -12,20 +11,10 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
     return badRequest('Color must be a string.')
   }
 
-  const { data, error } = await supabase
-    .from('wallets')
-    .update({
-      name: name.trim(),
-      ...(color !== undefined ? { color: color || null } : {}),
-    })
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .select()
-    .single()
-
-  if (error) return supabaseError(error)
-
-  return NextResponse.json(data)
+  return updateOwnedRow(supabase, 'wallets', { id, userId: user.id }, {
+    name: name.trim(),
+    ...(color !== undefined ? { color: color || null } : {}),
+  })
 })
 
 export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, params }) => {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { withAuth, notFound, noContent, supabaseError } from '@/lib/server/route'
+import { withAuth, notFound, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
 import { localYMD, toYMD } from '@/lib/utils/date'
 
 // Advances a YYYY-MM-DD by one occurrence of the given frequency — mirrors
@@ -32,14 +32,9 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
     if (!current) return notFound('Recurring transaction not found.')
     if (!current.next_run_date) return NextResponse.json(current)
 
-    const { data, error } = await supabase
-      .from('recurring_transactions')
-      .update({ next_run_date: nextOccurrence(current.next_run_date, current.frequency) })
-      .eq('id', id).eq('user_id', user.id)
-      .select().single()
-
-    if (error) return supabaseError(error)
-    return NextResponse.json(data)
+    return updateOwnedRow(supabase, 'recurring_transactions', { id, userId: user.id }, {
+      next_run_date: nextOccurrence(current.next_run_date, current.frequency),
+    })
   }
 
   const { amount, category_id, wallet_id, note, frequency, end_date, bank_fee, active } = body
@@ -64,37 +59,21 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
     }
   }
 
-  const { data, error } = await supabase
-    .from('recurring_transactions')
-    .update({
-      amount: amount ? Number(amount) : undefined,
-      category_id: category_id !== undefined ? (category_id || null) : undefined,
-      wallet_id: wallet_id !== undefined ? (wallet_id || null) : undefined,
-      note: note !== undefined ? (note?.trim() || null) : undefined,
-      frequency: frequency || undefined,
-      end_date: end_date !== undefined ? (end_date || null) : undefined,
-      bank_fee: bank_fee !== undefined ? (Number(bank_fee) > 0 ? Number(bank_fee) : null) : undefined,
-      active: active !== undefined ? !!active : undefined,
-      next_run_date: resumedNextRunDate,
-    })
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .select()
-    .single()
-
-  if (error) return supabaseError(error)
-  return NextResponse.json(data)
+  return updateOwnedRow(supabase, 'recurring_transactions', { id, userId: user.id }, {
+    amount: amount ? Number(amount) : undefined,
+    category_id: category_id !== undefined ? (category_id || null) : undefined,
+    wallet_id: wallet_id !== undefined ? (wallet_id || null) : undefined,
+    note: note !== undefined ? (note?.trim() || null) : undefined,
+    frequency: frequency || undefined,
+    end_date: end_date !== undefined ? (end_date || null) : undefined,
+    bank_fee: bank_fee !== undefined ? (Number(bank_fee) > 0 ? Number(bank_fee) : null) : undefined,
+    active: active !== undefined ? !!active : undefined,
+    next_run_date: resumedNextRunDate,
+  })
 })
 
 export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {
   const { id } = params
 
-  const { error } = await supabase
-    .from('recurring_transactions')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  if (error) return supabaseError(error)
-  return noContent()
+  return deleteOwnedRow(supabase, 'recurring_transactions', { id, userId: user.id })
 })

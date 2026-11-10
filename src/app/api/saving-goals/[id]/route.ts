@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { withAuth, noContent, supabaseError } from '@/lib/server/route'
+import { withAuth, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
@@ -16,27 +15,11 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   if (note !== undefined) update.note = note?.trim() || null
   if (status !== undefined) update.status = status
 
-  const { data, error } = await supabase
-    .from('saving_goals')
-    .update(update)
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .select()
-    .single()
-
-  if (error) return supabaseError(error)
-  return NextResponse.json(data)
+  return updateOwnedRow(supabase, 'saving_goals', { id, userId: user.id }, update)
 })
 
 export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {
   const { id } = params
 
-  const { error } = await supabase
-    .from('saving_goals')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  if (error) return supabaseError(error)
-  return noContent()
+  return deleteOwnedRow(supabase, 'saving_goals', { id, userId: user.id })
 })

@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { withAuth, badRequest, notFound, noContent, supabaseError } from '@/lib/server/route'
+import { withAuth, badRequest, notFound, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
@@ -9,17 +8,9 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
 
   if (!name?.trim()) return badRequest('Name is required.')
 
-  const { data, error } = await supabase
-    .from('categories')
-    .update({ name: name.trim(), icon: icon?.trim() || null, color: color || null })
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .select()
-    .single()
-
-  if (error) return supabaseError(error)
-
-  return NextResponse.json(data)
+  return updateOwnedRow(supabase, 'categories', { id, userId: user.id }, {
+    name: name.trim(), icon: icon?.trim() || null, color: color || null,
+  })
 })
 
 export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {
@@ -46,13 +37,5 @@ export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user
     return badRequest('This category keeps your debt and balance-adjustment totals correct. It cannot be deleted.')
   }
 
-  const { error } = await supabase
-    .from('categories')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  if (error) return supabaseError(error)
-
-  return noContent()
+  return deleteOwnedRow(supabase, 'categories', { id, userId: user.id })
 })

@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { withAuth, badRequest, noContent, supabaseError } from '@/lib/server/route'
+import { withAuth, badRequest, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
@@ -7,31 +6,15 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   const { amount, rollover, active } = await request.json()
   if (amount !== undefined && (!amount || Number(amount) <= 0)) return badRequest('Amount is required.')
 
-  const { data, error } = await supabase
-    .from('budgets')
-    .update({
-      amount: amount !== undefined ? Number(amount) : undefined,
-      rollover: rollover !== undefined ? !!rollover : undefined,
-      active: active !== undefined ? !!active : undefined,
-    })
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .select('*, categories(id, name, icon, color)')
-    .single()
-
-  if (error) return supabaseError(error)
-  return NextResponse.json(data)
+  return updateOwnedRow(supabase, 'budgets', { id, userId: user.id }, {
+    amount: amount !== undefined ? Number(amount) : undefined,
+    rollover: rollover !== undefined ? !!rollover : undefined,
+    active: active !== undefined ? !!active : undefined,
+  }, '*, categories(id, name, icon, color)')
 })
 
 export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {
   const { id } = params
 
-  const { error } = await supabase
-    .from('budgets')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  if (error) return supabaseError(error)
-  return noContent()
+  return deleteOwnedRow(supabase, 'budgets', { id, userId: user.id })
 })

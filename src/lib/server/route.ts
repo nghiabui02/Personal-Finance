@@ -38,6 +38,43 @@ export function rpcError(error: { message: string; code?: string }): NextRespons
 
 export const noContent = () => new NextResponse(null, { status: 204 })
 
+/**
+ * Updating or deleting one row the caller owns.
+ *
+ * Row-level security already hides other people's rows; the `user_id` filter is
+ * the second line behind it. Taking `userId` as a required argument means a
+ * route cannot forget it.
+ */
+export async function updateOwnedRow(
+  supabase: ServerClient,
+  table: string,
+  { id, userId }: { id: string; userId: string },
+  patch: Record<string, unknown>,
+  columns = '*',
+): Promise<NextResponse> {
+  const { data, error } = await supabase
+    .from(table)
+    .update(patch)
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select(columns)
+    .single()
+
+  if (error) return supabaseError(error)
+  return NextResponse.json(data)
+}
+
+export async function deleteOwnedRow(
+  supabase: ServerClient,
+  table: string,
+  { id, userId }: { id: string; userId: string },
+): Promise<NextResponse> {
+  const { error } = await supabase.from(table).delete().eq('id', id).eq('user_id', userId)
+
+  if (error) return supabaseError(error)
+  return noContent()
+}
+
 // Wraps a route handler with the auth check every private route needs,
 // resolves dynamic params, and turns uncaught errors into logged 500s
 // instead of opaque crashes.
