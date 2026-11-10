@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server'
 import { withAuth, rpcError, supabaseError } from '@/lib/server/route'
 import { ensureSystemCategory } from '@/lib/server/system-categories'
 import { localYMD } from '@/lib/utils/date'
+import { debtMovementRpcParams } from '@/lib/server/rpc-params'
 
 export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
-  const { amount, note, wallet_id, date } = await request.json()
+  const body = await request.json()
 
   // Which direction this lands in depends on the debt, so the category has to
   // be resolved before the money moves. Creating it changes no balance, so it
@@ -23,14 +24,7 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
 
   // The wallet is checked before the payment record and the debt change, so a
   // wallet that cannot cover the payment leaves the debt exactly as it was.
-  const { data, error } = await supabase.rpc('record_debt_payment', {
-    p_debt_id: id,
-    p_amount: Number(amount),
-    p_date: date || localYMD(),
-    p_wallet_id: wallet_id || null,
-    p_category_id: categoryId,
-    p_note: note ?? null,
-  })
+  const { data, error } = await supabase.rpc('record_debt_payment', debtMovementRpcParams(id, body, categoryId, localYMD()))
 
   if (error) return rpcError(error)
   if (!data) return supabaseError({ message: 'Payment did not return a result.' })
