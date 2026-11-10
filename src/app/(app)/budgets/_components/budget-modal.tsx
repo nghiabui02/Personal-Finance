@@ -10,6 +10,7 @@ import { formatMonthYear } from '@/lib/utils/date'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { readField } from '@/lib/utils/form'
 
 interface BudgetModalProps {
   editing: Budget | null
@@ -63,7 +64,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const amount = Number((e.currentTarget.elements.namedItem('amount') as HTMLInputElement).value)
+    const amount = Number(readField(e.currentTarget, 'amount'))
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
 
     submit(async () => {

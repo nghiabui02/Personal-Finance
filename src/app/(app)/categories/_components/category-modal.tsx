@@ -9,6 +9,7 @@ import { CATEGORY_PALETTE } from '@/lib/utils/colors'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { readField } from '@/lib/utils/form'
 
 
 interface CategoryModalProps {
@@ -25,8 +26,8 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
-    const icon = (form.elements.namedItem('icon') as HTMLInputElement).value.trim()
+    const name = readField(form, 'name').trim()
+    const icon = readField(form, 'icon').trim()
 
     submit(async () => {
       if (editing) {

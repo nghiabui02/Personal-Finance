@@ -22,6 +22,7 @@ import { CenteredAmountInput } from './centered-amount-input'
 import { FrequentChips } from './frequent-chips'
 import { QuickParse } from './quick-parse'
 import { useTransactionForm } from './use-transaction-form'
+import { readField } from '@/lib/utils/form'
 
 interface TransactionFormProps {
   editing: Transaction | null
@@ -56,10 +57,9 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const getValue = (name: string) => (form.elements.namedItem(name) as HTMLInputElement)?.value ?? ''
 
-    const amount = Number(getValue('amount'))
-    const fee    = Number(getValue('fee') || '0')
+    const amount = Number(readField(form, 'amount'))
+    const fee    = Number(readField(form, 'fee') || '0')
 
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     if (!date) { setError('Please pick a date.'); return }

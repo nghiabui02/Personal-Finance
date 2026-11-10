@@ -17,6 +17,7 @@ import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { readField } from '@/lib/utils/form'
 
 /** Creates a recurring rule, or edits the amount, schedule and details of one. */
 export function RecurringModal({
@@ -45,11 +46,10 @@ export function RecurringModal({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const getValue = (n: string) => (form.elements.namedItem(n) as HTMLInputElement)?.value ?? ''
-    const amount = Number(getValue('amount'))
+    const amount = Number(readField(form, 'amount'))
     // frequency comes from state, not form input
-    const note = getValue('note')
-    const fee = showFee ? Number(getValue('fee') || '0') : 0
+    const note = readField(form, 'note')
+    const fee = showFee ? Number(readField(form, 'fee') || '0') : 0
 
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     if (!startDate) { setError('Start date is required.'); return }

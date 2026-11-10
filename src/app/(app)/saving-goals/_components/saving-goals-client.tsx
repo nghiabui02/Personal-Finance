@@ -21,6 +21,7 @@ import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 import { AddButton } from '@/components/ui/add-button'
+import { readField } from '@/lib/utils/form'
 
 // ── Goal Modal ────────────────────────────────────────────────────────────────
 
@@ -32,10 +33,9 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const get = (n: string) => (form.elements.namedItem(n) as HTMLInputElement).value
-    const name = get('name').trim()
-    const target_amount = Number(get('target_amount'))
-    const icon = get('icon').trim()
+    const name = readField(form, 'name').trim()
+    const target_amount = Number(readField(form, 'target_amount'))
+    const icon = readField(form, 'icon').trim()
 
     if (!name) { setError('Name is required.'); return }
     if (!target_amount || target_amount <= 0) { setError('Target amount is required.'); return }
@@ -46,14 +46,14 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
           name, icon: icon || undefined,
           target_amount,
           deadline: deadline || undefined,
-          note: get('note') || undefined,
+          note: readField(form, 'note') || undefined,
         })
       } else {
         await savingGoalsApi.create({
           name, icon: icon || undefined,
           target_amount,
           deadline: deadline || undefined,
-          note: get('note') || undefined,
+          note: readField(form, 'note') || undefined,
         })
       }
     })
@@ -92,7 +92,7 @@ function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => v
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const amount = Number((e.currentTarget.elements.namedItem('amount') as HTMLInputElement).value)
+    const amount = Number(readField(e.currentTarget, 'amount'))
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
 
     submit(async () => {

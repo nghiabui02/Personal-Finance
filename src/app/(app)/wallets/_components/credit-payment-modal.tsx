@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { readField } from '@/lib/utils/form'
 
 interface CreditPaymentModalProps {
   creditWallet: Wallet
@@ -33,8 +34,8 @@ export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPay
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const amount = Number((form.elements.namedItem('amount') as HTMLInputElement).value)
-    const note = (form.elements.namedItem('note') as HTMLInputElement).value.trim()
+    const amount = Number(readField(form, 'amount'))
+    const note = readField(form, 'note').trim()
 
     if (!amount || amount <= 0) { setError('Enter a valid amount.'); return }
     if (!fromId) { setError('Select a source wallet.'); return }

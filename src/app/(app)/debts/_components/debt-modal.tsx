@@ -15,6 +15,7 @@ import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 import { localYMD } from '@/lib/utils/date'
 import { BRAND_HEX } from '@/lib/utils/colors'
 import { BORROWED_HEX } from './debt-presentation'
+import { readField } from '@/lib/utils/form'
 
 /** Creates a debt, or edits the person, contact, due date and note of one. */
 export function DebtModal({
@@ -42,9 +43,8 @@ export function DebtModal({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const get = (name: string) => (form.elements.namedItem(name) as HTMLInputElement | null)?.value ?? ''
-    const amount = Number(get('amount'))
-    const person_name = get('person_name').trim()
+    const amount = Number(readField(form, 'amount'))
+    const person_name = readField(form, 'person_name').trim()
 
     if (!person_name) { setError('Name is required.'); return }
     if (!editing && (!amount || amount <= 0)) { setError('Amount is required.'); return }
@@ -53,20 +53,20 @@ export function DebtModal({
       if (editing) {
         await debtsApi.update(editing.id, {
           person_name,
-          person_contact: get('person_contact') || undefined,
+          person_contact: readField(form, 'person_contact') || undefined,
           due_date: dueDate || undefined,
-          note: get('note') || undefined,
+          note: readField(form, 'note') || undefined,
         })
       } else {
         await debtsApi.create({
           type,
           person_name,
-          person_contact: get('person_contact') || undefined,
+          person_contact: readField(form, 'person_contact') || undefined,
           amount,
           wallet_id: walletId || undefined,
           date,
           due_date: dueDate || undefined,
-          note: get('note') || undefined,
+          note: readField(form, 'note') || undefined,
         })
       }
     })

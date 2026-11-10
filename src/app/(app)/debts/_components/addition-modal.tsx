@@ -13,6 +13,7 @@ import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { readField } from '@/lib/utils/form'
 
 // Records more money lent/borrowed against an existing debt — increases
 // remaining_amount. Shared between the debts list page and the debt detail
@@ -39,7 +40,7 @@ export function AdditionModal({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const note = (form.elements.namedItem('note') as HTMLInputElement).value
+    const note = readField(form, 'note')
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     submit(async () => {
       await debtsApi.addDebt(debt.id, { amount, note: note || undefined, date, wallet_id: walletId || undefined })

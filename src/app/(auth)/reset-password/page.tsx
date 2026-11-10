@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { FormError } from '@/components/ui/form-error'
 import { useAuthForm } from '../use-auth-form'
 import { AuthCard, AuthHeading } from '../_components/auth-card'
+import { readField } from '@/lib/utils/form'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -15,8 +16,8 @@ export default function ResetPasswordPage() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const password = (form.elements.namedItem('password') as HTMLInputElement).value
-    const confirm = (form.elements.namedItem('confirm') as HTMLInputElement).value
+    const password = readField(form, 'password')
+    const confirm = readField(form, 'confirm')
 
     if (password !== confirm) {
       setError('Passwords do not match.')

@@ -13,6 +13,7 @@ import { localYMD } from '@/lib/utils/date'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { readField } from '@/lib/utils/form'
 
 /** Records a payment against a debt — from the debts list and from a debt's
  *  own page. Never more than what is still owed. */
@@ -39,7 +40,7 @@ export function PaymentModal({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const note = (form.elements.namedItem('note') as HTMLInputElement).value
+    const note = readField(form, 'note')
 
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     if (amount > debt.remaining_amount) { setError(`Max is ${formatVND(debt.remaining_amount)}.`); return }

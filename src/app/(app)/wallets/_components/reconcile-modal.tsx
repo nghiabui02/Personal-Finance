@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { readField } from '@/lib/utils/form'
 
 /**
  * Type in the balance the bank actually shows; the gap is filed as one
@@ -51,8 +52,8 @@ export function ReconcileModal({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const value = Number((form.elements.namedItem('actual_balance') as HTMLInputElement).value)
-    const note = (form.elements.namedItem('note') as HTMLInputElement).value.trim()
+    const value = Number(readField(form, 'actual_balance'))
+    const note = readField(form, 'note').trim()
 
     if (!Number.isFinite(value)) { setError('Enter the balance shown by your bank.'); return }
 

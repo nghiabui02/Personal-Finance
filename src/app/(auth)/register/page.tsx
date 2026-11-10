@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { FormError } from '@/components/ui/form-error'
 import { useAuthForm } from '../use-auth-form'
 import { AuthCard, AuthHeading } from '../_components/auth-card'
+import { readField } from '@/lib/utils/form'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -16,8 +17,8 @@ export default function RegisterPage() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const email = (form.elements.namedItem('email') as HTMLInputElement).value
-    const password = (form.elements.namedItem('password') as HTMLInputElement).value
+    const email = readField(form, 'email')
+    const password = readField(form, 'password')
 
     submit(async () => {
       await authApi.signUp({ email, password })

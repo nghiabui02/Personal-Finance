@@ -11,6 +11,7 @@ import { CATEGORY_PALETTE } from '@/lib/utils/colors'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
+import { readField, readCheckbox } from '@/lib/utils/form'
 
 
 const TYPE_ORDER: Wallet['type'][] = ['cash', 'bank', 'credit', 'e_wallet', 'investment', 'other']
@@ -58,11 +59,10 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
-    const get = (name: string) => (form.elements.namedItem(name) as HTMLInputElement)?.value ?? ''
 
-    const name = get('name').trim()
-    const icon = get('icon').trim()
-    const is_default = (form.elements.namedItem('is_default') as HTMLInputElement)?.checked ?? false
+    const name = readField(form, 'name').trim()
+    const icon = readField(form, 'icon').trim()
+    const is_default = readCheckbox(form, 'is_default')
 
     if (!name) { setError('Name is required.'); return }
 
@@ -75,11 +75,11 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
           ? {
               ...base,
               balance: 0,
-              credit_limit: Number(get('credit_limit')) || 0,
-              statement_day: Number(get('statement_day')) || 26,
-              payment_due_day: Number(get('payment_due_day')) || 10,
+              credit_limit: Number(readField(form, 'credit_limit')) || 0,
+              statement_day: Number(readField(form, 'statement_day')) || 26,
+              payment_due_day: Number(readField(form, 'payment_due_day')) || 10,
             }
-          : { ...base, balance: Number(get('balance')) || 0 }
+          : { ...base, balance: Number(readField(form, 'balance')) || 0 }
         await walletsApi.create(payload)
       }
     })

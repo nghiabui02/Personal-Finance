@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { useAuthForm } from '../use-auth-form'
 import { AuthCard, AuthHeading } from '../_components/auth-card'
+import { readField } from '@/lib/utils/form'
 
 export default function ForgotPasswordPage() {
   const { error, isPending, submit } = useAuthForm()
@@ -14,7 +15,7 @@ export default function ForgotPasswordPage() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value
+    const email = readField(e.currentTarget, 'email')
 
     submit(async () => {
       const res = await fetch('/api/auth/forgot-password', {
