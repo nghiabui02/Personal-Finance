@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { formatVND } from '@/lib/utils/currency'
+import { formatSignedVND, formatVND } from '@/lib/utils/currency'
 import { type Debt, type DebtPayment } from '@/lib/api/debts'
 import type { WalletChoice } from '@/lib/api/wallets'
 import { AdditionModal } from '../../_components/addition-modal'
@@ -150,7 +150,7 @@ export default function DebtDetailClient({
                           ? (isLend ? 'text-brand' : 'text-orange-600 dark:text-orange-400')
                           : 'text-emerald-600 dark:text-emerald-400'
                       }`}>
-                        {isAddition ? '+' : '−'}{formatVND(ev.amount)}
+                        {formatSignedVND(ev.amount, isAddition)}
                       </p>
                     </div>
                   </div>

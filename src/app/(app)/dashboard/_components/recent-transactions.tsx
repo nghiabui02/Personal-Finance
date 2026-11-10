@@ -1,6 +1,6 @@
-import { formatVND } from '@/lib/utils/currency'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
 import { formatMonthDay } from '@/lib/utils/date'
+import { SignedAmount } from '@/components/ui/signed-amount'
 
 type Transaction = {
   id: string
@@ -49,13 +49,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                     {tx.note && cat?.name ? ` · ${cat.name}` : ''}
                   </p>
                 </div>
-                <span className={`text-sm font-semibold tabular-nums shrink-0 ${
-                  tx.type === 'income'
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
-                }`}>
-                  {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
-                </span>
+                <SignedAmount amount={tx.amount} positive={tx.type === 'income'} className="text-sm shrink-0" />
               </li>
             )
           })}

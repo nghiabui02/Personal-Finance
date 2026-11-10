@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { badRequest, noContent, withAuth } from '@/lib/server/route'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
-import { formatVND } from '@/lib/utils/currency'
+import { formatSignedVND, formatVND } from '@/lib/utils/currency'
 import { formatMonthDay, localYM, localYMD, shiftLocalDate } from '@/lib/utils/date'
 
 export type NotificationSeverity = 'alert' | 'warning' | 'info' | 'success'
@@ -125,7 +125,7 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     notifications.push({
       id: `recurring:${r.id}:${r.next_run_date}`, type: 'recurring_upcoming', severity: 'info',
       title: `Upcoming recurring: ${label}`,
-      detail: `${r.type === 'income' ? '+' : '−'}${formatVND(Number(r.amount))} on ${shortDate(r.next_run_date)}`,
+      detail: `${formatSignedVND(Number(r.amount), r.type === 'income')} on ${shortDate(r.next_run_date)}`,
       href: '/recurring',
     })
   }

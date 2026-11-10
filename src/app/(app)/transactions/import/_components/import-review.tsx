@@ -3,7 +3,7 @@ import { CategorySelect } from '@/components/ui/category-select'
 import type { Category } from '@/lib/api/categories'
 import type { ImportPreviewRow } from '@/lib/api/bank-import'
 import { MAX_TITLE_LENGTH } from '@/lib/imports/bank-csv'
-import { formatVND } from '@/lib/utils/currency'
+import { SignedAmount } from '@/components/ui/signed-amount'
 
 export type ReviewedRow = ImportPreviewRow & { selected: boolean; title: string; category_id: string | null }
 
@@ -19,9 +19,7 @@ function ReviewRow({ row, categories, onChange, disabled }: {
           <span className="block text-sm text-gray-500 whitespace-pre-wrap break-words">{row.description || '(No bank description)'}</span>
           {row.reference && <span className="block text-xs text-gray-400 break-all">Reference: {row.reference}</span>}
         </span>
-        <span className={`text-sm font-semibold whitespace-nowrap ${row.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
-          {row.type === 'income' ? '+' : '−'}{formatVND(row.amount)}
-        </span>
+        <SignedAmount amount={row.amount} positive={row.type === 'income'} className="text-sm whitespace-nowrap" />
       </label>
       {row.conflict ? <p className="text-sm text-rose-600">Previously imported reference has different data. Check the file before continuing.</p>
         : row.duplicate ? <p className="text-sm text-gray-500">Already imported into this wallet. Skipped, including if the recorded transaction was later edited or deleted.</p>

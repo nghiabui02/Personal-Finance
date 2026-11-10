@@ -207,6 +207,7 @@ node --experimental-strip-types --test tests/bank-csv.test.mjs          # CSV pa
 node --experimental-strip-types --test tests/transaction-matching.test.mjs  # category suggestion, duplicate check
 node --experimental-strip-types --test tests/rpc-params.test.mjs         # request body → money function arguments
 node --experimental-strip-types --test tests/totals.test.mjs             # income/expense totals, net, debts owed
+node --experimental-strip-types --test tests/currency.test.mjs           # signed amounts
 ```
 
 `tests/bank-import.sql` and `tests/bulk-delete.sql` cover the money functions —

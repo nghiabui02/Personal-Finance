@@ -3,6 +3,7 @@
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { type Transaction } from '@/lib/api/transactions'
 import { formatVND } from '@/lib/utils/currency'
+import { SignedAmount } from '@/components/ui/signed-amount'
 
 /** Present only while the list is in selection mode. */
 interface RowSelection {
@@ -57,11 +58,7 @@ export function TransactionRow({
       </div>
 
       <div className="text-right shrink-0">
-        <span className={`text-sm font-semibold tabular-nums ${
-          tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-        }`}>
-          {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
-        </span>
+        <SignedAmount amount={tx.amount} positive={tx.type === 'income'} className="text-sm" />
         {Number(tx.bank_fee) > 0 && (
           <span className="block text-[10px] text-gray-400 tabular-nums">
             incl. {formatVND(tx.bank_fee!)} fee

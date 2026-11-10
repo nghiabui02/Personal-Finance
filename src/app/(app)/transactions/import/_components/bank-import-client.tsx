@@ -7,7 +7,7 @@ import type { ImportPreviewRow, ImportResult } from '@/lib/api/bank-import'
 import type { Category } from '@/lib/api/categories'
 import type { Wallet } from '@/lib/api/wallets'
 import { suggestCategoryId, type HistoryTransaction } from '@/lib/transaction-matching'
-import { formatVND } from '@/lib/utils/currency'
+import { formatSignedVND, formatVND } from '@/lib/utils/currency'
 import { ImportReview, type ReviewedRow } from './import-review'
 import { ImportSource } from './import-source'
 import { useCsvSource, useStatementReview } from './use-bank-import'
@@ -74,7 +74,7 @@ function ReviewActions({ rows, busy, onBack }: { rows: ReviewedRow[]; busy: bool
   const canSave = selected.length > 0 && selected.every(row => row.title.trim()) && !rows.some(row => row.conflict)
   return (
     <div className="sticky bottom-0 rounded-xl border border-hairline bg-white dark:bg-gray-900 p-4 space-y-3">
-      <p className="text-sm">{selected.length} selected · Wallet change: {net >= 0 ? '+' : '−'}{formatVND(Math.abs(net))}</p>
+      <p className="text-sm">{selected.length} selected · Wallet change: {formatSignedVND(net)}</p>
       <p className="text-xs text-gray-500">The batch must respect the wallet&rsquo;s available balance. If any row fails, the entire batch rolls back.</p>
       <div className="flex gap-3">
         <Button type="button" variant="secondary" disabled={busy} onClick={onBack}>Back</Button>

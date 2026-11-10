@@ -10,6 +10,7 @@ import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_ICONS, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
 import { DateGroupHeader } from '@/components/ui/date-group-header'
 import { netOf } from '@/lib/utils/totals'
+import { SignedAmount } from '@/components/ui/signed-amount'
 
 function formatDateHeader(dateStr: string): string {
   const today = localYMD()
@@ -190,13 +191,7 @@ export default function WalletDetailClient({
 
                       {/* Amount */}
                       <div className="text-right shrink-0">
-                        <p className={`text-sm font-semibold tabular-nums ${
-                          tx.type === 'income'
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-rose-600 dark:text-rose-400'
-                        }`}>
-                          {tx.type === 'income' ? '+' : '−'}{formatVND(tx.amount)}
-                        </p>
+                        <SignedAmount amount={tx.amount} positive={tx.type === 'income'} className="block text-sm" />
                         {Number(tx.bank_fee) > 0 && (
                           <p className="text-[10px] text-gray-400 tabular-nums">
                             incl. {formatVND(tx.bank_fee!)} fee

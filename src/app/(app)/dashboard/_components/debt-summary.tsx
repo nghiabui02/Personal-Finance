@@ -1,4 +1,4 @@
-import { formatVND } from '@/lib/utils/currency'
+import { formatSignedVND, formatVND } from '@/lib/utils/currency'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
 import { sumRemaining } from '@/lib/utils/totals'
 
@@ -39,7 +39,7 @@ export function DebtSummary({ debts }: { debts: DebtItem[] }) {
             <dd className={`text-sm font-semibold tabular-nums ${
               net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'
             }`}>
-              {net >= 0 ? '+' : '−'}{formatVND(Math.abs(net))}
+              {formatSignedVND(net)}
             </dd>
           </div>
         </dl>

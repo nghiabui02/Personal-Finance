@@ -7,7 +7,7 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Category } from '@/lib/api/categories'
 import { toast } from '@/components/ui/toast'
-import { formatVND } from '@/lib/utils/currency'
+import { formatSignedVND, formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { type Wallet, walletsApi, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
 import { useState } from 'react'
@@ -15,6 +15,7 @@ import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 import { readField } from '@/lib/utils/form'
+import { SignedAmount } from '@/components/ui/signed-amount'
 
 /**
  * Type in the balance the bank actually shows; the gap is filed as one
@@ -67,7 +68,7 @@ export function ReconcileModal({
       toast.success(
         result.delta === 0
           ? 'Already matches — nothing to adjust.'
-          : `Adjusted by ${result.delta > 0 ? '+' : '−'}${formatVND(Math.abs(result.delta))}.`
+          : `Adjusted by ${formatSignedVND(result.delta, result.delta > 0)}.`
       )
     })
   }
@@ -102,9 +103,7 @@ export function ReconcileModal({
             ) : (
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 Files{' '}
-                <span className={`font-semibold tabular-nums ${delta > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {delta > 0 ? '+' : '−'}{formatVND(Math.abs(delta))}
-                </span>{' '}
+                <SignedAmount amount={delta} positive={delta > 0} />{' '}
                 {categoryId
                   ? `as ${reasonOptions.find(o => o.value === categoryId)?.label ?? 'that category'} — counted in your ${direction === 'income' ? 'income' : 'spending'}.`
                   : 'as a balance correction — kept out of your income and spending totals.'}

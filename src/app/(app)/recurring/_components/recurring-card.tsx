@@ -7,6 +7,7 @@ import { localYMD } from '@/lib/utils/date'
 import { type RecurringTransaction, FREQUENCY_LABELS, recurringApi } from '@/lib/api/recurring-transactions'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { SignedAmount } from '@/components/ui/signed-amount'
 
 /** One rule on the list: what it is, when it next runs, and what can be done with it. */
 export function RecurringCard({
@@ -85,11 +86,7 @@ export function RecurringCard({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-sm font-semibold tabular-nums ${
-            item.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-          }`}>
-            {item.type === 'income' ? '+' : '−'}{formatVND(item.amount)}
-          </span>
+          <SignedAmount amount={item.amount} positive={item.type === 'income'} className="text-sm" />
           <div className="flex gap-0.5">
             {!isExpired && (
               <IconButton label={item.active ? 'Pause' : 'Resume'} onClick={handleToggleActive}
