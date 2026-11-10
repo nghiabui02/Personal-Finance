@@ -4,22 +4,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useState } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
+import { useAuthForm } from '../use-auth-form'
 
 export default function ForgotPasswordPage() {
-  const [isPending, setIsPending] = useState(false)
+  const { error, isPending, submit } = useAuthForm()
   const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value
 
-    setError(null)
-    setIsPending(true)
-
-    try {
+    submit(async () => {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -30,11 +26,7 @@ export default function ForgotPasswordPage() {
         throw new Error(data.error ?? 'Something went wrong.')
       }
       setSent(true)
-    } catch (err) {
-      setError(errorMessage(err))
-    } finally {
-      setIsPending(false)
-    }
+    }, { reenableOnSuccess: true })
   }
 
   return (

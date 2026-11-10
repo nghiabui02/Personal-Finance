@@ -5,31 +5,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
+import { useAuthForm } from '../use-auth-form'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
-  const [isPending, setIsPending] = useState(false)
+  const { error, isPending, submit } = useAuthForm()
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
     const email = (form.elements.namedItem('email') as HTMLInputElement).value
     const password = (form.elements.namedItem('password') as HTMLInputElement).value
 
-    setError(null)
-    setIsPending(true)
-
-    try {
+    submit(async () => {
       await authApi.signUp({ email, password })
       router.push('/login?message=check_email')
-    } catch (err) {
-      setError(errorMessage(err, 'Sign up failed.'))
-      setIsPending(false)
-    }
+    }, { fallback: 'Sign up failed.' })
   }
 
   return (

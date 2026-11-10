@@ -4,16 +4,14 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
+import { useAuthForm } from '../use-auth-form'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const [isPending, setIsPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useAuthForm()
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
     const password = (form.elements.namedItem('password') as HTMLInputElement).value
@@ -28,19 +26,13 @@ export default function ResetPasswordPage() {
       return
     }
 
-    setError(null)
-    setIsPending(true)
-
-    try {
+    submit(async () => {
       const supabase = createClient()
       const { error } = await supabase.auth.updateUser({ password })
       if (error) throw new Error(error.message)
       router.push('/dashboard')
       router.refresh()
-    } catch (err) {
-      setError(errorMessage(err))
-      setIsPending(false)
-    }
+    })
   }
 
   return (
