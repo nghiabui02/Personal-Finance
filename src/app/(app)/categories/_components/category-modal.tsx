@@ -4,12 +4,11 @@ import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Category, categoriesApi } from '@/lib/api/categories'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { CATEGORY_PALETTE } from '@/lib/utils/colors'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 
 interface CategoryModalProps {
@@ -20,9 +19,7 @@ interface CategoryModalProps {
 
 export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProps) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, isPending, submit } = useFormSubmit(onClose)
   const [selectedColor, setSelectedColor] = useState(editing?.color ?? CATEGORY_PALETTE[0])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -31,18 +28,11 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
     const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
     const icon = (form.elements.namedItem('icon') as HTMLInputElement).value.trim()
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        if (editing) {
-          await categoriesApi.update(editing.id, { name, icon: icon || undefined, color: selectedColor })
-        } else {
-          await categoriesApi.create({ name, icon: icon || undefined, color: selectedColor, type: activeTab })
-        }
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
+    submit(async () => {
+      if (editing) {
+        await categoriesApi.update(editing.id, { name, icon: icon || undefined, color: selectedColor })
+      } else {
+        await categoriesApi.create({ name, icon: icon || undefined, color: selectedColor, type: activeTab })
       }
     })
   }

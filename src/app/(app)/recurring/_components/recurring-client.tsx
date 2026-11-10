@@ -24,9 +24,9 @@ import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
 import { type RecurringTransaction, FREQUENCY_LABELS, recurringApi } from '@/lib/api/recurring-transactions'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 /** Rough per-month value of a rule, for comparing rules on different clocks. */
 const MONTHLY_MULTIPLIER: Record<RecurringTransaction['frequency'], number> = {
@@ -50,9 +50,7 @@ function RecurringModal({
   onClose: () => void
 }) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
   const [walletId, setWalletId] = useState(editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
@@ -75,32 +73,25 @@ function RecurringModal({
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     if (!startDate) { setError('Start date is required.'); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        if (editing) {
-          await recurringApi.update(editing.id, {
-            amount, frequency,
-            category_id: categoryId || undefined,
-            wallet_id: walletId || undefined,
-            note: note || undefined,
-            end_date: endDate || undefined,
-            bank_fee: fee > 0 ? fee : null,
-          })
-        } else {
-          await recurringApi.create({
-            type: txType, amount, frequency, start_date: startDate,
-            category_id: categoryId || undefined,
-            wallet_id: walletId || undefined,
-            note: note || undefined,
-            end_date: endDate || undefined,
-            bank_fee: fee > 0 ? fee : undefined,
-          })
-        }
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
+    submit(async () => {
+      if (editing) {
+        await recurringApi.update(editing.id, {
+          amount, frequency,
+          category_id: categoryId || undefined,
+          wallet_id: walletId || undefined,
+          note: note || undefined,
+          end_date: endDate || undefined,
+          bank_fee: fee > 0 ? fee : null,
+        })
+      } else {
+        await recurringApi.create({
+          type: txType, amount, frequency, start_date: startDate,
+          category_id: categoryId || undefined,
+          wallet_id: walletId || undefined,
+          note: note || undefined,
+          end_date: endDate || undefined,
+          bank_fee: fee > 0 ? fee : undefined,
+        })
       }
     })
   }

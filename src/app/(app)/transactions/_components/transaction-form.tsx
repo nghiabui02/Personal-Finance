@@ -20,11 +20,10 @@ import {
 } from '@/lib/transaction-matching'
 import type { ParsedDraft } from '@/lib/api/parse-transaction'
 import { QuickParse } from './quick-parse'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
+import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 interface TransactionFormProps {
   editing: Transaction | null
@@ -128,9 +127,7 @@ function CenteredAmountInput({
 }
 
 export function TransactionForm({ editing, categories, wallets, debts, frequent = [], recent = [], defaultDate, onDone, onCancel }: TransactionFormProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onDone)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
   const [walletId, setWalletId] = useState(
@@ -269,43 +266,36 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
     if (!date) { setError('Please pick a date.'); return }
     if (overdrawn) { setError(overdraftMessage); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        const base = {
-          type: txType,
-          amount,
-          category_id: categoryId || undefined,
-          wallet_id: walletId || undefined,
-          transaction_date: date,
-          note: note || (selectedDebt ? `Repayment to ${selectedDebt.person_name}` : undefined),
-          // Folded into this one transaction — the server stores amount + fee
-          // as the total, so the list shows a single row, not a separate fee row.
-          bank_fee: fee > 0 ? fee : undefined,
-        }
-
-        if (editing) {
-          await transactionsApi.update(editing.id, base)
-        } else if (selectedDebtId && amount > 0) {
-          // Debt payment: the payments API creates the transaction + adjusts balance atomically
-          const res = await fetch(`/api/debts/${selectedDebtId}/payments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount, note: note || undefined, wallet_id: walletId || undefined, date }),
-          })
-          if (!res.ok) {
-            const err = await res.json()
-            throw new Error(err.error || 'Failed to record debt payment.')
-          }
-        } else {
-          await transactionsApi.create(base)
-        }
-
-        router.refresh()
-        onDone()
-      } catch (err) {
-        setError(errorMessage(err))
+    submit(async () => {
+      const base = {
+        type: txType,
+        amount,
+        category_id: categoryId || undefined,
+        wallet_id: walletId || undefined,
+        transaction_date: date,
+        note: note || (selectedDebt ? `Repayment to ${selectedDebt.person_name}` : undefined),
+        // Folded into this one transaction — the server stores amount + fee
+        // as the total, so the list shows a single row, not a separate fee row.
+        bank_fee: fee > 0 ? fee : undefined,
       }
+
+      if (editing) {
+        await transactionsApi.update(editing.id, base)
+      } else if (selectedDebtId && amount > 0) {
+        // Debt payment: the payments API creates the transaction + adjusts balance atomically
+        const res = await fetch(`/api/debts/${selectedDebtId}/payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, note: note || undefined, wallet_id: walletId || undefined, date }),
+        })
+        if (!res.ok) {
+          const err = await res.json()
+          throw new Error(err.error || 'Failed to record debt payment.')
+        }
+      } else {
+        await transactionsApi.create(base)
+      }
+
     })
   }
 

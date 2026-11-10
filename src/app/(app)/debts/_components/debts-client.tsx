@@ -23,9 +23,9 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { AdditionModal } from './addition-modal'
 import { PaymentModal } from './payment-modal'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 
 // ── Debt Modal ────────────────────────────────────────────────────────────────
@@ -42,9 +42,7 @@ function DebtModal({
   onClose: () => void
 }) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [type, setType] = useState<'lend' | 'borrow'>(editing?.type ?? defaultType)
   const [date, setDate] = useState(localYMD())
   const [dueDate, setDueDate] = useState(editing?.due_date ?? '')
@@ -64,32 +62,25 @@ function DebtModal({
     if (!person_name) { setError('Name is required.'); return }
     if (!editing && (!amount || amount <= 0)) { setError('Amount is required.'); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        if (editing) {
-          await debtsApi.update(editing.id, {
-            person_name,
-            person_contact: get('person_contact') || undefined,
-            due_date: dueDate || undefined,
-            note: get('note') || undefined,
-          })
-        } else {
-          await debtsApi.create({
-            type,
-            person_name,
-            person_contact: get('person_contact') || undefined,
-            amount,
-            wallet_id: walletId || undefined,
-            date,
-            due_date: dueDate || undefined,
-            note: get('note') || undefined,
-          })
-        }
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
+    submit(async () => {
+      if (editing) {
+        await debtsApi.update(editing.id, {
+          person_name,
+          person_contact: get('person_contact') || undefined,
+          due_date: dueDate || undefined,
+          note: get('note') || undefined,
+        })
+      } else {
+        await debtsApi.create({
+          type,
+          person_name,
+          person_contact: get('person_contact') || undefined,
+          amount,
+          wallet_id: walletId || undefined,
+          date,
+          due_date: dueDate || undefined,
+          note: get('note') || undefined,
+        })
       }
     })
   }

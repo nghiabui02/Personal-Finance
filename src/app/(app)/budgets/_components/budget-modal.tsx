@@ -5,12 +5,11 @@ import { CategorySelect } from '@/components/ui/category-select'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
 import { type Category } from '@/lib/api/categories'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
+import { useState } from 'react'
 import { formatMonthYear } from '@/lib/utils/date'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 interface BudgetModalProps {
   editing: Budget | null
@@ -51,9 +50,7 @@ function MonthPicker({ value, onChange }: { value: string; onChange: (v: string)
 
 export function BudgetModal({ editing, month, expenseCategories, existingCategoryIds, onClose }: BudgetModalProps) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [selectedMonth, setSelectedMonth] = useState(
     editing ? editing.month.slice(0, 7) : month
   )
@@ -69,24 +66,17 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
     const amount = Number((e.currentTarget.elements.namedItem('amount') as HTMLInputElement).value)
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        if (editing) {
-          await budgetsApi.update(editing.id, { amount, rollover, active })
-        } else {
-          await budgetsApi.create({
-            category_id: categoryId || undefined,
-            amount,
-            month: `${selectedMonth}-01`,
-            rollover,
-            active,
-          })
-        }
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
+    submit(async () => {
+      if (editing) {
+        await budgetsApi.update(editing.id, { amount, rollover, active })
+      } else {
+        await budgetsApi.create({
+          category_id: categoryId || undefined,
+          amount,
+          month: `${selectedMonth}-01`,
+          rollover,
+          active,
+        })
       }
     })
   }

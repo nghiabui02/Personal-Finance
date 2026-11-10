@@ -18,18 +18,16 @@ import { formatVND } from '@/lib/utils/currency'
 import { type SavingGoal, savingGoalsApi } from '@/lib/api/saving-goals'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
 import { plural } from '@/lib/utils/plural'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 // ── Goal Modal ────────────────────────────────────────────────────────────────
 
 function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: () => void }) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [deadline, setDeadline] = useState(editing?.deadline ?? '')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -43,28 +41,21 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
     if (!name) { setError('Name is required.'); return }
     if (!target_amount || target_amount <= 0) { setError('Target amount is required.'); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        if (editing) {
-          await savingGoalsApi.update(editing.id, {
-            name, icon: icon || undefined,
-            target_amount,
-            deadline: deadline || undefined,
-            note: get('note') || undefined,
-          })
-        } else {
-          await savingGoalsApi.create({
-            name, icon: icon || undefined,
-            target_amount,
-            deadline: deadline || undefined,
-            note: get('note') || undefined,
-          })
-        }
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
+    submit(async () => {
+      if (editing) {
+        await savingGoalsApi.update(editing.id, {
+          name, icon: icon || undefined,
+          target_amount,
+          deadline: deadline || undefined,
+          note: get('note') || undefined,
+        })
+      } else {
+        await savingGoalsApi.create({
+          name, icon: icon || undefined,
+          target_amount,
+          deadline: deadline || undefined,
+          note: get('note') || undefined,
+        })
       }
     })
   }
@@ -96,9 +87,7 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
 
 function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => void }) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
 
   const remaining = goal.target_amount - goal.current_amount
 
@@ -107,20 +96,13 @@ function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => v
     const amount = Number((e.currentTarget.elements.namedItem('amount') as HTMLInputElement).value)
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        const newAmount = Math.min(goal.current_amount + amount, goal.target_amount)
-        const isComplete = newAmount >= goal.target_amount
-        await savingGoalsApi.update(goal.id, {
-          current_amount: newAmount,
-          ...(isComplete ? { status: 'completed' } : {}),
-        })
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
-      }
+    submit(async () => {
+      const newAmount = Math.min(goal.current_amount + amount, goal.target_amount)
+      const isComplete = newAmount >= goal.target_amount
+      await savingGoalsApi.update(goal.id, {
+        current_amount: newAmount,
+        ...(isComplete ? { status: 'completed' } : {}),
+      })
     })
   }
 

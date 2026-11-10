@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { AmountInput } from '@/components/ui/amount-input'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -11,9 +10,9 @@ import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { debtsApi, type Debt } from '@/lib/api/debts'
 import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 // Records more money lent/borrowed against an existing debt — increases
 // remaining_amount. Shared between the debts list page and the debt detail
@@ -28,9 +27,7 @@ export function AdditionModal({
   onClose: () => void
 }) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [date, setDate] = useState(localYMD())
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
   const [amount, setAmount] = useState(0)
@@ -44,15 +41,8 @@ export function AdditionModal({
     const form = e.currentTarget
     const note = (form.elements.namedItem('note') as HTMLInputElement).value
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
-    setError(null)
-    startTransition(async () => {
-      try {
-        await debtsApi.addDebt(debt.id, { amount, note: note || undefined, date, wallet_id: walletId || undefined })
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
-      }
+    submit(async () => {
+      await debtsApi.addDebt(debt.id, { amount, note: note || undefined, date, wallet_id: walletId || undefined })
     })
   }
 

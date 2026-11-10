@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { AmountInput } from '@/components/ui/amount-input'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -11,9 +10,9 @@ import { type Debt, debtsApi } from '@/lib/api/debts'
 import { toWalletOptions, type WalletChoice } from '@/lib/api/wallets'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
-import { errorMessage } from '@/lib/utils/errors'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 /** Records a payment against a debt — from the debts list and from a debt's
  *  own page. Never more than what is still owed. */
@@ -27,9 +26,7 @@ export function PaymentModal({
   onClose: () => void
 }) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
   const [date, setDate] = useState(localYMD())
   const [amount, setAmount] = useState(0)
@@ -47,15 +44,8 @@ export function PaymentModal({
     if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
     if (amount > debt.remaining_amount) { setError(`Max is ${formatVND(debt.remaining_amount)}.`); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        await debtsApi.addPayment(debt.id, { amount, note: note || undefined, wallet_id: walletId || undefined, date })
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
-      }
+    submit(async () => {
+      await debtsApi.addPayment(debt.id, { amount, note: note || undefined, wallet_id: walletId || undefined, date })
     })
   }
 

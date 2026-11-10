@@ -10,11 +10,10 @@ import { toast } from '@/components/ui/toast'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
 import { type Wallet, walletsApi, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
-import { errorMessage } from '@/lib/utils/errors'
+import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
+import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 
 /**
  * Type in the balance the bank actually shows; the gap is filed as one
@@ -30,9 +29,7 @@ export function ReconcileModal({
   onClose: () => void
 }) {
   const close = useModalClose()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [date, setDate] = useState(localYMD())
   const [actual, setActual] = useState<number | null>(null)
   const [categoryId, setCategoryId] = useState('')
@@ -59,25 +56,18 @@ export function ReconcileModal({
 
     if (!Number.isFinite(value)) { setError('Enter the balance shown by your bank.'); return }
 
-    setError(null)
-    startTransition(async () => {
-      try {
-        const result = await walletsApi.reconcile(wallet.id, {
-          actual_balance: value,
-          note,
-          date,
-          category_id: categoryId || undefined,
-        })
-        toast.success(
-          result.delta === 0
-            ? 'Already matches — nothing to adjust.'
-            : `Adjusted by ${result.delta > 0 ? '+' : '−'}${formatVND(Math.abs(result.delta))}.`
-        )
-        router.refresh()
-        onClose()
-      } catch (err) {
-        setError(errorMessage(err))
-      }
+    submit(async () => {
+      const result = await walletsApi.reconcile(wallet.id, {
+        actual_balance: value,
+        note,
+        date,
+        category_id: categoryId || undefined,
+      })
+      toast.success(
+        result.delta === 0
+          ? 'Already matches — nothing to adjust.'
+          : `Adjusted by ${result.delta > 0 ? '+' : '−'}${formatVND(Math.abs(result.delta))}.`
+      )
     })
   }
 
