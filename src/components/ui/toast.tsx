@@ -13,13 +13,24 @@ import { errorMessage } from '@/lib/utils/errors'
 
 type ToastTone = 'error' | 'success'
 
+/** An offer to reverse what the toast is reporting, e.g. a delete. */
+interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 interface Toast {
   id: number
   tone: ToastTone
   message: string
+  action?: ToastAction
 }
 
 const VISIBLE_MS: Record<ToastTone, number> = { error: 6000, success: 3000 }
+
+// An action has to outlast a plain confirmation: the user reads the message
+// first and only then decides to undo.
+const ACTION_VISIBLE_MS = 8000
 
 let toasts: Toast[] = []
 let nextId = 1
@@ -34,15 +45,15 @@ function dismiss(id: number) {
   publish(toasts.filter(t => t.id !== id))
 }
 
-function push(tone: ToastTone, message: string) {
+function push(tone: ToastTone, message: string, action?: ToastAction) {
   const id = nextId++
-  publish([...toasts, { id, tone, message }])
-  setTimeout(() => dismiss(id), VISIBLE_MS[tone])
+  publish([...toasts, { id, tone, message, action }])
+  setTimeout(() => dismiss(id), action ? ACTION_VISIBLE_MS : VISIBLE_MS[tone])
 }
 
 export const toast = {
   error: (message: string) => push('error', message),
-  success: (message: string) => push('success', message),
+  success: (message: string, action?: ToastAction) => push('success', message, action),
 }
 
 /** Shows a thrown value as an error toast. */
@@ -77,6 +88,7 @@ export function Toaster() {
       className="fixed left-1/2 -translate-x-1/2 z-[300] flex flex-col gap-2 w-[min(26rem,calc(100vw-2rem))] bottom-above-nav md:bottom-auto md:top-5"
       role="status"
       aria-live="polite"
+      data-toaster
     >
       {items.map(t => (
         <div
@@ -88,6 +100,15 @@ export function Toaster() {
             {TONE_ICONS[t.tone]}
           </svg>
           <p className="text-sm flex-1 min-w-0">{t.message}</p>
+          {t.action && (
+            <button
+              type="button"
+              onClick={() => { dismiss(t.id); t.action!.onClick() }}
+              className="shrink-0 text-sm font-semibold underline underline-offset-2 hover:no-underline"
+            >
+              {t.action.label}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => dismiss(t.id)}

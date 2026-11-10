@@ -146,6 +146,14 @@ input, textarea, select {
   bottom: calc(3.5rem + max(env(safe-area-inset-bottom), 0.5rem) + 1rem);
 }
 
+/* The selection bar sits where toasts appear on a phone, and a toast would
+   cover its buttons. While the bar is up, toasts go to the top — where desktop
+   already shows them. Unlayered, so it wins over the utilities on the toaster. */
+body:has([data-selection-bar]) [data-toaster] {
+  bottom: auto;
+  top: calc(env(safe-area-inset-top) + 1.25rem);
+}
+
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }

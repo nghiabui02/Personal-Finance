@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { toastError } from '@/components/ui/toast'
+import { toast, toastError } from '@/components/ui/toast'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
+import { CategorySelect } from '@/components/ui/category-select'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Dot, Em, Verdict } from '@/components/ui/verdict'
 import { TabGroup } from '@/components/ui/tab-group'
@@ -19,6 +20,7 @@ import type { DebtOption } from '@/lib/types'
 import { TransactionModal } from './transaction-modal'
 import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
 import type { HistoryTransaction } from '@/lib/transaction-matching'
+import { MAX_BULK_TRANSACTIONS } from '@/lib/constants'
 import { countActiveFilters, type TransactionFilters } from '@/lib/server/transaction-filters'
 import { FilterModal } from './filter-modal'
 import { PeriodNavigator, ViewSelector, type ViewMode } from './period-navigator'
@@ -35,6 +37,10 @@ function formatDateHeader(dateStr: string): string {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
+function plural(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? '' : 's'}`
+}
+
 function groupByDate(transactions: Transaction[]): [string, Transaction[]][] {
   const map = new Map<string, Transaction[]>()
   for (const tx of transactions) {
@@ -43,6 +49,17 @@ function groupByDate(transactions: Transaction[]): [string, Transaction[]][] {
     map.get(key)!.push(tx)
   }
   return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]))
+}
+
+/**
+ * A transfer leg and a debt repayment are owned by the record they belong to:
+ * their direction and category follow it, and re-creating one from a list
+ * would leave that record pointing at nothing. They can still be deleted —
+ * the database function reverses the whole relationship — but not restored
+ * from here, and not recategorised in bulk.
+ */
+function isStandalone(tx: Transaction): boolean {
+  return !tx.transfer_pair_id && !tx.debt_payment_id
 }
 
 interface TransactionsClientProps {
@@ -67,19 +84,42 @@ const PLUS_ICON = (
 )
 
 
+/** Present only while the list is in selection mode. */
+interface RowSelection {
+  selected: boolean
+  onToggle: (id: string) => void
+}
+
 function TransactionRow({
   tx,
   onEdit,
   onDelete,
+  selection,
 }: {
   tx: Transaction
   onEdit: (tx: Transaction) => void
   onDelete: (id: string) => void
+  selection?: RowSelection
 }) {
   const cat = tx.categories
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div
+      className={`flex items-center gap-3 px-4 py-3 ${
+        selection ? 'cursor-pointer' : ''
+      } ${selection?.selected ? 'bg-brand-soft' : ''}`}
+      onClick={selection ? () => selection.onToggle(tx.id) : undefined}
+    >
+      {selection && (
+        <input
+          type="checkbox"
+          checked={selection.selected}
+          onChange={() => selection.onToggle(tx.id)}
+          onClick={e => e.stopPropagation()}
+          aria-label={`Select ${tx.note || cat?.name || 'transaction'}`}
+          className="shrink-0 accent-[var(--brand)]"
+        />
+      )}
       <div
         className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base"
         style={{ backgroundColor: cat?.color ? `${cat.color}22` : '#f3f4f6' }}
@@ -109,12 +149,14 @@ function TransactionRow({
         )}
       </div>
 
-      <div className="flex gap-0.5">
-        {!tx.transfer_pair_id && (
-          <IconButton label="Edit transaction" onClick={() => onEdit(tx)}>{EditIcon}</IconButton>
-        )}
-        <IconButton label="Delete transaction" onClick={() => onDelete(tx.id)} tone="danger">{TrashIcon}</IconButton>
-      </div>
+      {!selection && (
+        <div className="flex gap-0.5">
+          {!tx.transfer_pair_id && (
+            <IconButton label="Edit transaction" onClick={() => onEdit(tx)}>{EditIcon}</IconButton>
+          )}
+          <IconButton label="Delete transaction" onClick={() => onDelete(tx.id)} tone="danger">{TrashIcon}</IconButton>
+        </div>
+      )}
     </div>
   )
 }
@@ -175,6 +217,9 @@ function TransactionList({
   onEdit,
   onDelete,
   onAdd,
+  selectedIds,
+  onToggleSelect,
+  onClearSelection,
   scrollableBody = false,
   hideSummary = false,
 }: {
@@ -186,6 +231,12 @@ function TransactionList({
   onEdit: (tx: Transaction) => void
   onDelete: (id: string) => void
   onAdd: () => void
+  /** Null outside selection mode — that is what switches the rows over. */
+  selectedIds: ReadonlySet<string> | null
+  onToggleSelect: (id: string) => void
+  /** Called when a category chip narrows the list: rows ticked under the old
+   *  chip would stay selected out of sight. */
+  onClearSelection: () => void
 }) {
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE)
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
@@ -254,7 +305,7 @@ function TransactionList({
         <CategoryChips
           transactions={transactions}
           selected={selectedCategoryId}
-          onSelect={setSelectedCategoryId}
+          onSelect={categoryId => { setSelectedCategoryId(categoryId); onClearSelection() }}
         />
       </div>
 
@@ -288,6 +339,9 @@ function TransactionList({
                       tx={tx}
                       onEdit={onEdit}
                       onDelete={onDelete}
+                      selection={selectedIds
+                        ? { selected: selectedIds.has(tx.id), onToggle: onToggleSelect }
+                        : undefined}
                     />
                   ))}
                 </div>
@@ -305,6 +359,77 @@ function TransactionList({
               </p>
             )}
           </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The actions a selection can take, pinned above the mobile nav the way the
+ * toasts are. Choosing a category applies it straight away: it is one control
+ * instead of a picker plus a confirm. Each row's previous category is not
+ * kept, so the way back is selecting the rows again.
+ *
+ * System categories are left out: rows filed under one drop out of income,
+ * spending and budgets, which is too much for a mis-tap to do to a whole batch.
+ * The single-transaction form still offers them.
+ */
+function SelectionBar({
+  selected,
+  categories,
+  isPending,
+  onCategorize,
+  onDelete,
+  onCancel,
+}: {
+  selected: Transaction[]
+  categories: Category[]
+  isPending: boolean
+  onCategorize: (categoryId: string) => void
+  onDelete: () => void
+  onCancel: () => void
+}) {
+  const types = new Set(selected.map(tx => tx.type))
+  const overLimit = selected.length > MAX_BULK_TRANSACTIONS
+  const categorizable = selected.length > 0 && types.size === 1 && selected.every(isStandalone)
+  const [type] = [...types]
+
+  return (
+    <div
+      data-selection-bar
+      className="fixed left-1/2 -translate-x-1/2 z-[200] w-[min(32rem,calc(100vw-2rem))] bottom-above-nav md:bottom-5"
+    >
+      <div className="rounded-2xl border border-hairline bg-white dark:bg-gray-900 shadow-lg p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium flex-1">
+            {selected.length} selected
+          </p>
+          <Button variant="secondary" onClick={onCancel} disabled={isPending}>Cancel</Button>
+          <Button variant="danger" onClick={onDelete} disabled={isPending || overLimit || selected.length === 0}>
+            Delete
+          </Button>
+        </div>
+        {overLimit ? (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            A batch is {MAX_BULK_TRANSACTIONS} transactions at most. Untick some to continue.
+          </p>
+        ) : categorizable ? (
+          <CategorySelect
+            label=""
+            categories={categories.filter(category => !category.system_key)}
+            filterType={type}
+            value=""
+            // A second pick while the first is still saving would send both.
+            onChange={categoryId => { if (categoryId && !isPending) onCategorize(categoryId) }}
+            placeholder="Move all to category…"
+            searchable
+          />
+        ) : selected.length > 0 && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Mixing income with expense, a transfer or a debt repayment leaves only Delete:
+            those carry a category their own record decides.
+          </p>
         )}
       </div>
     </div>
@@ -334,6 +459,10 @@ export default function TransactionsClient({
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  // Null is "not selecting". An empty Set is selection mode with nothing
+  // picked yet, which still has to show the rows' checkboxes.
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string> | null>(null)
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
 
   // Search state
   const [searchOpen, setSearchOpen] = useState(!!searchQuery)
@@ -347,6 +476,19 @@ export default function TransactionsClient({
     setPrevSearchQuery(searchQuery)
     setSearchValue(searchQuery)
     setSearchOpen(!!searchQuery)
+  }
+
+  // Rows ticked under one tab, day or period would otherwise stay selected out
+  // of sight and still be acted on. Selection mode stays on; the picks go.
+  const selectionScope = `${view}::${period}::${searchQuery}::${filter}::${selectedDate ?? ''}`
+  const [prevSelectionScope, setPrevSelectionScope] = useState(selectionScope)
+  if (prevSelectionScope !== selectionScope) {
+    setPrevSelectionScope(selectionScope)
+    clearPicks()
+  }
+
+  function clearPicks() {
+    if (selectedIds?.size) setSelectedIds(new Set())
   }
 
   // Focus input when search opens
@@ -407,13 +549,113 @@ export default function TransactionsClient({
       ? 'The amount goes back to the wallet it came from.'
       : 'This transaction will be permanently deleted.'
 
-  function handleDeleteConfirmed() {
-    if (!confirmId) return
+  /** Re-creates a deleted row. A new id, the same money. */
+  function restore(tx: Transaction) {
     startTransition(async () => {
-      try { await transactionsApi.delete(confirmId); router.refresh() }
-      catch (err) { toastError(err, 'Could not delete the transaction.') }
-      finally { setConfirmId(null) }
+      try {
+        await transactionsApi.create({
+          type: tx.type,
+          // Stored `amount` is the total; the server adds the fee back on top
+          // of the base it is given, so the fee has to come off first.
+          amount: Number(tx.amount) - Number(tx.bank_fee ?? 0),
+          category_id: tx.category_id ?? undefined,
+          wallet_id: tx.wallet_id ?? undefined,
+          transaction_date: tx.transaction_date,
+          note: tx.note ?? undefined,
+          bank_fee: Number(tx.bank_fee) > 0 ? Number(tx.bank_fee) : undefined,
+        })
+        router.refresh()
+      } catch (err) {
+        toastError(err, 'Could not restore the transaction.')
+      }
     })
+  }
+
+  function deleteTransaction(tx: Transaction) {
+    startTransition(async () => {
+      try {
+        await transactionsApi.delete(tx.id)
+        router.refresh()
+        toast.success(
+          'Transaction deleted.',
+          isStandalone(tx) ? { label: 'Undo', onClick: () => restore(tx) } : undefined,
+        )
+      } catch (err) {
+        toastError(err, 'Could not delete the transaction.')
+      } finally {
+        setConfirmId(null)
+      }
+    })
+  }
+
+  /**
+   * A standalone row goes at once, with the way back in the toast — the
+   * confirm step bought nothing that Undo does not. A transfer or a debt
+   * repayment still asks: reversing one touches a record Undo cannot rebuild.
+   */
+  function handleDelete(id: string) {
+    const tx = transactions.find(t => t.id === id)
+    // No modal stands between two taps on the same row any more, and the
+    // second delete would only report the row as not found.
+    if (!tx || isPending) return
+    if (isStandalone(tx)) deleteTransaction(tx)
+    else setConfirmId(id)
+  }
+
+  function handleDeleteConfirmed() {
+    if (confirmTx) deleteTransaction(confirmTx)
+  }
+
+  // ── Selection ──────────────────────────────────────────────────────────────
+
+  const selectedTransactions = selectedIds
+    ? transactions.filter(tx => selectedIds.has(tx.id))
+    : []
+
+  function toggleSelect(id: string) {
+    setSelectedIds(current => {
+      const next = new Set(current ?? [])
+      if (!next.delete(id)) next.add(id)
+      return next
+    })
+  }
+
+  function endSelection() {
+    setSelectedIds(null)
+    setConfirmBulkDelete(false)
+  }
+
+  /** `action` reports what happened, in the server's own count — not always
+   *  the number selected, since deleting a transfer takes its sibling leg. */
+  function runOnSelection(action: (ids: string[]) => Promise<string>, fallback: string) {
+    const ids = selectedTransactions.map(tx => tx.id)
+    startTransition(async () => {
+      try {
+        const message = await action(ids)
+        endSelection()
+        router.refresh()
+        toast.success(message)
+      } catch (err) {
+        toastError(err, fallback)
+        // A recategorise refused part-way keeps the rows it did change, so the
+        // list is reloaded rather than left showing the old categories.
+        router.refresh()
+      }
+    })
+  }
+
+  function categorizeSelection(categoryId: string) {
+    runOnSelection(
+      async ids => `${plural((await transactionsApi.categorizeMany(ids, categoryId)).updated, 'transaction')} moved.`,
+      'Could not change the category.',
+    )
+  }
+
+  function deleteSelection() {
+    runOnSelection(
+      async ids => `${plural((await transactionsApi.deleteMany(ids)).deleted, 'transaction')} deleted.`,
+      'Could not delete the selection.',
+    )
   }
 
   return (
@@ -484,6 +726,15 @@ export default function TransactionsClient({
               Import CSV
             </Link>
             <button
+              onClick={() => (selectedIds ? endSelection() : setSelectedIds(new Set()))}
+              aria-pressed={!!selectedIds}
+              className={`px-2 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedIds ? 'text-brand' : 'text-gray-500 hover:text-brand'
+              }`}
+            >
+              {selectedIds ? 'Done' : 'Select'}
+            </button>
+            <button
               onClick={searchOpen ? clearSearch : () => setSearchOpen(true)}
               className={`p-2 rounded-xl border transition-colors ${
                 searchOpen
@@ -546,8 +797,11 @@ export default function TransactionsClient({
                 filter={filter}
                 onFilter={setFilter}
                 onEdit={openModal}
-                onDelete={setConfirmId}
+                onDelete={handleDelete}
                 onAdd={() => openModal()}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onClearSelection={clearPicks}
                 scrollableBody
                 hideSummary
               />
@@ -573,8 +827,11 @@ export default function TransactionsClient({
                 filter={filter}
                 onFilter={setFilter}
                 onEdit={openModal}
-                onDelete={setConfirmId}
+                onDelete={handleDelete}
                 onAdd={() => openModal()}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onClearSelection={clearPicks}
                 scrollableBody
                 hideSummary
               />
@@ -592,8 +849,11 @@ export default function TransactionsClient({
                 filter={filter}
                 onFilter={setFilter}
                 onEdit={openModal}
-                onDelete={setConfirmId}
+                onDelete={handleDelete}
                 onAdd={() => openModal()}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onClearSelection={clearPicks}
                 scrollableBody
                 hideSummary
               />
@@ -622,6 +882,29 @@ export default function TransactionsClient({
           recent={recent}
           defaultDate={editingTx ? undefined : defaultDate}
           onClose={() => { setModalOpen(false); setEditingTx(null) }}
+        />
+      )}
+
+      {/* Hidden while the confirm is up: the bar is stacked above modals. */}
+      {selectedIds && !confirmBulkDelete && (
+        <SelectionBar
+          selected={selectedTransactions}
+          categories={categories}
+          isPending={isPending}
+          onCategorize={categorizeSelection}
+          onDelete={() => setConfirmBulkDelete(true)}
+          onCancel={endSelection}
+        />
+      )}
+
+      {confirmBulkDelete && (
+        <ConfirmModal
+          title={`Delete ${plural(selectedTransactions.length, 'transaction')}?`}
+          description="Every amount goes back to the wallet it came from, and a debt repayment reopens its debt. A batch this size is not offered as an undo, so it is confirmed here instead."
+          confirmLabel="Delete"
+          isPending={isPending}
+          onConfirm={deleteSelection}
+          onClose={() => setConfirmBulkDelete(false)}
         />
       )}
 

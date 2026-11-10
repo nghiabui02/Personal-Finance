@@ -49,3 +49,10 @@ export const SYSTEM_CATEGORY_KEYS = [
   'adjust_up', 'adjust_down',
 ] as const
 export type SystemCategoryKey = (typeof SYSTEM_CATEGORY_KEYS)[number]
+
+/**
+ * The most transactions one bulk action takes. A selection comes from a list
+ * the user scrolled; past this it is a mistake, and the delete loop holds its
+ * locks for the whole batch. Shared so the list can say so before the request.
+ */
+export const MAX_BULK_TRANSACTIONS = 200

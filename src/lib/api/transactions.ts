@@ -49,4 +49,21 @@ export const transactionsApi = {
   delete(id: string): Promise<null> {
     return apiFetch(`/api/transactions/${id}`, { method: 'DELETE' })
   },
+
+  /** Files a whole selection under one category. Rejects when any row could
+   *  not take it; the rows that could are changed all the same. */
+  categorizeMany(ids: string[], category_id: string): Promise<{ updated: number }> {
+    return apiFetch('/api/transactions/bulk', {
+      method: 'PATCH',
+      body: JSON.stringify({ ids, category_id }),
+    })
+  },
+
+  /** Removes a whole selection in one database transaction. */
+  deleteMany(ids: string[]): Promise<{ deleted: number }> {
+    return apiFetch('/api/transactions/bulk', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    })
+  },
 }
