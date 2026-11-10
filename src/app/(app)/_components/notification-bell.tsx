@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import type { AppNotification, NotificationSeverity } from '@/app/api/notifications/route'
+import { useDismiss } from '@/components/ui/use-dismiss'
 
 const SEVERITY_DOT: Record<NotificationSeverity, string> = {
   alert: 'bg-rose-500',
@@ -63,22 +64,7 @@ export function NotificationBell() {
     })
   }
 
-  // Close on outside click / Escape
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (e: PointerEvent) => {
-      if (!panelRef.current?.contains(e.target as Node)) closePanel()
-    }
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closePanel()
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
+  useDismiss(panelRef, open, closePanel)
 
   const count = items.length
   const unreadCount = items.filter(i => !i.read).length

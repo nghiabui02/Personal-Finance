@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import { useDismiss } from '@/components/ui/use-dismiss'
 import { getPeriodLabel, navigatePeriod, type PeriodType } from '@/lib/utils/period'
 
 const COMPARE_OFFSETS = [1, 2, 3, 4, 5, 6]
@@ -25,22 +26,7 @@ export function ComparePeriodPicker({
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  // Close on an outside click or Escape
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false)
-    }
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
+  useDismiss(ref, open, () => setOpen(false))
 
   const labelFor = (candidate: number) => getPeriodLabel(period, navigatePeriod(period, start, -candidate))
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { PeriodNav } from '@/components/ui/period-nav'
 import { TabGroup } from '@/components/ui/tab-group'
 import {
   formatMonthDay, formatMonthYear, formatWeekdayMonthDay,
@@ -51,27 +52,12 @@ export function PeriodNavigator({ view, period }: PeriodNavigatorProps) {
   }
 
   return (
-    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-      <button
-        onClick={() => go(-1)}
-        className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-        </svg>
-      </button>
-      <span className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-32 text-center tabular-nums">
-        {getPeriodLabel(view, period)}
-      </span>
-      <button
-        onClick={() => go(1)}
-        className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-        </svg>
-      </button>
-    </div>
+    <PeriodNav
+      label={getPeriodLabel(view, period)}
+      onPrev={() => go(-1)}
+      onNext={() => go(1)}
+      labelClassName="min-w-32 tabular-nums"
+    />
   )
 }
 
