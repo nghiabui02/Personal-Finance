@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { LOCALES } from './locale'
+import { CustomSelect } from '@/components/ui/custom-select'
 import { FormError } from '@/components/ui/form-error'
 
 /** Refreshing the current route preserves mounted forms and their drafts. */
@@ -35,13 +36,22 @@ export function LanguageSelector() {
 
   return (
     <div className="space-y-2">
-      <label className="flex items-center justify-between gap-3 text-sm text-gray-600 dark:text-gray-300">
-        {t('language')}
-        <select value={locale} disabled={saving || refreshing} onChange={event => changeLocale(event.target.value)}
-          className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100">
-          {LOCALES.map(value => <option key={value} value={value}>{value === 'vi' ? 'Tiếng Việt' : 'English'}</option>)}
-        </select>
-      </label>
+      <fieldset
+        disabled={saving || refreshing}
+        aria-label={t('language')}
+        className="flex items-center justify-between gap-3 text-sm text-gray-600 dark:text-gray-300 disabled:opacity-60"
+      >
+        <span aria-hidden="true">{t('language')}</span>
+        <div className="w-40 shrink-0">
+          <CustomSelect
+            label={null}
+            name="locale"
+            value={locale}
+            onChange={changeLocale}
+            options={LOCALES.map(value => ({ value, label: value === 'vi' ? 'Tiếng Việt' : 'English' }))}
+          />
+        </div>
+      </fieldset>
       <span role="status" className="text-xs text-gray-500">{saving || refreshing ? t('savingLanguage') : ''}</span>
       <FormError message={error ? t('languageSaveFailed') : null} />
     </div>
