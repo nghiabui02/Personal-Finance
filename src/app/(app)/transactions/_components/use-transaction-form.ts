@@ -6,6 +6,7 @@ import { type Wallet } from '@/lib/api/wallets'
 import type { ParsedDraft } from '@/lib/api/parse-transaction'
 import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
 import { findDuplicate, suggestCategoryId, type HistoryTransaction } from '@/lib/transaction-matching'
+import { isDebtCategoryKey } from '@/lib/constants'
 import type { DebtOption } from '@/lib/types'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
@@ -53,9 +54,19 @@ export function useTransactionForm({
   const [preset, setPreset] = useState<FrequentTransaction | null>(null)
   const [note, setNote] = useState(editing?.note ?? '')
 
+  /** Whether this form offers the category as a new choice. */
+  function isOffered(category: Category): boolean {
+    if (!isDebtCategoryKey(category.system_key)) return true
+    // Lend and Borrow come from creating a debt. Collect and Repay can be
+    // picked, but only while creating, because only then a debt is chosen.
+    return !editing && (category.system_key === 'collect_debt' || category.system_key === 'repay_debt')
+  }
+
+  const offeredCategoryIds = new Set(categories.filter(isOffered).map(c => c.id))
+
   function applyFrequent(f: FrequentTransaction) {
     setTxType(f.type)
-    setCategoryId(f.categoryId ?? '')
+    setCategoryId(f.categoryId && offeredCategoryIds.has(f.categoryId) ? f.categoryId : '')
     if (f.walletId) setWalletId(f.walletId)
     setSelectedDebtId('')
     setAmountValue(f.amount)
@@ -84,6 +95,12 @@ export function useTransactionForm({
     })
   }
 
+  // A row keeps the category it already has, even a legacy debt category, so
+  // saving it unchanged never fails or clears the field.
+  const choosableCategories = categories.filter(
+    c => offeredCategoryIds.has(c.id) || c.id === editing?.category_id || c.id === categoryId,
+  )
+
   // Detect if selected category is a debt-related one — by system_key, not
   // display name, so renaming a category (or i18n) never breaks this.
   const selectedCat = categories.find(c => c.id === categoryId)
@@ -96,13 +113,13 @@ export function useTransactionForm({
     ? debts.filter(d => isRepay ? d.type === 'borrow' : d.type === 'lend')
     : []
 
-  const debtOptions = [
-    { value: '', label: t('notLinked') },
-    ...relevantDebts.map(d => ({
-      value: d.id,
-      label: t('debtRemaining', { person: d.person_name, amount: formatVND(d.remaining_amount) }),
-    })),
-  ]
+  // No "not linked" choice: a debt category without a debt is what this form
+  // used to let through.
+  const debtOptions = relevantDebts.map(d => ({
+    value: d.id,
+    label: t('debtRemaining', { person: d.person_name, amount: formatVND(d.remaining_amount) }),
+  }))
+  const debtMissing = showDebtSelector && !selectedDebtId
 
   const selectedDebt = relevantDebts.find(d => d.id === selectedDebtId)
 
@@ -141,7 +158,7 @@ export function useTransactionForm({
   // than an empty category, and the user is looking at the field anyway.
   const suggestedId = categoryId ? null : suggestCategoryId(note, recent)
   const suggestedCategory = suggestedId
-    ? categories.find(c => c.id === suggestedId && c.type === txType) ?? null
+    ? choosableCategories.find(c => c.id === suggestedId && c.type === txType) ?? null
     : null
 
   // The same spend typed twice, or typed once and then imported. Editing is
@@ -157,7 +174,7 @@ export function useTransactionForm({
     txType, categoryId, walletId, date, note, amountValue, feeValue, showFee, selectedDebtId, preset, moreOpen,
     setWalletId, setDate, setNote, setAmountValue, setFeeValue, setShowFee, setSelectedDebtId, setMoreOpen,
     applyFrequent, applyDraft, changeType, changeCategory,
-    isRepay, showDebtSelector, debtOptions, selectedDebt,
+    choosableCategories, offeredCategoryIds, isRepay, showDebtSelector, debtOptions, debtMissing, selectedDebt,
     selectedWallet, spendTotal, overdrawn, overdraftMessage,
     suggestedCategory, duplicate, canAddFee,
   }

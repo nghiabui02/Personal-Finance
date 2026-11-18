@@ -6,6 +6,7 @@ import { toastError } from '@/components/ui/toast'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
+import { isDebtCategoryKey } from '@/lib/constants'
 import { type RecurringTransaction, recurringApi } from '@/lib/api/recurring-transactions'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -29,6 +30,8 @@ export function RecurringCard({
   const today = localYMD()
   const isOverdue = item.next_run_date && item.next_run_date <= today
   const isExpired = item.end_date && item.end_date < today
+  // Paused by the debt-category rule: it cannot run again until it files elsewhere.
+  const needsNewCategory = !item.active && isDebtCategoryKey(cat?.system_key)
 
   async function handleSkip() {
     setSkipping(true)
@@ -86,6 +89,9 @@ export function RecurringCard({
               {item.end_date && <span>{t('sentenceUntil', { value0: formatDate(item.end_date) })}</span>}
               {Number(item.bank_fee) > 0 && <span>{t('sentenceFee', { value0: formatVND(item.bank_fee!) })}</span>}
             </div>
+            {needsNewCategory && (
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{t('pausedDebtCategory')}</p>
+            )}
           </div>
         </div>
 
@@ -94,7 +100,7 @@ export function RecurringCard({
           <div className="flex gap-0.5">
             {!isExpired && (
               <IconButton label={item.active ? t('pause') : t('resume')} onClick={handleToggleActive}
-                disabled={togglingActive} tone="brand">
+                disabled={togglingActive || needsNewCategory} tone="brand">
                 {item.active ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />

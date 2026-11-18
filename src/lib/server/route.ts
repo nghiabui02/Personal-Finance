@@ -30,12 +30,16 @@ export function supabaseError(error: { message: string; code?: string }): Promis
   return jsonError(500, 'internalServerError')
 }
 
+/** SQLSTATE `assert_not_debt_category` raises, so the refusal can be translated. */
+const DEBT_CATEGORY_SQLSTATE = 'DC001'
+
 /**
  * The money functions raise their user-facing refusals — not enough in the
  * wallet, more than the debt still owes — with SQLSTATE P0001, and write the
  * sentence the user should read. Anything else is a fault on our side.
  */
 export function rpcError(error: { message: string; code?: string }): Promise<NextResponse> | NextResponse {
+  if (error.code === DEBT_CATEGORY_SQLSTATE) return badRequest('debtCategoryNeedsADebt')
   return error.code === 'P0001' ? NextResponse.json({ error: error.message }, { status: 400 }) : supabaseError(error)
 }
 

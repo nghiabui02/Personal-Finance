@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { withAuth, notFound, deleteOwnedRow, updateOwnedRow, type ServerClient } from '@/lib/server/route'
+import { withAuth, badRequest, notFound, deleteOwnedRow, updateOwnedRow, type ServerClient } from '@/lib/server/route'
+import { isDebtCategory } from '@/lib/server/system-categories'
 import { localYMD, toYMD } from '@/lib/utils/date'
 
 // Advances a YYYY-MM-DD by one occurrence of the given frequency — mirrors
@@ -17,11 +18,11 @@ function nextOccurrence(current: string, frequency: string): string {
   return toYMD(date)
 }
 
-/** Where a rule stands in its schedule, or null when it is not the caller's. */
+/** Where a rule stands in its schedule, and what it files under, or null when it is not the caller's. */
 async function getSchedule(supabase: ServerClient, userId: string, id: string) {
   const { data } = await supabase
     .from('recurring_transactions')
-    .select('next_run_date, frequency')
+    .select('next_run_date, frequency, category_id')
     .eq('id', id).eq('user_id', userId).single()
   return data
 }
@@ -45,21 +46,30 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
 
   const { amount, category_id, wallet_id, note, frequency, end_date, bank_fee, active } = body
 
+  const needsCurrentRule = category_id !== undefined || active === true
+  const current = needsCurrentRule ? await getSchedule(supabase, user.id, id) : null
+  if (needsCurrentRule && !current) return notFound('recurringTransactionNotFound')
+
+  // A rule that already sits in a debt category may still be edited while it
+  // stays paused and keeps that category; it cannot start running, or move into
+  // one, because the nightly job files its transactions without a debt.
+  if (current) {
+    const nextCategoryId = category_id !== undefined ? (category_id || null) : current.category_id
+    const categoryChanged = nextCategoryId !== current.category_id
+    if ((categoryChanged || active === true) && await isDebtCategory(supabase, nextCategoryId)) {
+      return badRequest('debtCategoryNeedsADebt')
+    }
+  }
+
   // Resuming a paused item skips whatever was missed while inactive — jump
   // next_run_date to the first FUTURE occurrence instead of letting the
   // cron backfill everything that piled up during the pause.
   let resumedNextRunDate: string | undefined
-  if (active === true) {
-    const current = await getSchedule(supabase, user.id, id)
-
-    if (!current) return notFound('recurringTransactionNotFound')
-
-    if (current.next_run_date) {
-      const today = localYMD()
-      let next = current.next_run_date
-      while (next <= today) next = nextOccurrence(next, current.frequency)
-      resumedNextRunDate = next
-    }
+  if (active === true && current?.next_run_date) {
+    const today = localYMD()
+    let next = current.next_run_date
+    while (next <= today) next = nextOccurrence(next, current.frequency)
+    resumedNextRunDate = next
   }
 
   return updateOwnedRow(supabase, 'recurring_transactions', { id, userId: user.id }, {

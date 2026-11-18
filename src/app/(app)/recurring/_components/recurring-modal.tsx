@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { localYMD } from '@/lib/utils/date'
 import { type Category } from '@/lib/api/categories'
+import { isDebtCategoryKey } from '@/lib/constants'
 import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
 import { type RecurringTransaction, recurringApi } from '@/lib/api/recurring-transactions'
 import { useState } from 'react'
@@ -45,6 +46,11 @@ export function RecurringModal({
   const [showFee, setShowFee] = useState(Number(editing?.bank_fee) > 0)
 
   const walletOptions = toWalletOptions(wallets, t('none'))
+  // The nightly job files a rule's transactions without a debt, so a debt
+  // category is not offered. A rule keeps the category it already has.
+  const choosableCategories = categories.filter(
+    c => c.id === editing?.category_id || !isDebtCategoryKey(c.system_key),
+  )
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -108,7 +114,7 @@ export function RecurringModal({
         {/* Category + Wallet */}
         <div className="grid grid-cols-2 gap-3">
           <CategorySelect
-            categories={categories} filterType={txType}
+            categories={choosableCategories} filterType={txType}
             value={categoryId} onChange={setCategoryId} searchable />
           {wallets.length > 0
             ? <CustomSelect label={t('wallet')} name="wallet_id" options={walletOptions}

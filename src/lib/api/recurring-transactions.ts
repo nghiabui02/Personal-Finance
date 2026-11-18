@@ -15,7 +15,7 @@ export type RecurringTransaction = {
   next_run_date: string | null
   bank_fee: number | null
   active: boolean
-  categories: { id: string; name: string; icon: string | null; color: string | null } | null
+  categories: { id: string; name: string; icon: string | null; color: string | null; system_key?: string | null } | null
   wallets: { id: string; name: string } | null
 }
 

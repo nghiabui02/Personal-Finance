@@ -1,5 +1,5 @@
 import { apiFetch } from './client'
-import type { TransactionType } from '@/lib/constants'
+import { isDebtCategoryKey, type TransactionType } from '@/lib/constants'
 
 export type Transaction = {
   id: string
@@ -15,7 +15,7 @@ export type Transaction = {
   bank_fee: number | null
   debt_payment_id: string | null
   transfer_pair_id: string | null
-  categories: { id: string; name: string; icon: string | null; color: string | null } | null
+  categories: { id: string; name: string; icon: string | null; color: string | null; system_key?: string | null } | null
   wallets: { id: string; name: string } | null
 }
 
@@ -25,9 +25,12 @@ export type Transaction = {
  * would leave that record pointing at nothing. They can still be deleted —
  * the database function reverses the whole relationship — but not restored
  * from here, and not recategorised in bulk.
+ *
+ * A row under a debt category is not standalone either, even without a link:
+ * the money functions refuse to create one, so Undo could not bring it back.
  */
 export function isStandalone(tx: Transaction): boolean {
-  return !tx.transfer_pair_id && !tx.debt_payment_id
+  return !tx.transfer_pair_id && !tx.debt_payment_id && !isDebtCategoryKey(tx.categories?.system_key)
 }
 
 type TransactionPayload = {

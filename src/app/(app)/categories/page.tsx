@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import CategoriesClient from './_components/categories-client'
 import { requireUser } from '@/lib/server/auth'
+import { getCategories } from '@/lib/server/queries'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('navigation')
@@ -18,14 +19,9 @@ export default async function CategoriesPage({
   const { type } = await searchParams
   const initialTab = type === 'income' ? 'income' : 'expense'
 
-  const { supabase, user } = await requireUser()
+  const { supabase } = await requireUser()
 
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('*')
-    .or(`user_id.eq.${user.id},is_default.eq.true`)
-    .order('is_default', { ascending: false })
-    .order('name')
+  const categories = await getCategories(supabase)
 
-  return <CategoriesClient categories={categories ?? []} initialTab={initialTab} />
+  return <CategoriesClient categories={categories} initialTab={initialTab} />
 }

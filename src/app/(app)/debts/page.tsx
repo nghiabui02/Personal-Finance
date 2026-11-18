@@ -10,7 +10,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 export const dynamic = 'force-dynamic'
 
-export default async function DebtsPage() {
+export default async function DebtsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ new?: string }>
+}) {
+  // The transaction form sends people here to create the debt a Lend or Borrow
+  // transaction stands for.
+  const { new: newDebtType } = await searchParams
+  const initialNewDebtType = newDebtType === 'lend' || newDebtType === 'borrow' ? newDebtType : undefined
+
   const { supabase, user } = await requireUser()
 
   const [{ data: debts }, { data: wallets }] = await Promise.all([
@@ -24,6 +33,7 @@ export default async function DebtsPage() {
 
   return (
     <DebtsClient
+      initialNewDebtType={initialNewDebtType}
       debts={(debts ?? []) as unknown as Parameters<typeof DebtsClient>[0]['debts']}
       wallets={(wallets ?? []) as unknown as Parameters<typeof DebtsClient>[0]['wallets']}
     />

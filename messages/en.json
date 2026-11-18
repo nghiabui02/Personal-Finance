@@ -133,7 +133,6 @@
     "newCategory": "New category",
     "createYourFirstOne": "Create your first one",
     "custom": "Custom",
-    "default": "Default",
     "thisCategoryWillBePermanentlyDeletedTransactionsUsingItWillBecomeUncategorized": "This category will be permanently deleted. Transactions using it will become uncategorized.",
     "deleteCategory": "Delete category",
     "editCategory": "Edit category",
@@ -144,7 +143,7 @@
     "color": "Color",
     "save": "Save",
     "sentenceInTotal": "{value0} in total",
-    "usingDefaults": "You''''re using <strong>{count}</strong> built-in {type, select, income {income} other {expense}} categories.",
+    "usingDefaults": "You have added <strong>{count}</strong> {type, select, income {income} other {expense}} categories from the Store.",
     "customCount": "You have added <strong>{count}</strong> custom {type, select, income {income} other {expense}} {count, plural, one {category} other {categories}}.",
     "labels": {
       "salary": "Salary",
@@ -169,7 +168,17 @@
     },
     "couldNotDeleteTheCategory": "Could not delete the category.",
     "deleteNamedCategory": "Delete “{name}”?",
-    "emptyType": "No {type, select, income {income} other {expense}} categories yet."
+    "emptyType": "No {type, select, income {income} other {expense}} categories yet.",
+    "store": "Category Store",
+    "browseStore": "Browse Store",
+    "fromStore": "From Store",
+    "storeHeadline": "You have added <strong>{count} of {total}</strong> available categories.",
+    "storeEmptyType": "No categories to add here yet.",
+    "add": "Add",
+    "adding": "Adding…",
+    "added": "Added",
+    "backToCategories": "Back to categories",
+    "couldNotAddTheCategory": "Could not add the category."
   },
   "dashboard": {
     "budgets": "Budgets",
@@ -349,7 +358,8 @@
     "sentenceEnded": "Ended ({value0})",
     "couldNotDeleteTheRecurringRule": "Could not delete the recurring rule.",
     "couldNotSkipTheNextOccurrence": "Could not skip the next occurrence.",
-    "toggleFailed": "Could not update this rule. Please try again."
+    "toggleFailed": "Could not update this rule. Please try again.",
+    "pausedDebtCategory": "Paused: debt categories need a debt. Choose another category, or record the payments in Debts."
   },
   "reports": {
     "score": "score",
@@ -522,7 +532,6 @@
     "date": "Date",
     "linkToDebtBorrowed": "Link to debt (borrowed)",
     "linkToDebtLent": "Link to debt (lent)",
-    "notLinked": "Not linked",
     "remaining": "Remaining:",
     "linkingUpdatesTheDebtRecordAutomatically": "· Linking updates the debt record automatically",
     "noteOptional": "Note (optional)",
@@ -627,7 +636,13 @@
     "deleteSelectionFailed": "Could not delete the selection.",
     "deleteCount": "Delete {count, plural, one {# transaction} other {# transactions}}?",
     "selectTransaction": "Select transaction {name}",
-    "categoryForRecord": "Category for record {row}"
+    "categoryForRecord": "Category for record {row}",
+    "lendingMoneyCreateADebt": "Lending money? Create a debt",
+    "borrowingMoneyCreateADebt": "Borrowing money? Create a debt",
+    "noDebtToRepay": "You have no borrowed debt to repay. <link>Open Debts</link> to add one.",
+    "noDebtToCollect": "You have no lent debt to collect. <link>Open Debts</link> to add one.",
+    "chooseADebt": "Choose a debt",
+    "debtRecordNotChanged": "The debt record itself is not changed."
   },
   "wallets": {
     "wallets": "Wallets",
@@ -841,7 +856,8 @@
     "selectAtLeastOneTransaction": "Select at least one transaction.",
     "selectionLimit": "Select at most {limit} transactions at a time.",
     "selectionContainsAnInvalidTransaction": "Selection contains an invalid transaction.",
-    "partialCategoryUpdate": "Only {updated} of {total} could take that category. Income and expense rows need their own, and transfers and debt repayments cannot be recategorised."
+    "partialCategoryUpdate": "Only {updated} of {total} could take that category. Income and expense rows need their own, and transfers and debt repayments cannot be recategorised.",
+    "debtCategoryNeedsADebt": "Lend, Borrow, Collect Debt and Repay Debt can only be used through a debt. Record it from Debts instead."
   },
   "csv": {
     "invalidSeparator": "Choose a valid CSV separator.",

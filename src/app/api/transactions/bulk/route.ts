@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { NextResponse } from 'next/server'
 import { badRequest, notFound, rpcError, supabaseError, withAuth } from '@/lib/server/route'
 import { isUuid } from '@/lib/imports/bank-csv'
-import { MAX_BULK_TRANSACTIONS } from '@/lib/constants'
+import { isDebtCategoryKey, MAX_BULK_TRANSACTIONS } from '@/lib/constants'
 
 /**
  * Acting on a selection of transactions at once — recategorising a stretch of
@@ -34,12 +34,13 @@ export const PATCH = withAuth(async (request, { supabase, user }) => {
   const categoryId = (body as { category_id?: unknown }).category_id
   if (!isUuid(categoryId)) return badRequest('chooseACategory')
 
-  // Row-level security decides visibility, so a category that comes back is one
-  // this user may file against — own or shared starter.
+  // Only the user's own categories: a Store template is not filed against
+  // directly, the user's copy of it is.
   const { data: category, error: categoryError } = await supabase
-    .from('categories').select('id, type').eq('id', categoryId).maybeSingle()
+    .from('categories').select('id, type, system_key').eq('id', categoryId).eq('user_id', user.id).maybeSingle()
   if (categoryError) return supabaseError(categoryError)
   if (!category) return notFound('thatCategoryNoLongerExists')
+  if (isDebtCategoryKey(category.system_key)) return badRequest('debtCategoryNeedsADebt')
 
   const { data, error } = await supabase
     .from('transactions')

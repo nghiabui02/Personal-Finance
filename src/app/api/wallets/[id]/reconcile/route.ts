@@ -28,7 +28,7 @@ async function resolveUserCategory(
     .select('id, type')
     .eq('id', categoryId)
     .eq('type', direction)
-    .or(`user_id.eq.${userId},user_id.is.null`)
+    .eq('user_id', userId)
     .maybeSingle()
 
   return data?.id ?? null

@@ -15,6 +15,7 @@ import { CategoryCard } from './category-card'
 import { CategoryModal } from './category-modal'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 import { AddButton } from '@/components/ui/add-button'
+import { Button } from '@/components/ui/button'
 
 export default function CategoriesClient({
   categories,
@@ -36,12 +37,16 @@ export default function CategoriesClient({
   const confirmCategory = categories.find(c => c.id === confirmId)
 
   const filtered = sortCategories(categories, locale).filter(c => c.type === tab)
-  const defaults = filtered.filter(c => c.user_id === null)
-  const custom = filtered.filter(c => c.user_id !== null)
+  const fromStore = filtered.filter(c => c.source_template_id !== null)
+  const custom = filtered.filter(c => c.source_template_id === null)
 
   function switchTab(t: 'income' | 'expense') {
     setTab(t)
     router.replace(`/categories?type=${t}`, { scroll: false })
+  }
+
+  function goToStore() {
+    router.push('/categories/store')
   }
 
   function openModal(category: Category | null = null) {
@@ -68,18 +73,22 @@ export default function CategoriesClient({
           />
         }
         action={
-          <AddButton onClick={() => openModal()}>{t('newCategory')}</AddButton>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={goToStore}>{t('browseStore')}</Button>
+            <AddButton onClick={() => openModal()}>{t('newCategory')}</AddButton>
+          </div>
         }
       />
 
       {filtered.length === 0 ? (
         <EmptyState
           message={t('emptyType', { type: tab })}
-          action={{ label: t('createYourFirstOne'), onClick: () => openModal() }}
+          action={{ label: t('browseStore'), onClick: goToStore }}
+          secondaryAction={{ label: t('createYourFirstOne'), onClick: () => openModal() }}
         />
       ) : (
         <div className="space-y-6">
-          {[{ title: t('custom'), list: custom }, { title: t('default'), list: defaults }].map(({ title, list }) =>
+          {[{ title: t('custom'), list: custom }, { title: t('fromStore'), list: fromStore }].map(({ title, list }) =>
             list.length > 0 && (
               <section key={title}>
                 <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">{title}</p>

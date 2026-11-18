@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
+import { isDebtCategory } from '@/lib/server/system-categories'
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
@@ -15,6 +16,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   if (bank_fee !== undefined && bank_fee !== null && Number(bank_fee) < 0) {
     return badRequest('bankFeeMustBePositive')
   }
+  // The nightly job files transactions without a debt, which a debt category forbids.
+  if (await isDebtCategory(supabase, category_id || null)) return badRequest('debtCategoryNeedsADebt')
 
   const { data, error } = await supabase
     .from('recurring_transactions')

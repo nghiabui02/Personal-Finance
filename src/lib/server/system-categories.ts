@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import type { SystemCategoryKey, TransactionType } from '@/lib/constants'
+import { isDebtCategoryKey, type SystemCategoryKey, type TransactionType } from '@/lib/constants'
 
 /**
  * Categories the app creates on the user's behalf, so a feature always has
@@ -104,4 +104,16 @@ export async function ensureSystemCategory(
   // Swallowing this used to leave transactions silently uncategorised — the
   // caller could not tell a missing category from a rejected one.
   throw new Error(`Could not create the "${def.name}" category: ${error?.message ?? 'unknown error'}`)
+}
+
+/** Whether `categoryId` is one of the user's debt categories, which only a debt
+ *  may file transactions under. Routes that write `category_id` without going
+ *  through the money functions call this. */
+export async function isDebtCategory(supabase: SupabaseClient, categoryId: string | null): Promise<boolean> {
+  if (!categoryId) return false
+
+  const { data, error } = await supabase.from('categories').select('system_key').eq('id', categoryId).maybeSingle()
+  if (error) throw error
+
+  return isDebtCategoryKey(data?.system_key)
 }

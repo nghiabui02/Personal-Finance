@@ -82,14 +82,17 @@ function DebtSection({
 export default function DebtsClient({
   debts,
   wallets,
+  initialNewDebtType,
 }: {
   debts: Debt[]
   wallets: WalletChoice[]
+  /** Opens the new-debt dialog on arrival, for this direction. */
+  initialNewDebtType?: 'lend' | 'borrow'
 }) {
   const t = useTranslations('debts')
-  const [modalOpen, setModalOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(initialNewDebtType !== undefined)
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null)
-  const [defaultType, setDefaultType] = useState<'lend' | 'borrow'>('lend')
+  const [defaultType, setDefaultType] = useState<'lend' | 'borrow'>(initialNewDebtType ?? 'lend')
   const [payingDebt, setPayingDebt] = useState<Debt | null>(null)
   const [addingDebt, setAddingDebt] = useState<Debt | null>(null)
   const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(

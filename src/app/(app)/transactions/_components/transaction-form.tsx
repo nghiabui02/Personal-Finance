@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 
 import { BankFeeField } from '@/components/ui/bank-fee-field'
@@ -49,12 +50,14 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
     txType, categoryId, walletId, date, note, amountValue, feeValue, showFee, selectedDebtId, preset, moreOpen,
     setWalletId, setDate, setNote, setAmountValue, setFeeValue, setShowFee, setSelectedDebtId, setMoreOpen,
     applyFrequent, applyDraft, changeType, changeCategory,
-    isRepay, showDebtSelector, debtOptions, selectedDebt,
+    choosableCategories, offeredCategoryIds, isRepay, showDebtSelector, debtOptions, debtMissing, selectedDebt,
     selectedWallet, spendTotal, overdrawn, overdraftMessage,
     suggestedCategory, duplicate, canAddFee,
   } = useTransactionForm({ editing, categories, wallets, debts, recent, defaultDate })
 
   const walletOptions = toWalletOptions(wallets, t('none'))
+  // A chip would file the form under a category it no longer offers.
+  const offeredFrequent = frequent.filter(f => !f.categoryId || offeredCategoryIds.has(f.categoryId))
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -116,12 +119,12 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
         )}
       </div>
 
-      {!editing && frequent.length > 0 && !amountValue && (
-        <FrequentChips frequent={frequent} activeKey={preset?.key} onPick={applyFrequent} />
+      {!editing && offeredFrequent.length > 0 && !amountValue && (
+        <FrequentChips frequent={offeredFrequent} activeKey={preset?.key} onPick={applyFrequent} />
       )}
 
       <CategoryTiles
-        categories={categories}
+        categories={choosableCategories}
         txType={txType}
         categoryId={categoryId}
         suggestedCategory={suggestedCategory}
@@ -129,6 +132,12 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
         onToggleMore={() => setMoreOpen(open => !open)}
         onChange={changeCategory}
       />
+
+      {!editing && (
+        <Link href={`/debts?new=${txType === 'expense' ? 'lend' : 'borrow'}`} className="block text-xs text-brand hover:underline">
+          {txType === 'expense' ? t('lendingMoneyCreateADebt') : t('borrowingMoneyCreateADebt')}
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         {wallets.length > 0
@@ -146,7 +155,14 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
       </div>
 
       {/* Debt selector — shown when category is Repay Debt / Collect Debt */}
-      {showDebtSelector && (
+      {showDebtSelector && debtOptions.length === 0 && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
+          {t.rich(isRepay ? 'noDebtToRepay' : 'noDebtToCollect', {
+            link: chunks => <Link href="/debts" className="font-medium underline">{chunks}</Link>,
+          })}
+        </p>
+      )}
+      {showDebtSelector && debtOptions.length > 0 && (
         <div className="space-y-1.5">
           <CustomSelect
             label={isRepay ? t('linkToDebtBorrowed') : t('linkToDebtLent')}
@@ -154,7 +170,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
             options={debtOptions}
             value={selectedDebtId}
             onChange={setSelectedDebtId}
-            placeholder={t('notLinked')}
+            placeholder={t('chooseADebt')}
           />
           {selectedDebt && (
             <p className="text-xs text-gray-400 dark:text-gray-500">{t('sentenceRemainingLinkingUpdatesTheDebtRecordAutomatically', { value0: formatVND(selectedDebt.remaining_amount) })}</p>
@@ -191,7 +207,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
 
       <ModalActions
         isPending={isPending}
-        disabled={overdrawn}
+        disabled={overdrawn || debtMissing}
         submitLabel={t('saveTransaction')}
         submitVariant="success"
         onCancel={onCancel}

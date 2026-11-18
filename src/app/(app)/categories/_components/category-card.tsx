@@ -14,7 +14,6 @@ interface CategoryCardProps {
 export function CategoryCard({ category, onEdit, onDelete, isDeleting }: CategoryCardProps) {
   const locale = useLocale()
   const t = useTranslations('categories')
-  const isOwned = category.user_id !== null
 
   return (
     <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl px-4 py-3.5 border border-hairline hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
@@ -33,19 +32,17 @@ export function CategoryCard({ category, onEdit, onDelete, isDeleting }: Categor
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{getCategoryName(category, locale)}</p>
-        {!isOwned && <p className="text-xs text-gray-400">{t('default')}</p>}
+        {category.source_template_id && <p className="text-xs text-gray-400">{t('fromStore')}</p>}
       </div>
 
       {category.color && (
         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
       )}
 
-      {isOwned && (
-        <div className="flex items-center gap-0.5">
-          <IconButton label={t('editCategory')} onClick={onEdit}>{EditIcon}</IconButton>
-          <IconButton label={t('deleteCategory')} onClick={onDelete} disabled={isDeleting} tone="danger">{TrashIcon}</IconButton>
-        </div>
-      )}
+      <div className="flex items-center gap-0.5">
+        <IconButton label={t('editCategory')} onClick={onEdit}>{EditIcon}</IconButton>
+        <IconButton label={t('deleteCategory')} onClick={onDelete} disabled={isDeleting} tone="danger">{TrashIcon}</IconButton>
+      </div>
     </div>
   )
 }

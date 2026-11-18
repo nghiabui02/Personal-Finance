@@ -50,6 +50,14 @@ export const SYSTEM_CATEGORY_KEYS = [
 ] as const
 export type SystemCategoryKey = (typeof SYSTEM_CATEGORY_KEYS)[number]
 
+/** The system categories that stand for money moving to or from another person.
+ *  A transaction filed under one must belong to a debt. */
+export const DEBT_CATEGORY_KEYS = ['lend_out', 'borrow_in', 'collect_debt', 'repay_debt'] as const satisfies readonly SystemCategoryKey[]
+
+export function isDebtCategoryKey(key: string | null | undefined): boolean {
+  return (DEBT_CATEGORY_KEYS as readonly string[]).includes(key ?? '')
+}
+
 /**
  * The most transactions one bulk action takes. A selection comes from a list
  * the user scrolled; past this it is a mistake, and the delete loop holds its

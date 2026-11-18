@@ -133,7 +133,6 @@
     "newCategory": "Danh mục mới",
     "createYourFirstOne": "Tạo danh mục đầu tiên",
     "custom": "Tùy chỉnh",
-    "default": "Mặc định",
     "thisCategoryWillBePermanentlyDeletedTransactionsUsingItWillBecomeUncategorized": "Danh mục sẽ bị xóa vĩnh viễn. Các giao dịch thuộc danh mục này sẽ trở thành chưa phân loại.",
     "deleteCategory": "Xóa danh mục",
     "editCategory": "Sửa danh mục",
@@ -144,7 +143,7 @@
     "color": "Màu sắc",
     "save": "Lưu",
     "sentenceInTotal": "Tổng cộng {value0}",
-    "usingDefaults": "Bạn đang dùng <strong>{count}</strong> danh mục {type, select, income {thu nhập} other {chi tiêu}} mặc định.",
+    "usingDefaults": "Bạn đã thêm <strong>{count}</strong> danh mục {type, select, income {thu nhập} other {chi tiêu}} từ cửa hàng.",
     "customCount": "Bạn đã thêm <strong>{count}</strong> danh mục {type, select, income {thu nhập} other {chi tiêu}} riêng.",
     "labels": {
       "salary": "Lương",
@@ -169,7 +168,17 @@
     },
     "couldNotDeleteTheCategory": "Không xóa được danh mục.",
     "deleteNamedCategory": "Xóa “{name}”?",
-    "emptyType": "Chưa có danh mục {type, select, income {thu nhập} other {chi tiêu}}."
+    "emptyType": "Chưa có danh mục {type, select, income {thu nhập} other {chi tiêu}}.",
+    "store": "Cửa hàng danh mục",
+    "browseStore": "Duyệt cửa hàng",
+    "fromStore": "Từ cửa hàng",
+    "storeHeadline": "Bạn đã thêm <strong>{count} / {total}</strong> danh mục có sẵn.",
+    "storeEmptyType": "Chưa có danh mục nào để thêm.",
+    "add": "Thêm",
+    "adding": "Đang thêm…",
+    "added": "Đã thêm",
+    "backToCategories": "Về danh mục",
+    "couldNotAddTheCategory": "Không thêm được danh mục."
   },
   "dashboard": {
     "budgets": "Ngân sách",
@@ -349,7 +358,8 @@
     "sentenceEnded": "Đã kết thúc ({value0})",
     "couldNotDeleteTheRecurringRule": "Không xóa được quy tắc định kỳ.",
     "couldNotSkipTheNextOccurrence": "Không bỏ qua được lần tới.",
-    "toggleFailed": "Không cập nhật được quy tắc. Vui lòng thử lại."
+    "toggleFailed": "Không cập nhật được quy tắc. Vui lòng thử lại.",
+    "pausedDebtCategory": "Đã tạm dừng: danh mục nợ cần gắn với một khoản nợ. Hãy chọn danh mục khác, hoặc ghi các khoản thanh toán trong mục Khoản nợ."
   },
   "reports": {
     "score": "điểm",
@@ -522,7 +532,6 @@
     "date": "Ngày",
     "linkToDebtBorrowed": "Liên kết khoản đi vay",
     "linkToDebtLent": "Liên kết khoản cho vay",
-    "notLinked": "Không liên kết",
     "remaining": "Còn lại:",
     "linkingUpdatesTheDebtRecordAutomatically": "· Liên kết tự động cập nhật khoản nợ",
     "noteOptional": "Ghi chú (không bắt buộc)",
@@ -627,7 +636,13 @@
     "deleteSelectionFailed": "Không xóa được các giao dịch đã chọn.",
     "deleteCount": "Xóa {count} giao dịch?",
     "selectTransaction": "Chọn giao dịch {name}",
-    "categoryForRecord": "Danh mục cho bản ghi {row}"
+    "categoryForRecord": "Danh mục cho bản ghi {row}",
+    "lendingMoneyCreateADebt": "Cho vay tiền? Tạo khoản nợ",
+    "borrowingMoneyCreateADebt": "Đi vay tiền? Tạo khoản nợ",
+    "noDebtToRepay": "Bạn chưa có khoản đi vay nào để trả. <link>Mở Khoản nợ</link> để thêm.",
+    "noDebtToCollect": "Bạn chưa có khoản cho vay nào để thu. <link>Mở Khoản nợ</link> để thêm.",
+    "chooseADebt": "Chọn khoản nợ",
+    "debtRecordNotChanged": "Bản ghi khoản nợ không bị thay đổi."
   },
   "wallets": {
     "wallets": "Ví",
@@ -841,7 +856,8 @@
     "selectAtLeastOneTransaction": "Chọn ít nhất một giao dịch.",
     "selectionLimit": "Mỗi lần chọn tối đa {limit} giao dịch.",
     "selectionContainsAnInvalidTransaction": "Danh sách chọn chứa giao dịch không hợp lệ.",
-    "partialCategoryUpdate": "Chỉ {updated} / {total} giao dịch đổi được danh mục. Thu và chi cần danh mục riêng; chuyển tiền và trả nợ không thể đổi danh mục."
+    "partialCategoryUpdate": "Chỉ {updated} / {total} giao dịch đổi được danh mục. Thu và chi cần danh mục riêng; chuyển tiền và trả nợ không thể đổi danh mục.",
+    "debtCategoryNeedsADebt": "Cho vay, Đi vay, Thu nợ và Trả nợ chỉ dùng được thông qua một khoản nợ. Hãy ghi nhận từ mục Khoản nợ."
   },
   "csv": {
     "invalidSeparator": "Chọn dấu phân cách CSV hợp lệ.",

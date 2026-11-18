@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { CATEGORY_COLUMNS } from '@/lib/api/categories'
+import { CATEGORY_COLUMNS, type Category } from '@/lib/api/categories'
 import { WALLET_COLUMNS, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
 
 /**
@@ -20,14 +20,23 @@ import { WALLET_COLUMNS, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
  * than four spellings of the same query.
  */
 
-/** Own categories plus the shared starter ones; row-level security decides
- *  which, so there is no user filter here. Defaults first, then by name. */
+/** The user's own categories: custom, added from the Store, and system ones.
+ *  Row-level security limits `user_id` to the caller; the shared Store
+ *  templates (user_id null) are read only by the Store itself. */
 export function categoriesQuery(supabase: SupabaseClient) {
   return supabase
     .from('categories')
     .select(CATEGORY_COLUMNS)
+    .not('user_id', 'is', null)
     .order('is_default', { ascending: false })
     .order('name')
+}
+
+/** `categoriesQuery`, resolved. */
+export async function getCategories(supabase: SupabaseClient): Promise<Category[]> {
+  const { data, error } = await categoriesQuery(supabase)
+  if (error) throw error
+  return data as unknown as Category[]
 }
 
 /** The user's wallets, default first then alphabetical — the order the wallet

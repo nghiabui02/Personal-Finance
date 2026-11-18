@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import RecurringClient from './_components/recurring-client'
-import { categoriesQuery, walletsQuery } from '@/lib/server/queries'
+import { getCategories, walletsQuery } from '@/lib/server/queries'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('navigation')
@@ -13,20 +13,20 @@ export const dynamic = 'force-dynamic'
 export default async function RecurringPage() {
   const { supabase, user } = await requireUser()
 
-  const [{ data: items }, { data: categories }, { data: wallets }] = await Promise.all([
+  const [{ data: items }, categories, { data: wallets }] = await Promise.all([
     supabase
       .from('recurring_transactions')
       .select('*, categories(id, name, icon, color, default_key, name_is_custom, system_key), wallets(id, name)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
-    categoriesQuery(supabase),
+    getCategories(supabase),
     walletsQuery(supabase, user.id),
   ])
 
   return (
     <RecurringClient
       items={(items ?? []) as unknown as Parameters<typeof RecurringClient>[0]['items']}
-      categories={categories ?? []}
+      categories={categories}
       wallets={(wallets ?? []) as unknown as Parameters<typeof RecurringClient>[0]['wallets']}
     />
   )

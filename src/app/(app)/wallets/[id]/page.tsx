@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { requireUser } from '@/lib/server/auth'
 import { WALLET_TX_PAGE_SIZE, type WalletTransaction } from '@/lib/api/wallets'
 import WalletDetailClient from './_components/wallet-detail-client'
-import { categoriesQuery, walletTransactionsQuery } from '@/lib/server/queries'
+import { getCategories, walletTransactionsQuery } from '@/lib/server/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +14,7 @@ export default async function WalletDetailPage({
   const { id } = await params
   const { supabase, user } = await requireUser()
 
-  const [{ data: wallet }, { data: transactions }, { data: amountRows }, { data: categories }] = await Promise.all([
+  const [{ data: wallet }, { data: transactions }, { data: amountRows }, categories] = await Promise.all([
     supabase
       .from('wallets')
       .select('*')
@@ -31,7 +31,7 @@ export default async function WalletDetailPage({
       .eq('user_id', user.id),
     // Reconciling can file the gap under a real category — interest on a
     // savings pocket is income, not a bookkeeping correction.
-    categoriesQuery(supabase),
+    getCategories(supabase),
   ])
 
   if (!wallet) notFound()
@@ -48,7 +48,7 @@ export default async function WalletDetailPage({
   return (
     <WalletDetailClient
       wallet={wallet}
-      categories={categories ?? []}
+      categories={categories}
       initialTransactions={rows}
       initialHasMore={rows.length === WALLET_TX_PAGE_SIZE}
       totalIncome={totalIncome}

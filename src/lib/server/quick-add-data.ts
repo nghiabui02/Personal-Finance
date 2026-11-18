@@ -2,7 +2,7 @@ import { getLocale } from 'next-intl/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Category } from '@/lib/api/categories'
 import type { Wallet } from '@/lib/api/wallets'
-import { categoriesQuery, walletsQuery } from './queries'
+import { getCategories, walletsQuery } from './queries'
 import { getRecentTransactions, type RecentTransaction } from './recent-transactions'
 import { toFrequentTransactions, type FrequentTransaction } from './frequent-transactions'
 import type { DebtOption } from '@/lib/types'
@@ -21,8 +21,8 @@ export async function getQuickAddData(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<QuickAddData> {
-  const [{ data: categories }, { data: wallets }, { data: debts }, recent] = await Promise.all([
-    categoriesQuery(supabase),
+  const [categories, { data: wallets }, { data: debts }, recent] = await Promise.all([
+    getCategories(supabase),
     walletsQuery(supabase, userId),
     // Only debts a payment can still be recorded against.
     supabase.from('debts').select('id, type, person_name, remaining_amount')
@@ -32,7 +32,7 @@ export async function getQuickAddData(
   ])
 
   return {
-    categories: (categories ?? []) as Category[],
+    categories,
     wallets: (wallets ?? []) as unknown as Wallet[],
     debts: (debts ?? []).map(d => ({
       id: d.id,

@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server'
 import { withAuth, badRequest, jsonError, tooManyRequests } from '@/lib/server/route'
 import { isRateLimited, ONE_MINUTE_MS } from '@/lib/server/rate-limit'
 import { askForJson, createGroqClient } from '@/lib/server/groq'
-import { CATEGORY_COLUMNS } from '@/lib/api/categories'
+import { getCategories } from '@/lib/server/queries'
+import { isDebtCategoryKey } from '@/lib/constants'
 import { localYMD } from '@/lib/utils/date'
 
 /**
@@ -61,13 +62,16 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   if (!input) return badRequest('typeWhatYouSpentOrPasteABankMessage')
   if (input.length > MAX_INPUT_CHARS) return badRequest('thatTextIsTooLongToReadAsOneTransaction')
 
-  const [{ data: categories }, { data: wallets }] = await Promise.all([
-    supabase.from('categories').select(CATEGORY_COLUMNS).order('name'),
+  const [categories, { data: wallets }] = await Promise.all([
+    getCategories(supabase),
     supabase.from('wallets').select('id, name, type').eq('user_id', user.id).order('name'),
   ])
 
   // Only ids the model may choose from — anything else is rejected below.
-  const categoryList = (categories ?? []).map(c => ({ id: c.id, name: c.name, aliases: [getCategoryName(c, 'vi'), getCategoryName(c, 'en')], type: c.type }))
+  // A debt category needs a debt, which one line of text cannot name.
+  const categoryList = categories
+    .filter(c => !isDebtCategoryKey(c.system_key))
+    .map(c => ({ id: c.id, name: c.name, aliases: [getCategoryName(c, 'vi'), getCategoryName(c, 'en')], type: c.type }))
   const walletList = (wallets ?? []).map(w => ({ id: w.id, name: w.name, type: w.type }))
 
   let draft: Record<string, unknown>

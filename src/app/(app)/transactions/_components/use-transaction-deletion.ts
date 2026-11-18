@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast, toastError } from '@/components/ui/toast'
+import { isDebtCategoryKey } from '@/lib/constants'
 import { isStandalone, type Transaction, transactionsApi } from '@/lib/api/transactions'
 
 /**
@@ -18,11 +19,15 @@ export function useTransactionDeletion(transactions: Transaction[]) {
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   const confirmTx = transactions.find(tx => tx.id === confirmId)
-  const consequence = confirmTx?.debt_payment_id
+  const walletConsequence = confirmTx?.debt_payment_id
     ? 'The money goes back to the wallet and the debt is reopened for this amount.'
     : confirmTx?.wallet_id
       ? 'The amount goes back to the wallet it came from.'
       : 'This transaction will be permanently deleted.'
+  // Without a payment record there is no debt to reopen, so the debt itself
+  // stays as it is — say so rather than let the user expect otherwise.
+  const leavesDebtUntouched = !!confirmTx && !confirmTx.debt_payment_id && isDebtCategoryKey(confirmTx.categories?.system_key)
+  const consequence = leavesDebtUntouched ? `${walletConsequence} ${t('debtRecordNotChanged')}` : walletConsequence
 
   /** Re-creates a deleted row. A new id, the same money. */
   function restore(tx: Transaction) {
