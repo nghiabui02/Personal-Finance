@@ -1,3 +1,4 @@
+import { getLocale } from 'next-intl/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Category } from '@/lib/api/categories'
 import type { Wallet } from '@/lib/api/wallets'
@@ -39,7 +40,7 @@ export async function getQuickAddData(
       person_name: d.person_name,
       remaining_amount: Number(d.remaining_amount),
     })),
-    frequent: toFrequentTransactions(recent),
+    frequent: toFrequentTransactions(recent, await getLocale()),
     recent,
   }
 }

@@ -1,3 +1,5 @@
+import { useLocale, useTranslations } from 'next-intl'
+
 import { type Debt } from '@/lib/api/debts'
 import { BRAND_HEX, MONEY_IN } from '@/lib/utils/colors'
 import { formatMonthDayYear } from '@/lib/utils/date'
@@ -45,6 +47,7 @@ export function DebtAvatar({ name, isLend, size }: { name: string; isLend: boole
 
 /** "Lent" or "Borrowed", and "Done" once it is settled. */
 export function DebtBadges({ isLend, isCompleted }: { isLend: boolean; isCompleted: boolean }) {
+  const t = useTranslations('debts')
   return (
     <>
       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${
@@ -52,20 +55,22 @@ export function DebtBadges({ isLend, isCompleted }: { isLend: boolean; isComplet
           ? 'bg-brand-soft text-brand'
           : 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400'
       }`}>
-        {isLend ? 'Lent' : 'Borrowed'}
+        {isLend ? t('lent') : t('borrowed')}
       </span>
       {isCompleted && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">Done</span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">{t('done')}</span>
       )}
     </>
   )
 }
 
 export function DebtDueDate({ dueDate, isOverdue }: { dueDate: string; isOverdue: boolean }) {
+  const locale = useLocale()
+  const t = useTranslations('debts')
   return (
     <p className={`text-xs ${isOverdue ? 'text-rose-500' : 'text-gray-400'}`}>
-      Due {formatMonthDayYear(new Date(dueDate))}
-      {isOverdue && ' · Overdue'}
+      {t('dueOn', { date: formatMonthDayYear(new Date(dueDate), locale) })}
+      {isOverdue && t('overdue')}
     </p>
   )
 }

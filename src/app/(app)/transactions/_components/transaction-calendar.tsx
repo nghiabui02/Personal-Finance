@@ -1,4 +1,5 @@
 'use client'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { useRouter } from 'next/navigation'
 import { type Transaction } from '@/lib/api/transactions'
@@ -11,16 +12,14 @@ interface TransactionCalendarProps {
   onSelectDate: (date: string | null) => void
 }
 
-function formatNet(net: number): string {
+function formatNet(net: number, locale: string): string {
   const abs = Math.abs(net)
   let s: string
-  if (abs >= 1_000_000) s = `${+(abs / 1_000_000).toFixed(1)}M`
-  else if (abs >= 1_000) s = `${Math.round(abs / 1_000)}k`
+  if (abs >= 1_000_000) s = `${(abs / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}${locale === 'en' ? 'M' : 'tr'}`
+  else if (abs >= 1_000) s = `${Math.round(abs / 1_000)}${locale === 'en' ? 'K' : 'ng'}`
   else s = String(Math.round(abs))
   return (net > 0 ? '+' : '−') + s
 }
-
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export function TransactionCalendar({
   transactions,
@@ -28,6 +27,9 @@ export function TransactionCalendar({
   selectedDate,
   onSelectDate,
 }: TransactionCalendarProps) {
+  const locale = useLocale()
+  const weekdays = Array.from({ length: 7 }, (_, index) => new Date(2026, 0, 5 + index).toLocaleDateString(locale, { weekday: 'short' }))
+  const t = useTranslations('transactions')
   const router = useRouter()
   const [year, month] = period.split('-').map(Number)
   const today = localYMD()
@@ -57,7 +59,7 @@ export function TransactionCalendar({
     onSelectDate(null)
   }
 
-  const monthLabel = formatMonthYear(new Date(year, month - 1, 1))
+  const monthLabel = formatMonthYear(new Date(year, month - 1, 1), locale)
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-3 sm:p-4 lg:sticky">
@@ -84,7 +86,7 @@ export function TransactionCalendar({
 
       {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
-        {WEEKDAYS.map(d => (
+        {weekdays.map(d => (
           <div key={d} className="text-center text-[11px] font-medium text-gray-400 dark:text-gray-500 py-1">
             {d}
           </div>
@@ -136,7 +138,7 @@ export function TransactionCalendar({
                       ? 'text-emerald-500 dark:text-emerald-400'
                       : 'text-rose-500 dark:text-rose-400'}
                 `}>
-                  {formatNet(net!)}
+                  {formatNet(net!, locale)}
                 </span>
               )}
             </button>
@@ -148,14 +150,13 @@ export function TransactionCalendar({
       {selectedDate && (
         <div className="mt-3 pt-3 border-t border-hairline flex items-center justify-between">
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {formatWeekdayMonthDay(new Date(selectedDate + 'T00:00:00'))}
+            {formatWeekdayMonthDay(new Date(selectedDate + 'T00:00:00'), locale)}
           </span>
           <button
             onClick={() => onSelectDate(null)}
             className="text-xs text-brand hover:underline"
           >
-            Show all
-          </button>
+            {t('showAll')}</button>
         </div>
       )}
     </div>

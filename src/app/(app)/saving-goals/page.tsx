@@ -1,8 +1,12 @@
+import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import SavingGoalsClient from './_components/saving-goals-client'
 
-export const metadata: Metadata = { title: 'Saving Goals' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('navigation')
+  return { title: t('savingGoals') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function SavingGoalsPage() {

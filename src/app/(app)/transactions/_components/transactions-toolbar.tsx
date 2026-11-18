@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import Link from 'next/link'
 import { useEffect, useRef } from 'react'
@@ -23,6 +24,7 @@ function Icon({ path, size = 15, className }: { path: string; size?: number; cla
 }
 
 function SearchInput({ search }: { search: NoteSearch }) {
+  const t = useTranslations('transactions')
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Mounted only while the box is open, so mounting is the moment to focus.
@@ -41,7 +43,7 @@ function SearchInput({ search }: { search: NoteSearch }) {
             if (e.key === 'Enter') search.submit()
             if (e.key === 'Escape') search.clear()
           }}
-          placeholder="Search by note… (Enter)"
+          placeholder={t('searchByNoteEnter')}
           className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
         />
       </div>
@@ -68,6 +70,7 @@ export function TransactionsToolbar({
   onOpenFilters: () => void
   onAdd: () => void
 }) {
+  const t = useTranslations('transactions')
   return (
     <div className="flex items-center gap-2 mb-3">
       <div
@@ -87,8 +90,7 @@ export function TransactionsToolbar({
 
       <div className="flex items-center gap-2 shrink-0 ml-auto">
         <Link href="/transactions/import" className="px-2 py-2 text-xs font-medium text-gray-500 hover:text-brand whitespace-nowrap">
-          Import CSV
-        </Link>
+          {t('importCsv')}</Link>
         <button
           onClick={onToggleSelecting}
           aria-pressed={isSelecting}
@@ -96,7 +98,7 @@ export function TransactionsToolbar({
             isSelecting ? 'text-brand' : 'text-gray-500 hover:text-brand'
           }`}
         >
-          {isSelecting ? 'Done' : 'Select'}
+          {isSelecting ? t('done') : t('select')}
         </button>
         <button
           onClick={search.isOpen ? search.clear : search.open}
@@ -105,13 +107,13 @@ export function TransactionsToolbar({
               ? 'text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:text-rose-600 hover:border-rose-200 dark:hover:border-rose-800'
               : ICON_BUTTON_IDLE
           }`}
-          aria-label={search.isOpen ? 'Close search' : 'Search'}
+          aria-label={search.isOpen ? t('closeSearch') : t('search')}
         >
           <Icon path={search.isOpen ? CLOSE_PATH : SEARCH_PATH} />
         </button>
         <button
           onClick={onOpenFilters}
-          aria-label={activeFilters > 0 ? `Filters (${activeFilters} active)` : 'Filter transactions'}
+          aria-label={activeFilters > 0 ? t('activeFilters', { count: activeFilters }) : t('filterTransactions')}
           className={`relative p-2 rounded-xl border transition-colors ${
             activeFilters > 0 ? 'text-brand border-brand bg-brand-soft' : ICON_BUTTON_IDLE
           }`}
@@ -129,7 +131,7 @@ export function TransactionsToolbar({
             `inline-flex`, which outranks a `hidden` passed via className. */}
         <div className="hidden md:block">
           <AddButton onClick={onAdd}>
-            <span className="hidden sm:inline">Add</span>
+            <span className="hidden sm:inline">{t('add')}</span>
           </AddButton>
         </div>
       </div>

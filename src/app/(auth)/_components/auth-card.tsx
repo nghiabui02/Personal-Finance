@@ -1,15 +1,17 @@
+import { useTranslations } from 'next-intl'
 /**
  * The frame of every sign-in screen: a dark brand strip over a white panel.
  * The layout above it centres the card; what goes inside is the page's own.
  */
 export function AuthCard({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('auth')
   return (
     <div className="rounded-2xl overflow-hidden border border-hairline shadow-sm">
       <div className="bg-panel px-6 py-5">
         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
           <span className="text-white font-bold text-base leading-none">₫</span>
         </div>
-        <p className="eyebrow text-slate-400">Personal Finance</p>
+        <p className="eyebrow text-slate-400">{t('personalFinance')}</p>
       </div>
       <div className="bg-white dark:bg-gray-900 px-6 py-6">{children}</div>
     </div>

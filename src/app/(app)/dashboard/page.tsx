@@ -1,3 +1,6 @@
+import { getCategoryName } from '@/i18n/category'
+import { getLocale } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
@@ -8,7 +11,10 @@ import type { CategoryRef } from '@/lib/types'
 import { formatVND } from '@/lib/utils/currency'
 import { localYM, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
 
-export const metadata: Metadata = { title: 'Dashboard' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('navigation')
+  return { title: t('dashboard') }
+}
 import { DashboardHero, type Alert } from './_components/dashboard-hero'
 import { BudgetProgress } from './_components/budget-progress'
 import { DebtSummary } from './_components/debt-summary'
@@ -25,6 +31,8 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ month?: string }>
 }) {
+  const t = await getTranslations('dashboard')
+  const locale = await getLocale()
   const { month: monthParam } = await searchParams
   const month = monthParam ?? localYM()
   const todayStr = localYMD()
@@ -51,8 +59,8 @@ export default async function DashboardPage({
     Promise.all([
       // History keeps all rows; income and spending use operating rows only.
       onlyOperatingTransactions(supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
-      supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
-      onlyOperatingTransactions(supabase.from('transactions').select('amount, categories(id, name, icon, color)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
+      supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color, default_key, name_is_custom, system_key)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
+      onlyOperatingTransactions(supabase.from('transactions').select('amount, categories(id, name, icon, color, default_key, name_is_custom, system_key)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
       supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
       walletsQuery(supabase, user.id),
       supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
@@ -96,13 +104,13 @@ export default async function DashboardPage({
     if (b.spent > b.amount) {
       alerts.push({
         type: 'budget_over',
-        label: `Over budget: ${b.category.icon ?? ''} ${b.category.name} — spent ${formatVND(b.spent)} of ${formatVND(b.amount)}`,
+        label: t('budgetOverAlert', { category: `${b.category.icon ?? ''} ${getCategoryName(b.category, locale)}`, spent: formatVND(b.spent), amount: formatVND(b.amount) }),
         href: '/budgets',
       })
     } else if (pct >= 0.8) {
       alerts.push({
         type: 'budget_near',
-        label: `Budget nearly full: ${b.category.icon ?? ''} ${b.category.name} — ${Math.round(pct * 100)}% used`,
+        label: t('budgetNearAlert', { category: `${b.category.icon ?? ''} ${getCategoryName(b.category, locale)}`, percent: Math.round(pct * 100) }),
         href: '/budgets',
       })
     }
@@ -113,18 +121,17 @@ export default async function DashboardPage({
       const isOverdue = d.due_date < todayStr
       // lend = they owe you; borrow = you owe them
       const direction = d.type === 'lend'
-        ? `${d.person_name} owes you`
-        : `You owe ${d.person_name}`
+        ? t('owedBy', { person: d.person_name })
+        : t('owedTo', { person: d.person_name })
       alerts.push({
         type: 'debt_due',
         label: isOverdue
-          ? `Overdue: ${direction} — ${formatVND(d.remaining_amount)} remaining`
-          : `Due soon: ${direction} — ${formatVND(d.remaining_amount)} on ${d.due_date}`,
+          ? t('debtOverdue', { direction, amount: formatVND(d.remaining_amount) })
+          : t('debtSoon', { direction, amount: formatVND(d.remaining_amount), date: d.due_date }),
         href: '/debts',
       })
     }
   }
-
 
   return (
     <div className="space-y-4 pb-2">

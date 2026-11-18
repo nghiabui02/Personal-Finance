@@ -1,8 +1,12 @@
+import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import CategoriesClient from './_components/categories-client'
 import { requireUser } from '@/lib/server/auth'
 
-export const metadata: Metadata = { title: 'Categories' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('navigation')
+  return { title: t('categories') }
+}
 
 export const dynamic = 'force-dynamic'
 

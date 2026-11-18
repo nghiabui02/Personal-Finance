@@ -11,7 +11,7 @@ export const POST = withRoute(async (request) => {
   const { email } = await request.json()
 
   if (!email) {
-    return badRequest('Email is required.')
+    return badRequest('emailIsRequired')
   }
 
   const origin = new URL(request.url).origin

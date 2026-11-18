@@ -1,4 +1,6 @@
 'use client'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { useEffect, useRef, useState } from 'react'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -13,13 +15,13 @@ export type Filter = 'all' | 'income' | 'expense'
 
 const PAGE_SIZE = 10
 
-function formatDateHeader(dateStr: string): string {
+function formatDateHeader(dateStr: string, locale: string): string {
   const today = localYMD()
   const yesterday = shiftLocalDate(today, -1)
-  if (dateStr === today) return 'Today'
-  if (dateStr === yesterday) return 'Yesterday'
+  if (dateStr === today) return locale === 'en' ? 'Today' : 'Hôm nay'
+  if (dateStr === yesterday) return locale === 'en' ? 'Yesterday' : 'Hôm qua'
   const [y, m, d] = dateStr.split('-').map(Number)
-  return formatWeekdayMonthDay(new Date(y, m - 1, d))
+  return formatWeekdayMonthDay(new Date(y, m - 1, d), locale)
 }
 
 function groupByDate(transactions: Transaction[]): [string, Transaction[]][] {
@@ -41,6 +43,8 @@ function CategoryChips({
   selected: string
   onSelect: (id: string) => void
 }) {
+  const locale = useLocale()
+  const t = useTranslations('transactions')
   const cats = new Map<string, { id: string; name: string; icon: string | null; color: string | null }>()
   for (const tx of transactions) {
     if (tx.categories && !cats.has(tx.categories.id)) {
@@ -60,8 +64,7 @@ function CategoryChips({
             : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
         }`}
       >
-        All
-      </button>
+        {t('all')}</button>
       {list.map(cat => (
         <button
           key={cat.id}
@@ -74,7 +77,7 @@ function CategoryChips({
           style={selected === cat.id ? { backgroundColor: cat.color ?? '#374151' } : undefined}
         >
           {cat.icon && <span>{cat.icon}</span>}
-          <span>{cat.name}</span>
+          <span>{getCategoryName(cat, locale)}</span>
         </button>
       ))}
     </div>
@@ -105,6 +108,8 @@ export function TransactionList({
    *  chip would stay selected out of sight. */
   onClearSelection: () => void
 }) {
+  const locale = useLocale()
+  const t = useTranslations('transactions')
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE)
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -142,9 +147,9 @@ export function TransactionList({
       <div className="space-y-3 mb-4 shrink-0">
         <TabGroup
           tabs={[
-            { key: 'all',     label: 'All'     },
-            { key: 'expense', label: 'Expense' },
-            { key: 'income',  label: 'Income'  },
+            { key: 'all',     label: t('all')     },
+            { key: 'expense', label: t('expense') },
+            { key: 'income',  label: t('income')  },
           ]}
           value={filter}
           onChange={onFilter}
@@ -160,14 +165,14 @@ export function TransactionList({
       <div className="flex-1 overflow-y-auto min-h-0">
         {filtered.length === 0 ? (
           <EmptyState
-            message={filter === 'all' && !selectedCategoryId ? 'No transactions.' : 'No transactions match this filter.'}
-            action={filter === 'all' && !selectedCategoryId ? { label: 'Add one', onClick: onAdd } : undefined}
+            message={filter === 'all' && !selectedCategoryId ? t('noTransactions') : t('noTransactionsMatchThisFilter')}
+            action={filter === 'all' && !selectedCategoryId ? { label: t('addOne'), onClick: onAdd } : undefined}
           />
         ) : (
           <div className="space-y-4">
             {groups.map(([date, txs], groupIdx) => (
               <div key={date} className="animate-fade-up" style={{ animationDelay: `${groupIdx * 40}ms` }}>
-                <DateGroupHeader label={formatDateHeader(date)} net={netOf(txs)} />
+                <DateGroupHeader label={formatDateHeader(date, locale)} net={netOf(txs)} />
 
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline divide-y divide-hairline">
                   {txs.map(tx => (
@@ -187,13 +192,10 @@ export function TransactionList({
 
             {hasMore && (
               <div ref={sentinelRef} className="py-3 text-center text-xs text-gray-400">
-                Loading more...
-              </div>
+                {t('loadingMore')}</div>
             )}
             {!hasMore && filtered.length > PAGE_SIZE && (
-              <p className="py-3 text-center text-xs text-gray-400">
-                All {filtered.length} transactions shown
-              </p>
+              <p className="py-3 text-center text-xs text-gray-400">{t('sentenceAllTransactionsShown', { value0: filtered.length })}</p>
             )}
           </div>
         )}

@@ -1,3 +1,4 @@
+import { getCategoryName } from '@/i18n/category'
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, jsonError, tooManyRequests } from '@/lib/server/route'
 import { isRateLimited, ONE_MINUTE_MS } from '@/lib/server/rate-limit'
@@ -24,41 +25,41 @@ const PARSES_PER_MINUTE = 30
 
 const SYSTEM_PROMPT = `You extract a single financial transaction from a short piece of text.
 
-The text is written by a Vietnamese user and may be:
+The text may be in Vietnamese or English, independently of the UI language, and may be:
 - shorthand they typed ("cà phê 35k vcb", "grab 82k tiền mặt")
 - a pasted bank SMS or app notification (Vietnamese banks: VCB, Techcombank, MB, ACB, BIDV, TPBank, VPBank)
 
 Rules:
-- Amounts use Vietnamese shorthand: "k"/"ng" = thousand, "tr"/"m" = million, "tỷ" = billion.
+- Amounts use Vietnamese shorthand: 'k'/'ng' = thousand, 'tr'/'m' = million, "tỷ" = billion.
   "35k" = 35000. "1tr2" = 1200000. "25tr" = 25000000. Dots and commas are digit
   separators, never decimals: "82,000" = 82000, "1.500.000" = 1500000.
-- type is "expense" unless the text clearly describes money coming in
-  (lương, thưởng, nhận, hoàn tiền, bán, GHI CO, +).
+- type is 'expense' unless the text clearly describes money coming in
+  (lương, thưởng, nhận, hoàn tiền, bán, GHI CO, salary, bonus, received, refund, sold, +).
 - Pick category_id from the provided list. Match on meaning, not spelling.
   Use null when nothing fits — never invent an id.
 - Pick wallet_id from the provided list when the text names or abbreviates one
   (vcb, techcom, tcb, mb, tiền mặt, tm, cash, momo). Use null otherwise.
-- note: a short human label for the row, in the user's own words. Strip bank
+- note: a short human label for the row, in the user's own words and language. Never translate user text. Strip bank
   boilerplate (account numbers, balances, reference codes). Omit if the category
   already says everything.
 - date: only set it when the text states one; otherwise null (today is used).
 - confidence: 0-1. Below 0.5 means you are guessing at the amount or type.
 
 Respond with JSON only:
-{"type":"expense|income","amount":number,"category_id":string|null,"wallet_id":string|null,"note":string|null,"date":"YYYY-MM-DD"|null,"confidence":number}`
+{'type':"expense|income",'amount':number,"category_id":string|null,"wallet_id":string|null,'note':string|null,'date':"YYYY-MM-DD"|null,'confidence':number}`
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   if (isRateLimited(request, { key: `ai-parse:${user.id}`, limit: PARSES_PER_MINUTE, windowMs: ONE_MINUTE_MS })) {
-    return tooManyRequests('Too many requests. Wait a minute, or fill the form in by hand.')
+    return tooManyRequests('tooManyRequestsWaitAMinuteOrFillTheFormInBy')
   }
 
   const groq = createGroqClient()
-  if (!groq) return jsonError(500, 'Groq is not configured.')
+  if (!groq) return jsonError(500, 'groqIsNotConfigured')
 
   const { text } = await request.json()
   const input = typeof text === 'string' ? text.trim() : ''
-  if (!input) return badRequest('Type what you spent, or paste a bank message.')
-  if (input.length > MAX_INPUT_CHARS) return badRequest('That text is too long to read as one transaction.')
+  if (!input) return badRequest('typeWhatYouSpentOrPasteABankMessage')
+  if (input.length > MAX_INPUT_CHARS) return badRequest('thatTextIsTooLongToReadAsOneTransaction')
 
   const [{ data: categories }, { data: wallets }] = await Promise.all([
     supabase.from('categories').select(CATEGORY_COLUMNS).order('name'),
@@ -66,7 +67,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   ])
 
   // Only ids the model may choose from — anything else is rejected below.
-  const categoryList = (categories ?? []).map(c => ({ id: c.id, name: c.name, type: c.type }))
+  const categoryList = (categories ?? []).map(c => ({ id: c.id, name: c.name, aliases: [getCategoryName(c, 'vi'), getCategoryName(c, 'en')], type: c.type }))
   const walletList = (wallets ?? []).map(w => ({ id: w.id, name: w.name, type: w.type }))
 
   let draft: Record<string, unknown>
@@ -83,12 +84,12 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     })
   } catch (err) {
     console.error('[api] parse-transaction: groq failed:', err)
-    return jsonError(502, 'Could not read that. Try rewording it, or enter the transaction manually.')
+    return jsonError(502, 'couldNotReadThatTryRewordingItOrEnterTheTransactionManually')
   }
 
   const amount = Number(draft.amount)
   if (!Number.isFinite(amount) || amount <= 0) {
-    return badRequest('No amount found in that text.')
+    return badRequest('noAmountFoundInThatText')
   }
 
   // The model is told to pick from the lists, but never trusted to have done so.

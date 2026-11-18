@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import { getQuickAddData } from '@/lib/server/quick-add-data'
@@ -10,7 +11,10 @@ import TransactionsClient from './_components/transactions-client'
 import type { ViewMode } from './_components/period-navigator'
 import { localYMD, getMondayOfLocalWeek, shiftLocalDate } from '@/lib/utils/date'
 
-export const metadata: Metadata = { title: 'Transactions' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('navigation')
+  return { title: t('transactions') }
+}
 export const dynamic = 'force-dynamic'
 
 function getDateRange(
@@ -62,13 +66,13 @@ export default async function TransactionsPage({
       q
         ? supabase
             .from('transactions')
-            .select('*, categories(id, name, icon, color), wallets(id, name)')
+            .select('*, categories(id, name, icon, color, default_key, name_is_custom, system_key), wallets(id, name)')
             .eq('user_id', user.id)
             .ilike('note', `%${q}%`)
             .limit(100)
         : supabase
             .from('transactions')
-            .select('*, categories(id, name, icon, color), wallets(id, name)')
+            .select('*, categories(id, name, icon, color, default_key, name_is_custom, system_key), wallets(id, name)')
             .eq('user_id', user.id)
             .gte('transaction_date', startDate)
             .lt('transaction_date', endDate),

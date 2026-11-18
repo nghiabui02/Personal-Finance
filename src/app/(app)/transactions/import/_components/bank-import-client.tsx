@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import Link from 'next/link'
 import { useState } from 'react'
@@ -17,6 +18,7 @@ import { netOf } from '@/lib/utils/totals'
 export function BankImportClient({ wallets, categories, recent }: {
   wallets: Wallet[]; categories: Category[]; recent: HistoryTransaction[]
 }) {
+  const t = useTranslations('transactions')
   const [walletId, setWalletId] = useState(wallets[0]?.id ?? '')
   const source = useCsvSource()
   // Debt and transfer categories are driven by their own records, so they are
@@ -37,19 +39,19 @@ export function BankImportClient({ wallets, categories, recent }: {
 
   return (
     <div className="max-w-3xl mx-auto pb-6 space-y-5">
-      <Link href="/transactions" className="text-sm text-gray-500 hover:text-brand">Back to transactions</Link>
+      <Link href="/transactions" className="text-sm text-gray-500 hover:text-brand">{t('backToTransactions')}</Link>
       <div>
-        <h1 className="text-xl font-semibold">Import VCB CSV</h1>
-        <p className="mt-1 text-sm text-gray-500">Upload, map columns, then review. Your wallet changes only after confirmation.</p>
+        <h1 className="text-xl font-semibold">{t('importVcbCsv')}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t('uploadMapColumnsThenReviewYourWalletChangesOnlyAfterConfirmation')}</p>
       </div>
-      {!wallets.length ? <p className="text-sm">Create a <Link href="/wallets" className="text-brand underline">bank wallet</Link> before importing.</p>
+      {!wallets.length ? <p className="text-sm">{t.rich('sentenceCreateABankWalletBeforeImporting', { value0: chunks => <Link href="/wallets" className="text-brand underline">{chunks}</Link> })}</p>
         : result && wallet ? <ImportSuccess result={result} wallet={wallet} /> : (
           <>
             <ImportSource source={source} wallets={wallets} walletId={walletId} disabled={busy || !!rows} onWalletChange={setWalletId} />
             {rows ? <form onSubmit={review.confirm} className="space-y-4">
               <ImportReview rows={rows} categories={importable} disabled={busy} onChange={review.updateRow} />
               <ReviewActions rows={rows} busy={busy} onBack={review.back} />
-            </form> : <Button disabled={busy || !source.csv || !!source.parseError} onClick={review.preview}>{busy ? 'Checking…' : 'Review transactions'}</Button>}
+            </form> : <Button disabled={busy || !source.csv || !!source.parseError} onClick={review.preview}>{busy ? t('checking') : t('reviewTransactions')}</Button>}
           </>
         )}
       {error && <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
@@ -58,27 +60,29 @@ export function BankImportClient({ wallets, categories, recent }: {
 }
 
 function ImportSuccess({ result, wallet }: { result: ImportResult; wallet: Wallet }) {
+  const t = useTranslations('transactions')
   return (
     <div className="rounded-xl border border-hairline p-5 space-y-4" role="status">
-      <p>{result.imported} imported · {result.skipped} already imported and skipped.</p>
-      <p>Balance after import: <strong>{formatVND(result.balance)}</strong></p>
-      <p className="text-sm text-gray-500">Compare with the bank balance at the same time. Reconciliation is a separate confirmation; do not compare an old closing balance with today&rsquo;s wallet.</p>
-      <Link href={`/wallets/${wallet.id}`} className="inline-block text-sm text-brand underline">Open wallet to reconcile balance</Link>
+      <p>{t('sentenceImportedAlreadyImportedAndSkipped', { value0: result.imported, value1: result.skipped })}</p>
+      <p>{t.rich('sentenceBalanceAfterImport', { value0: () => <strong>{formatVND(result.balance)}</strong> })}</p>
+      <p className="text-sm text-gray-500">{t('compareWithTheBankBalanceAtTheSameTimeReconciliationIsA')}</p>
+      <Link href={`/wallets/${wallet.id}`} className="inline-block text-sm text-brand underline">{t('openWalletToReconcileBalance')}</Link>
     </div>
   )
 }
 
 function ReviewActions({ rows, busy, onBack }: { rows: ReviewedRow[]; busy: boolean; onBack: () => void }) {
+  const t = useTranslations('transactions')
   const selected = rows.filter(row => row.selected)
   const net = netOf(selected)
   const canSave = selected.length > 0 && selected.every(row => row.title.trim()) && !rows.some(row => row.conflict)
   return (
     <div className="sticky bottom-0 rounded-xl border border-hairline bg-white dark:bg-gray-900 p-4 space-y-3">
-      <p className="text-sm">{selected.length} selected · Wallet change: {formatSignedVND(net)}</p>
-      <p className="text-xs text-gray-500">The batch must respect the wallet&rsquo;s available balance. If any row fails, the entire batch rolls back.</p>
+      <p className="text-sm">{t('sentenceSelectedWalletChange', { value0: selected.length, value1: formatSignedVND(net) })}</p>
+      <p className="text-xs text-gray-500">{t('theBatchMustRespectTheWalletSAvailableBalanceIfAnyRow')}</p>
       <div className="flex gap-3">
-        <Button type="button" variant="secondary" disabled={busy} onClick={onBack}>Back</Button>
-        <Button type="submit" disabled={busy || !canSave}>{busy ? 'Importing…' : 'Confirm import'}</Button>
+        <Button type="button" variant="secondary" disabled={busy} onClick={onBack}>{t('back')}</Button>
+        <Button type="submit" disabled={busy || !canSave}>{busy ? t('importing') : t('confirmImport')}</Button>
       </div>
     </div>
   )

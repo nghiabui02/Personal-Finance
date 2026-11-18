@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useCallback, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -16,6 +17,7 @@ interface EmojiPickerInputProps {
 }
 
 export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPickerInputProps) {
+  const t = useTranslations('common')
   const [value, setValue] = useState(defaultValue)
   const [open, setOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('finance')
@@ -47,7 +49,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
   // For text search, we do a simple name-based approach via keyword map
   const searchResults = query.trim() ? getSearchResults(query) : null
   const displayedEmojis = searchResults ?? CATEGORIES.find(c => c.key === activeCategory)!.emojis
-  const sectionLabel = query.trim() ? `Results for "${query}"` : CATEGORIES.find(c => c.key === activeCategory)!.label
+  const sectionLabel = query.trim() ? t('emojiResults', { query }) : t(`emojiGroups.${activeCategory}`)
 
   return (
     <div ref={ref} className="relative">
@@ -71,7 +73,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
         >
           {value
             ? <span className="text-xl leading-none">{value}</span>
-            : <span className="text-gray-400 text-sm">Choose emoji</span>}
+            : <span className="text-gray-400 text-sm">{t('chooseEmoji')}</span>}
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
             className={`ml-auto text-gray-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}>
             <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
@@ -82,8 +84,8 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
           <button
             type="button"
             onClick={() => setValue('')}
-            aria-label="Remove icon"
-            title="Remove icon"
+            aria-label={t('removeIcon')}
+            title={t('removeIcon')}
             className="self-stretch px-2.5 text-gray-400 hover:text-rose-600 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -117,11 +119,11 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="money, food, car…"
+                placeholder={t('moneyFoodCar')}
                 className="flex-1 min-w-0 text-sm bg-transparent outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400"
               />
               {query && (
-                <button type="button" onMouseDown={e => { e.preventDefault(); setQuery('') }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0">
+                <button type="button" aria-label={t('clearSearch')} onMouseDown={e => { e.preventDefault(); setQuery('') }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12"/>
                   </svg>
@@ -146,7 +148,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
                   }`}
                 >
                   <span className="text-sm leading-none">{cat.icon}</span>
-                  {cat.shortLabel}
+                  {t(`emojiGroups.${cat.key}`)}
                 </button>
               ))}
             </div>
@@ -159,7 +161,7 @@ export function EmojiPickerInput({ label, name, defaultValue = '' }: EmojiPicker
           {/* Emoji grid */}
           <div className="overflow-y-auto flex-1 px-2 pb-2 border-t border-hairline pt-2">
             {displayedEmojis.length === 0 ? (
-              <p className="text-center text-sm text-gray-400 py-6">Nothing matches that.</p>
+              <p className="text-center text-sm text-gray-400 py-6">{t('nothingMatchesThat')}</p>
             ) : (
               <div className="grid grid-cols-8 gap-0.5">
                 {displayedEmojis.map((emoji, i) => (

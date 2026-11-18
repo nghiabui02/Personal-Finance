@@ -1,4 +1,7 @@
 'use client'
+import { sortCategories, categorySearchTerms } from '@/i18n/category'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -9,7 +12,7 @@ import { type Category } from '@/lib/api/categories'
 import { toast } from '@/components/ui/toast'
 import { formatSignedVND, formatVND } from '@/lib/utils/currency'
 import { localYMD } from '@/lib/utils/date'
-import { type Wallet, walletsApi, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
+import { type Wallet, walletsApi } from '@/lib/api/wallets'
 import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
@@ -30,6 +33,9 @@ export function ReconcileModal({
   categories: Category[]
   onClose: () => void
 }) {
+  const locale = useLocale()
+  const common = useTranslations('common')
+  const t = useTranslations('wallets')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [date, setDate] = useState(localYMD())
@@ -44,10 +50,10 @@ export function ReconcileModal({
   // that way can hold it.
   const direction = delta !== null && delta > 0 ? 'income' : 'expense'
   const reasonOptions = [
-    { value: '', label: 'Balance correction' },
-    ...categories
+    { value: '', label: t('balanceCorrection') },
+    ...sortCategories(categories, locale)
       .filter(c => c.type === direction)
-      .map(c => ({ value: c.id, label: `${c.icon ?? ''} ${c.name}`.trim() })),
+      .map(c => ({ value: c.id, label: `${c.icon ?? ''} ${getCategoryName(c, locale)}`.trim(), searchText: categorySearchTerms(c) })),
   ]
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -56,7 +62,7 @@ export function ReconcileModal({
     const value = Number(readField(form, 'actual_balance'))
     const note = readField(form, 'note').trim()
 
-    if (!Number.isFinite(value)) { setError('Enter the balance shown by your bank.'); return }
+    if (!Number.isFinite(value)) { setError(t('enterTheBalanceShownByYourBank')); return }
 
     submit(async () => {
       const result = await walletsApi.reconcile(wallet.id, {
@@ -67,27 +73,27 @@ export function ReconcileModal({
       })
       toast.success(
         result.delta === 0
-          ? 'Already matches — nothing to adjust.'
-          : `Adjusted by ${formatSignedVND(result.delta, result.delta > 0)}.`
+          ? t('alreadyMatchesNothingToAdjust')
+          : t('reconciledAmount', { amount: formatSignedVND(result.delta, result.delta > 0) })
       )
     })
   }
 
   return (
-    <Modal title={`Reconcile ${wallet.name}`} size="md" onClose={onClose}>
+    <Modal title={t('reconcileWallet', { name: wallet.name })} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="rounded-xl bg-gray-50 dark:bg-gray-800 border border-hairline px-4 py-3">
           <p className="eyebrow text-gray-400 dark:text-gray-500 mb-1">
-            {isCredit ? 'Recorded available credit' : 'Recorded balance'}
+            {isCredit ? t('recordedAvailableCredit') : t('recordedBalance')}
           </p>
           <p className="text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">
             {formatVND(recorded)}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{WALLET_TYPE_LABELS[wallet.type]}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{common(`walletTypes.${wallet.type}`)}</p>
         </div>
 
         <AmountInput
-          label={isCredit ? 'Available credit on your statement' : 'Balance shown by your bank'}
+          label={isCredit ? t('availableCreditOnYourStatement') : t('balanceShownByYourBank')}
           name="actual_balance"
           defaultValue={recorded}
           onValueChange={setActual}
@@ -98,15 +104,10 @@ export function ReconcileModal({
           <div className="rounded-xl border border-hairline px-4 py-3">
             {delta === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Matches what&rsquo;s recorded — nothing to adjust.
-              </p>
+                {t('matchesWhatSRecordedNothingToAdjust')}</p>
             ) : (
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Files{' '}
-                <SignedAmount amount={delta} positive={delta > 0} />{' '}
-                {categoryId
-                  ? `as ${reasonOptions.find(o => o.value === categoryId)?.label ?? 'that category'} — counted in your ${direction === 'income' ? 'income' : 'spending'}.`
-                  : 'as a balance correction — kept out of your income and spending totals.'}
+                {t.rich(categoryId ? 'reconcileAsCategory' : 'reconcileAsCorrection', { amount: () => <SignedAmount amount={delta} positive={delta > 0} />, category: reasonOptions.find(option => option.value === categoryId)?.label ?? '', direction })}
               </p>
             )}
           </div>
@@ -114,7 +115,7 @@ export function ReconcileModal({
 
         {delta !== null && delta !== 0 && reasonOptions.length > 1 && (
           <CustomSelect
-            label="Reason"
+            label={t('reason')}
             name="reason"
             options={reasonOptions}
             value={categoryId}
@@ -124,11 +125,11 @@ export function ReconcileModal({
         )}
 
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-3 items-end">
-          <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
+          <DatePicker label={t('date')} name="date" value={date} onChange={setDate} required />
           <Input
-            label="Note (optional)"
+            label={t('noteOptional')}
             name="note"
-            placeholder="e.g. Interest"
+            placeholder={t('eGInterest')}
           />
         </div>
 
@@ -137,7 +138,7 @@ export function ReconcileModal({
         <ModalActions
           isPending={isPending}
           disabled={delta === 0}
-          submitLabel="Reconcile"
+          submitLabel={t('reconcile')}
           pendingLabel="Saving…"
           onCancel={close}
         />

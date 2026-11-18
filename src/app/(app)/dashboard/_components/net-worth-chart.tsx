@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { formatVND } from '@/lib/utils/currency'
 import type { NetWorthSnapshot as Snapshot } from '@/lib/types'
@@ -23,6 +24,7 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export function NetWorthChart({ snapshots }: { snapshots: Snapshot[] }) {
+  const t = useTranslations('dashboard')
   if (snapshots.length < 2) return null
 
   const data = snapshots.map(s => ({
@@ -40,8 +42,7 @@ export function NetWorthChart({ snapshots }: { snapshots: Snapshot[] }) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline dark:border-gray-800 p-5">
       <h2 className="eyebrow text-gray-400 dark:text-gray-500 mb-4">
-        Net worth · last 90 days
-      </h2>
+        {t('netWorthLast90Days')}</h2>
 
       <ResponsiveContainer width="100%" height={120}>
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>

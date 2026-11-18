@@ -63,24 +63,22 @@ export function shiftLocalDate(localDateStr: string, days: number): string {
 // date string becomes a Date (local midnight vs. parsed) is the caller's
 // decision and changing it can move a label by a day.
 
-const DISPLAY_LOCALE = 'en-US'
-
 /** "November 2026" */
-export function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString(DISPLAY_LOCALE, { month: 'long', year: 'numeric' })
+export function formatMonthYear(date: Date, locale = 'vi'): string {
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 }
 
 /** "Nov 10" */
-export function formatMonthDay(date: Date): string {
-  return date.toLocaleDateString(DISPLAY_LOCALE, { month: 'short', day: 'numeric' })
+export function formatMonthDay(date: Date, locale = 'vi'): string {
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
 }
 
 /** "Nov 10, 2026" */
-export function formatMonthDayYear(date: Date): string {
-  return date.toLocaleDateString(DISPLAY_LOCALE, { month: 'short', day: 'numeric', year: 'numeric' })
+export function formatMonthDayYear(date: Date, locale = 'vi'): string {
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 /** "Tue, Nov 10" */
-export function formatWeekdayMonthDay(date: Date): string {
-  return date.toLocaleDateString(DISPLAY_LOCALE, { weekday: 'short', month: 'short', day: 'numeric' })
+export function formatWeekdayMonthDay(date: Date, locale = 'vi'): string {
+  return date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
 }

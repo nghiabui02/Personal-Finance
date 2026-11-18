@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
@@ -21,6 +22,7 @@ interface CreditPaymentModalProps {
 }
 
 export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPaymentModalProps) {
+  const t = useTranslations('wallets')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [date, setDate] = useState(localYMD())
@@ -37,8 +39,8 @@ export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPay
     const amount = Number(readField(form, 'amount'))
     const note = readField(form, 'note').trim()
 
-    if (!amount || amount <= 0) { setError('Enter a valid amount.'); return }
-    if (!fromId) { setError('Select a source wallet.'); return }
+    if (!amount || amount <= 0) { setError(t('enterAValidAmount')); return }
+    if (!fromId) { setError(t('selectASourceWallet')); return }
 
     submit(async () => {
       await walletsApi.payCreditCard(creditWallet.id, { from_wallet_id: fromId, amount, note, date })
@@ -46,43 +48,43 @@ export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPay
   }
 
   return (
-    <Modal title="Pay Credit Card" size="md" onClose={onClose}>
+    <Modal title={t('payCreditCard')} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Summary */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 flex justify-between items-center">
           <div>
-            <p className="text-xs text-gray-400 mb-0.5">Current debt</p>
+            <p className="text-xs text-gray-400 mb-0.5">{t('currentDebt')}</p>
             <p className="text-lg font-bold text-rose-500">{formatVND(amountOwed)}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-400 mb-0.5">Available credit</p>
+            <p className="text-xs text-gray-400 mb-0.5">{t('availableCredit')}</p>
             <p className="text-base font-semibold text-gray-700 dark:text-gray-200">{formatVND(Number(creditWallet.balance))}</p>
           </div>
         </div>
 
         <AmountInput
-          label="Payment amount"
+          label={t('paymentAmount')}
           name="amount"
           defaultValue={amountOwed}
           required
         />
 
         <CustomSelect
-          label="Pay from"
+          label={t('payFrom')}
           name="from_wallet_id"
           options={sourceOptions}
           value={fromId}
           onChange={setFromId}
-          placeholder="Select wallet"
+          placeholder={t('selectWallet')}
         />
 
         <div className="grid grid-cols-2 gap-3">
-          <DatePicker label="Date" name="date" value={date} onChange={setDate} />
-          <Input label="Note (optional)" name="note" placeholder="Credit card payment" />
+          <DatePicker label={t('date')} name="date" value={date} onChange={setDate} />
+          <Input label={t('noteOptional')} name="note" placeholder={t('creditCardPayment')} />
         </div>
 
         {amountOwed <= 0 && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">No outstanding balance — credit is fully available.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">{t('noOutstandingBalanceCreditIsFullyAvailable')}</p>
         )}
 
         <FormError message={error} />
@@ -90,7 +92,7 @@ export function CreditPaymentModal({ creditWallet, wallets, onClose }: CreditPay
         <ModalActions
           isPending={isPending}
           disabled={amountOwed <= 0}
-          submitLabel="Pay"
+          submitLabel={t('pay')}
           pendingLabel="Processing..."
           onCancel={close}
         />

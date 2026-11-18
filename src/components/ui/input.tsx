@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 
@@ -18,6 +19,7 @@ const ClearIcon = () => (
 const NO_CLEAR_TYPES = ['password', 'number', 'date', 'time', 'datetime-local', 'file', 'checkbox', 'radio']
 
 export function Input({ label, error, id, clearable, className = '', defaultValue, value: controlledValue, onChange, type = 'text', ...props }: InputProps) {
+  const t = useTranslations('common')
   const inputId = id ?? label.toLowerCase().replace(/\s+/g, '-')
   // Uncontrolled by default; pass `value` to drive it from the parent (e.g. a
   // field the parent fills in from elsewhere) without a second component.
@@ -51,6 +53,7 @@ export function Input({ label, error, id, clearable, className = '', defaultValu
         />
         {showClear && value && (
           <button
+              aria-label={t('clearField', { label })}
             type="button"
             onClick={() => {
               setValue('')

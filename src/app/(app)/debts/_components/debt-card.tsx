@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import Link from 'next/link'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
@@ -20,6 +21,7 @@ export function DebtCard({
   onPay: () => void
   onAddMore: () => void
 }) {
+  const t = useTranslations('debts')
   const { isLend, isCompleted, isOverdue, paidAmount, pct, barColor } = describeDebt(debt)
 
   return (
@@ -44,13 +46,13 @@ export function DebtCard({
         <div className="flex gap-0.5 shrink-0">
           {!isCompleted && (
             <>
-              <button onClick={onAddMore} title={debt.type === 'lend' ? 'Lend more' : 'Borrow more'}
+              <button onClick={onAddMore} title={debt.type === 'lend' ? t('lendMore') : t('borrowMore')}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand-soft transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
               </button>
-              <button onClick={onPay} title="Record payment"
+              <button onClick={onPay} title={t('recordPayment')}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33" />
@@ -58,19 +60,19 @@ export function DebtCard({
               </button>
             </>
           )}
-          <IconButton label="Edit debt" onClick={onEdit}>{EditIcon}</IconButton>
-          <IconButton label="Delete debt" onClick={onDelete} tone="danger">{TrashIcon}</IconButton>
+          <IconButton label={t('editDebt')} onClick={onEdit}>{EditIcon}</IconButton>
+          <IconButton label={t('deleteDebt')} onClick={onDelete} tone="danger">{TrashIcon}</IconButton>
         </div>
       </div>
 
       <div className="flex justify-between text-xs text-gray-400 mb-1.5 tabular-nums">
-        <span>Paid {formatVND(paidAmount)}</span>
-        <span className="font-medium text-gray-700 dark:text-gray-300">{formatVND(debt.remaining_amount)} left</span>
+        <span>{t('sentencePaid', { value0: formatVND(paidAmount) })}</span>
+        <span className="font-medium text-gray-700 dark:text-gray-300">{t('sentenceLeft', { value0: formatVND(debt.remaining_amount) })}</span>
       </div>
       <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
         <div className="h-full rounded-full animate-bar-fill" style={{ width: `${pct}%`, backgroundColor: barColor }} />
       </div>
-      <p className="text-xs text-gray-400 mt-1 text-right tabular-nums">of {formatVND(debt.amount)}</p>
+      <p className="text-xs text-gray-400 mt-1 text-right tabular-nums">{t('sentenceOf', { value0: formatVND(debt.amount) })}</p>
     </div>
   )
 }

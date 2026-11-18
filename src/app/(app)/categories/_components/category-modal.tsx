@@ -1,4 +1,6 @@
 'use client'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
@@ -11,7 +13,6 @@ import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 import { readField } from '@/lib/utils/form'
 
-
 interface CategoryModalProps {
   editing: Category | null
   activeTab: 'income' | 'expense'
@@ -19,6 +20,9 @@ interface CategoryModalProps {
 }
 
 export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProps) {
+  const t = useTranslations('categories')
+  const locale = useLocale()
+  const [nameEdited, setNameEdited] = useState(false)
   const close = useModalClose()
   const { error, isPending, submit } = useFormSubmit(onClose)
   const [selectedColor, setSelectedColor] = useState(editing?.color ?? CATEGORY_PALETTE[0])
@@ -31,7 +35,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
 
     submit(async () => {
       if (editing) {
-        await categoriesApi.update(editing.id, { name, icon: icon || undefined, color: selectedColor })
+        await categoriesApi.update(editing.id, { ...(nameEdited ? { name } : {}), icon: icon || undefined, color: selectedColor })
       } else {
         await categoriesApi.create({ name, icon: icon || undefined, color: selectedColor, type: activeTab })
       }
@@ -39,14 +43,14 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
   }
 
   return (
-    <Modal title={editing ? 'Edit category' : 'New category'} onClose={onClose}>
+    <Modal title={editing ? t('editCategory') : t('newCategory')} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <EmojiPickerInput label="Icon" name="icon" defaultValue={editing?.icon ?? ''} />
-        <Input label="Name" name="name" defaultValue={editing?.name ?? ''} required
-          placeholder={activeTab === 'expense' ? 'e.g. Food & Drinks' : 'e.g. Salary'} />
+        <EmojiPickerInput label={t('icon')} name="icon" defaultValue={editing?.icon ?? ''} />
+        <Input label={t('name')} name="name" defaultValue={editing ? getCategoryName(editing, locale) : ''} onChange={() => setNameEdited(true)} required
+          placeholder={activeTab === 'expense' ? t('eGFoodDrinks') : t('eGSalary')} />
 
         <div>
-          <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</p>
+          <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('color')}</p>
           <div className="flex gap-2 flex-wrap">
             {CATEGORY_PALETTE.map(c => (
               <button key={c} type="button" onClick={() => setSelectedColor(c)}
@@ -60,7 +64,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
 
         <ModalActions
           isPending={isPending}
-          submitLabel="Save"
+          submitLabel={t('save')}
           onCancel={close}
         />
       </form>

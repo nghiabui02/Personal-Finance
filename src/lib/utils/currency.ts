@@ -13,9 +13,11 @@ export function formatSignedVND(amount: number, isPositive: boolean = amount >= 
   return `${isPositive ? '+' : '−'}${formatVND(Math.abs(amount))}`
 }
 
-export function formatCompactVND(amount: number): string {
-  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(1)}B ₫`
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M ₫`
-  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K ₫`
-  return formatVND(amount)
+export function formatCompactVND(amount: number, locale = 'vi'): string {
+  const absolute = Math.abs(amount)
+  const units = locale === 'en' ? ['B', 'M', 'K'] : [' tỷ', ' triệu', ' nghìn']
+  const divisor = absolute >= 1_000_000_000 ? 1_000_000_000 : absolute >= 1_000_000 ? 1_000_000 : absolute >= 1_000 ? 1_000 : 1
+  if (divisor === 1) return formatVND(amount)
+  const index = divisor === 1_000_000_000 ? 0 : divisor === 1_000_000 ? 1 : 2
+  return `${(amount / divisor).toLocaleString('vi-VN', { minimumFractionDigits: index < 2 ? 1 : 0, maximumFractionDigits: index < 2 ? 1 : 0 })}${units[index]} ₫`
 }

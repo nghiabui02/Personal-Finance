@@ -1,4 +1,6 @@
 'use client'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { CategorySelect } from '@/components/ui/category-select'
@@ -21,17 +23,19 @@ interface BudgetModalProps {
 }
 
 function MonthPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const locale = useLocale()
+  const t = useTranslations('budgets')
   function navigate(dir: -1 | 1) {
     const [y, m] = value.split('-').map(Number)
     const d = new Date(y, m - 1 + dir, 1)
     onChange(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
   const [y, m] = value.split('-').map(Number)
-  const label = formatMonthYear(new Date(y, m - 1, 1))
+  const label = formatMonthYear(new Date(y, m - 1, 1), locale)
 
   return (
     <div>
-      <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month</p>
+      <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('month')}</p>
       <div className="flex items-center justify-between rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5">
         <button type="button" onClick={() => navigate(-1)} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-0.5">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -50,6 +54,8 @@ function MonthPicker({ value, onChange }: { value: string; onChange: (v: string)
 }
 
 export function BudgetModal({ editing, month, expenseCategories, existingCategoryIds, onClose }: BudgetModalProps) {
+  const locale = useLocale()
+  const t = useTranslations('budgets')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [selectedMonth, setSelectedMonth] = useState(
@@ -65,7 +71,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const amount = Number(readField(e.currentTarget, 'amount'))
-    if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
+    if (!amount || amount <= 0) { setError(t('pleaseEnterAValidAmount')); return }
 
     submit(async () => {
       if (editing) {
@@ -83,7 +89,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
   }
 
   return (
-    <Modal title={editing ? 'Edit budget' : 'New budget'} onClose={onClose}>
+    <Modal title={editing ? t('editBudget') : t('newBudget')} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {!editing && <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />}
 
@@ -101,12 +107,12 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
           <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
             {editing.categories?.icon && <span className="text-xl">{editing.categories.icon}</span>}
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {editing.categories?.name ?? 'Uncategorized'}
+              {(editing.categories ? getCategoryName(editing.categories, locale) : undefined) ?? t('uncategorized')}
             </span>
           </div>
         )}
 
-        <AmountInput label="Budget amount" name="amount" defaultValue={editing?.amount} required />
+        <AmountInput label={t('budgetAmount')} name="amount" defaultValue={editing?.amount} required />
 
         <label className="flex items-start gap-2.5 cursor-pointer">
           <input
@@ -116,10 +122,8 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
             className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-fill focus:ring-brand"
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">
-            Roll over
-            <span className="block text-xs text-gray-400 dark:text-gray-500">
-              Unused amount carries into next month; overspend is deducted from it.
-            </span>
+            {t('rollOver')}<span className="block text-xs text-gray-400 dark:text-gray-500">
+              {t('unusedAmountCarriesIntoNextMonthOverspendIsDeductedFromIt')}</span>
           </span>
         </label>
 
@@ -132,10 +136,8 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
               className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-fill focus:ring-brand"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
-              Active
-              <span className="block text-xs text-gray-400 dark:text-gray-500">
-                Inactive: hidden from totals/alerts this month, doesn&apos;t break rollover chain when reactivated later — it just resets.
-              </span>
+              {t('active')}<span className="block text-xs text-gray-400 dark:text-gray-500">
+                {t('inactiveHiddenFromTotalsAlertsThisMonthDoesnTBreakRolloverChain')}</span>
             </span>
           </label>
         )}
@@ -144,7 +146,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
 
         <ModalActions
           isPending={isPending}
-          submitLabel="Save"
+          submitLabel={t('save')}
           onCancel={close}
         />
       </form>

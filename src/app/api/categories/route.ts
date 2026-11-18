@@ -5,8 +5,8 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { name, icon, color, type } = body
 
-  if (!name?.trim()) return badRequest('Name is required.')
-  if (type !== 'income' && type !== 'expense') return badRequest('Invalid type.')
+  if (!name?.trim()) return badRequest('nameIsRequired')
+  if (type !== 'income' && type !== 'expense') return badRequest('invalidType')
 
   const { data, error } = await supabase
     .from('categories')

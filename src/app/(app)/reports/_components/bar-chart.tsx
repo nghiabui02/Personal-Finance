@@ -1,4 +1,5 @@
 'use client'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { formatVND, formatCompactVND } from '@/lib/utils/currency'
 import { useTheme } from 'next-themes'
@@ -13,6 +14,8 @@ interface BarChartProps {
 }
 
 export function BarChart({ data, title, period }: BarChartProps) {
+  const locale = useLocale()
+  const t = useTranslations('reports')
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const hasData = data.some(d => d.income > 0 || d.expense > 0)
@@ -34,19 +37,18 @@ export function BarChart({ data, title, period }: BarChartProps) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-[10px] text-gray-400">Income</span>
+            <span className="text-[10px] text-gray-400">{t('income')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-rose-500" />
-            <span className="text-[10px] text-gray-400">Expense</span>
+            <span className="text-[10px] text-gray-400">{t('expense')}</span>
           </div>
         </div>
       </div>
 
       {!hasData ? (
         <div className="h-48 flex items-center justify-center text-sm text-gray-400">
-          No data for this period
-        </div>
+          {t('noDataForThisPeriod')}</div>
       ) : (
         <ResponsiveContainer width="100%" height={240}>
           <RechartsBarChart data={data} barGap={2} barCategoryGap={period === 'month' ? '15%' : '30%'}>
@@ -59,7 +61,7 @@ export function BarChart({ data, title, period }: BarChartProps) {
               interval={tickInterval}
             />
             <YAxis
-              tickFormatter={v => formatCompactVND(v)}
+              tickFormatter={v => formatCompactVND(v, locale)}
               tick={{ fontSize: 11, fill: '#94a3b8' }}
               axisLine={false}
               tickLine={false}

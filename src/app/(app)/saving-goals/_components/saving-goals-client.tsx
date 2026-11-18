@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
@@ -15,7 +16,6 @@ import { Dot, Em } from '@/components/ui/verdict'
 import { formatVND } from '@/lib/utils/currency'
 import { type SavingGoal, savingGoalsApi } from '@/lib/api/saving-goals'
 import { useState } from 'react'
-import { plural } from '@/lib/utils/plural'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
@@ -26,6 +26,7 @@ import { readField } from '@/lib/utils/form'
 // ── Goal Modal ────────────────────────────────────────────────────────────────
 
 function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: () => void }) {
+  const t = useTranslations('savingGoals')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [deadline, setDeadline] = useState(editing?.deadline ?? '')
@@ -37,8 +38,8 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
     const target_amount = Number(readField(form, 'target_amount'))
     const icon = readField(form, 'icon').trim()
 
-    if (!name) { setError('Name is required.'); return }
-    if (!target_amount || target_amount <= 0) { setError('Target amount is required.'); return }
+    if (!name) { setError(t('nameIsRequired')); return }
+    if (!target_amount || target_amount <= 0) { setError(t('targetAmountIsRequired')); return }
 
     submit(async () => {
       if (editing) {
@@ -60,21 +61,21 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
   }
 
   return (
-    <Modal title={editing ? 'Edit goal' : 'New saving goal'} onClose={onClose}>
+    <Modal title={editing ? t('editGoal') : t('newSavingGoal')} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <EmojiPickerInput label="Icon" name="icon" defaultValue={editing?.icon ?? ''} />
-          <Input label="Goal name" name="name" defaultValue={editing?.name ?? ''} required placeholder="e.g. Buy a motorbike" />
+          <EmojiPickerInput label={t('icon')} name="icon" defaultValue={editing?.icon ?? ''} />
+          <Input label={t('goalName')} name="name" defaultValue={editing?.name ?? ''} required placeholder={t('eGBuyAMotorbike')} />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <AmountInput label="Target amount" name="target_amount" defaultValue={editing?.target_amount} required />
-          <DatePicker label="Deadline (optional)" name="deadline" value={deadline} onChange={setDeadline} />
+          <AmountInput label={t('targetAmount')} name="target_amount" defaultValue={editing?.target_amount} required />
+          <DatePicker label={t('deadlineOptional')} name="deadline" value={deadline} onChange={setDeadline} />
         </div>
-        <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="Why this goal?" />
+        <Input label={t('noteOptional')} name="note" defaultValue={editing?.note ?? ''} placeholder={t('whyThisGoal')} />
         <FormError message={error} />
         <ModalActions
           isPending={isPending}
-          submitLabel="Save"
+          submitLabel={t('save')}
           onCancel={close}
         />
       </form>
@@ -85,6 +86,7 @@ function GoalModal({ editing, onClose }: { editing: SavingGoal | null; onClose: 
 // ── Contribute Modal ──────────────────────────────────────────────────────────
 
 function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => void }) {
+  const t = useTranslations('savingGoals')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
 
@@ -93,7 +95,7 @@ function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => v
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const amount = Number(readField(e.currentTarget, 'amount'))
-    if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
+    if (!amount || amount <= 0) { setError(t('pleaseEnterAValidAmount')); return }
 
     submit(async () => {
       const newAmount = Math.min(goal.current_amount + amount, goal.target_amount)
@@ -106,17 +108,17 @@ function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => v
   }
 
   return (
-    <Modal title="Add to goal" onClose={onClose}>
+    <Modal title={t('addToGoal')} onClose={onClose}>
       <div className="mb-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm">
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{goal.icon} {goal.name}</p>
-        <p className="font-semibold text-gray-900 dark:text-gray-100">{formatVND(remaining)} remaining</p>
+        <p className="font-semibold text-gray-900 dark:text-gray-100">{t('sentenceRemaining', { value0: formatVND(remaining) })}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <AmountInput label="Amount to add" name="amount" required />
+        <AmountInput label={t('amountToAdd')} name="amount" required />
         <FormError message={error} />
         <ModalActions
           isPending={isPending}
-          submitLabel="Add"
+          submitLabel={t('add')}
           onCancel={close}
         />
       </form>
@@ -135,6 +137,7 @@ function GoalCard({
   onDelete: () => void
   onContribute: () => void
 }) {
+  const t = useTranslations('savingGoals')
   const pct = goal.target_amount > 0
     ? Math.min((goal.current_amount / goal.target_amount) * 100, 100)
     : 0
@@ -153,10 +156,10 @@ function GoalCard({
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{goal.name}</p>
-            {isCompleted && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ Completed</span>}
+            {isCompleted && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{t('completed')}</span>}
             {!isCompleted && daysLeft !== null && (
               <p className={`text-xs ${daysLeft < 0 ? 'text-rose-500' : daysLeft < 30 ? 'text-yellow-500' : 'text-gray-400'}`}>
-                {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}
+                {daysLeft < 0 ? t('overdueDays', { count: Math.abs(daysLeft) }) : t('daysLeft', { count: daysLeft })}
               </p>
             )}
           </div>
@@ -164,14 +167,14 @@ function GoalCard({
 
         <div className="flex gap-0.5 shrink-0">
           {!isCompleted && !isCancelled && (
-            <IconButton label="Add money" onClick={onContribute} tone="positive">
+            <IconButton label={t('addMoney')} onClick={onContribute} tone="positive">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
             </IconButton>
           )}
-          <IconButton label="Edit goal" onClick={onEdit}>{EditIcon}</IconButton>
-          <IconButton label="Delete goal" onClick={onDelete} tone="danger">{TrashIcon}</IconButton>
+          <IconButton label={t('editGoal')} onClick={onEdit}>{EditIcon}</IconButton>
+          <IconButton label={t('deleteGoal')} onClick={onDelete} tone="danger">{TrashIcon}</IconButton>
         </div>
       </div>
 
@@ -187,9 +190,7 @@ function GoalCard({
         />
       </div>
       {!isCompleted && (
-        <p className="text-xs text-gray-400 mt-1.5 tabular-nums">
-          {formatVND(goal.target_amount - goal.current_amount)} to go
-        </p>
+        <p className="text-xs text-gray-400 mt-1.5 tabular-nums">{t('sentenceToGo', { value0: formatVND(goal.target_amount - goal.current_amount) })}</p>
       )}
     </div>
   )
@@ -198,11 +199,12 @@ function GoalCard({
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
+  const t = useTranslations('savingGoals')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingGoal, setEditingGoal] = useState<SavingGoal | null>(null)
   const [contributingGoal, setContributingGoal] = useState<SavingGoal | null>(null)
   const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
-    id => savingGoalsApi.delete(id), 'Could not delete the goal.',
+    id => savingGoalsApi.delete(id), t('couldNotDeleteTheGoal'),
   )
   const [tab, setTab] = useState<'active' | 'completed'>('active')
   // Capture once at mount — stable across re-renders, avoids React Compiler impure warning
@@ -219,21 +221,21 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
   return (
     <>
       <ScreenHeader
-        eyebrow="Money"
+        eyebrow={t('money')}
         headline={
           active.length === 0
-            ? <>No goals running — set one and every contribution has somewhere to go.</>
-            : <>You&rsquo;ve saved <Em tone="good">{savedPct}%</Em> of what your {plural(active.length, 'goal')} need{active.length === 1 ? 's' : ''}.</>
+            ? <>{t('noGoalsRunningSetOneAndEveryContributionHasSomewhereToGo')}</>
+            : <>{t.rich('savedForGoals', { percent: savedPct, count: active.length, strong: chunks => <Em tone="good">{chunks}</Em> })}</>
         }
         support={active.length > 0
-          ? <><span>{formatVND(totalSaved)} of {formatVND(totalTarget)}</span><Dot /><span>{formatVND(totalTarget - totalSaved)} to go</span></>
+          ? <><span>{t('sentenceOf', { value0: formatVND(totalSaved), value1: formatVND(totalTarget) })}</span><Dot /><span>{t('sentenceToGo', { value0: formatVND(totalTarget - totalSaved) })}</span></>
           : undefined}
         segments={MONEY_SEGMENTS}
         controls={
           <TabGroup
             tabs={[
-              { key: 'active', label: `Active (${active.length})` },
-              { key: 'completed', label: `Completed (${completed.length})` },
+              { key: 'active', label: t('activeCount', { count: active.length }) },
+              { key: 'completed', label: t('completedCount', { count: completed.length }) },
             ]}
             value={tab}
             onChange={setTab}
@@ -241,14 +243,14 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
           />
         }
         action={
-          <AddButton onClick={() => { setEditingGoal(null); setModalOpen(true) }}>New goal</AddButton>
+          <AddButton onClick={() => { setEditingGoal(null); setModalOpen(true) }}>{t('newGoal')}</AddButton>
         }
       />
 
       {displayed.length === 0 ? (
         <EmptyState
-          message={tab === 'active' ? 'No active goals.' : 'No completed goals yet.'}
-          action={tab === 'active' ? { label: 'Create your first goal', onClick: () => { setEditingGoal(null); setModalOpen(true) } } : undefined}
+          message={tab === 'active' ? t('noActiveGoals') : t('noCompletedGoalsYet')}
+          action={tab === 'active' ? { label: t('createYourFirstGoal'), onClick: () => { setEditingGoal(null); setModalOpen(true) } } : undefined}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -274,9 +276,9 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
       )}
       {confirmId && (
         <ConfirmModal
-          title="Delete goal?"
-          description="This saving goal will be permanently deleted."
-          confirmLabel="Delete"
+          title={t('deleteGoal2')}
+          description={t('thisSavingGoalWillBePermanentlyDeleted')}
+          confirmLabel={t('delete')}
           isPending={isPending}
           onConfirm={confirm}
           onClose={cancel}

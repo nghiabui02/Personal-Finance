@@ -1,11 +1,12 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
-import { type Wallet, WALLET_TYPE_ICONS, WALLET_TYPE_LABELS, walletsApi } from '@/lib/api/wallets'
+import { type Wallet, WALLET_TYPE_ICONS, walletsApi } from '@/lib/api/wallets'
 import { useState } from 'react'
 import { CATEGORY_PALETTE } from '@/lib/utils/colors'
 import { FormError } from '@/components/ui/form-error'
@@ -13,12 +14,11 @@ import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 import { readField, readCheckbox } from '@/lib/utils/form'
 
-
 const TYPE_ORDER: Wallet['type'][] = ['cash', 'bank', 'credit', 'e_wallet', 'investment', 'other']
 
 const TYPE_OPTIONS = TYPE_ORDER.map(value => ({
   value,
-  label: WALLET_TYPE_LABELS[value],
+  label: value,
   icon: WALLET_TYPE_ICONS[value],
 }))
 
@@ -28,9 +28,10 @@ interface WalletModalProps {
 }
 
 function DaySelect({ label, name, defaultValue }: { label: string; name: string; defaultValue?: number | null }) {
+  const t = useTranslations('wallets')
   const options = Array.from({ length: 28 }, (_, i) => ({
     value: String(i + 1),
-    label: `Day ${i + 1}`,
+    label: t('dayNumber', { day: i + 1 }),
   }))
   return (
     <div>
@@ -49,6 +50,8 @@ function DaySelect({ label, name, defaultValue }: { label: string; name: string;
 }
 
 export function WalletModal({ editing, onClose }: WalletModalProps) {
+  const common = useTranslations('common')
+  const t = useTranslations('wallets')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [selectedColor, setSelectedColor] = useState(editing?.color ?? CATEGORY_PALETTE[5])
@@ -64,7 +67,7 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
     const icon = readField(form, 'icon').trim()
     const is_default = readCheckbox(form, 'is_default')
 
-    if (!name) { setError('Name is required.'); return }
+    if (!name) { setError(t('nameIsRequired')); return }
 
     submit(async () => {
       if (editing) {
@@ -86,21 +89,21 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
   }
 
   return (
-    <Modal title={editing ? 'Edit wallet' : 'New wallet'} size="md" onClose={onClose}>
+    <Modal title={editing ? t('editWallet') : t('newWallet')} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* What the wallet is. Name takes the extra width — a type is one word. */}
         <div className={editing ? '' : 'grid grid-cols-[3fr_2fr] gap-3 items-end'}>
           <Input
-            label="Name"
+            label={t('name')}
             name="name"
             defaultValue={editing?.name ?? ''}
             required
-            placeholder={isCredit ? 'e.g. VCB Visa' : 'e.g. Vietcombank'}
+            placeholder={isCredit ? t('eGVcbVisa') : t('eGVietcombank')}
           />
           {!editing && <CustomSelect
-            label="Type"
+            label={t('type')}
             name="type"
-            options={TYPE_OPTIONS}
+            options={TYPE_OPTIONS.map(option => ({ ...option, label: common(`walletTypes.${option.value}`) }))}
             value={type}
             onChange={v => setType(v as Wallet['type'])}
           />}
@@ -110,20 +113,20 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
         {!editing && <div className="grid grid-cols-2 gap-3 items-end">
           {isCredit ? (
             <AmountInput
-              label="Credit Limit"
+              label={t('creditLimit')}
               name="credit_limit"
               defaultValue={0}
               required
             />
           ) : (
             <AmountInput
-              label="Balance"
+              label={t('balance')}
               name="balance"
               defaultValue={0}
             />
           )}
           <EmojiPickerInput
-            label="Icon"
+            label={t('icon')}
             name="icon"
             defaultValue={''}
           />
@@ -132,17 +135,16 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
         {!editing && isCredit && (
           <div>
             <div className="grid grid-cols-2 gap-3">
-              <DaySelect label="Statement Day" name="statement_day" defaultValue={26} />
-              <DaySelect label="Payment Due Day" name="payment_due_day" defaultValue={10} />
+              <DaySelect label={t('statementDay')} name="statement_day" defaultValue={26} />
+              <DaySelect label={t('paymentDueDay')} name="payment_due_day" defaultValue={10} />
             </div>
             <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
-              Example: statement on the 26th, payment due on the 10th of the next month
-            </p>
+              {t('exampleStatementOnThe26thPaymentDueOnThe10thOfThe')}</p>
           </div>
         )}
 
         <div>
-          <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</p>
+          <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('color')}</p>
           <div className="flex gap-2 flex-wrap">
             {CATEGORY_PALETTE.map(c => (
               <button
@@ -165,14 +167,14 @@ export function WalletModal({ editing, onClose }: WalletModalProps) {
             defaultChecked={false}
             className="w-4 h-4 rounded border-gray-300 text-brand-fill focus:ring-brand"
           />
-          <span className="text-sm text-gray-700 dark:text-gray-300">Set as default wallet</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{t('setAsDefaultWallet')}</span>
         </label>}
 
         <FormError message={error} />
 
         <ModalActions
           isPending={isPending}
-          submitLabel="Save"
+          submitLabel={t('save')}
           onCancel={close}
         />
       </form>

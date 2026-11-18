@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { AuthCard, AuthHeading } from '../_components/auth-card'
 import { readField } from '@/lib/utils/form'
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations('auth')
   const { error, isPending, submit } = useAuthForm()
   const [sent, setSent] = useState(false)
 
@@ -25,7 +27,7 @@ export default function ForgotPasswordPage() {
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error ?? 'Something went wrong.')
+        throw new Error(data.error ?? t('requestFailed'))
       }
       setSent(true)
     }, { reenableOnSuccess: true })
@@ -40,21 +42,19 @@ export default function ForgotPasswordPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
             </svg>
           </div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Check your email</h1>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{t('checkYourEmail')}</h1>
           <p className="text-sm text-gray-400 mb-6">
-            We sent a password reset link. Click it to set a new password.
-          </p>
+            {t('weSentAPasswordResetLinkClickItToSetANew')}</p>
           <Link href="/login" className="text-sm font-medium text-brand hover:underline">
-            Back to sign in
-          </Link>
+            {t('backToSignIn')}</Link>
         </div>
       ) : (
         <>
-          <AuthHeading title="Forgot password">Enter your email and we&apos;ll send a reset link.</AuthHeading>
+          <AuthHeading title={t('forgotPassword')}>{t('enterYourEmailAndWeLlSendAResetLink')}</AuthHeading>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Email"
+              label={t('email')}
               name="email"
               type="email"
               autoComplete="email"
@@ -63,14 +63,13 @@ export default function ForgotPasswordPage() {
             />
             <FormError message={error} />
             <Button type="submit" disabled={isPending} fullWidth>
-              {isPending ? 'Sending...' : 'Send reset link'}
+              {isPending ? t('sending') : t('sendResetLink')}
             </Button>
           </form>
 
           <p className="mt-5 text-center text-sm text-gray-400">
             <Link href="/login" className="font-medium text-brand hover:underline">
-              Back to sign in
-            </Link>
+              {t('backToSignIn')}</Link>
           </p>
         </>
       )}

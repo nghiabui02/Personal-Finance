@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { type Category } from '@/lib/api/categories'
 import { type Transaction } from '@/lib/api/transactions'
@@ -31,6 +32,7 @@ export function useTransactionForm({
   recent: HistoryTransaction[]
   defaultDate?: string
 }) {
+  const t = useTranslations('transactions')
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
   const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
   const [walletId, setWalletId] = useState(
@@ -95,10 +97,10 @@ export function useTransactionForm({
     : []
 
   const debtOptions = [
-    { value: '', label: 'Not linked' },
+    { value: '', label: t('notLinked') },
     ...relevantDebts.map(d => ({
       value: d.id,
-      label: `${d.person_name} — ${formatVND(d.remaining_amount)} remaining`,
+      label: t('debtRemaining', { person: d.person_name, amount: formatVND(d.remaining_amount) }),
     })),
   ]
 

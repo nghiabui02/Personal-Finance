@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { Button } from './button'
 import { Modal, useModalClose } from './modal'
@@ -15,11 +16,12 @@ interface ConfirmModalProps {
 export function ConfirmModal({
   title,
   description,
-  confirmLabel = 'Delete',
+  confirmLabel,
   isPending = false,
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
+  const t = useTranslations('common')
   const close = useModalClose()
   return (
     <Modal onClose={onClose}>
@@ -39,8 +41,7 @@ export function ConfirmModal({
 
         <div className="flex gap-2 w-full pt-1">
           <Button type="button" variant="secondary" fullWidth onClick={close} disabled={isPending}>
-            Cancel
-          </Button>
+            {t('cancel')}</Button>
           <Button
             type="button"
             fullWidth
@@ -48,7 +49,7 @@ export function ConfirmModal({
             disabled={isPending}
             className="bg-rose-600 hover:bg-rose-700 disabled:opacity-60"
           >
-            {isPending ? 'Deleting...' : confirmLabel}
+            {isPending ? t('deleting') : confirmLabel}
           </Button>
         </div>
       </div>

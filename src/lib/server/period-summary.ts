@@ -1,3 +1,6 @@
+import { getLocale } from 'next-intl/server'
+import { getCategoryName } from '@/i18n/category'
+import { categoryTotals } from '@/lib/utils/category-totals'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { monthRange, shiftLocalDate } from '@/lib/utils/date'
 import type { PeriodType } from '@/lib/utils/period'
@@ -23,7 +26,7 @@ export function getDateRange(period: PeriodType, start: string): { startDate: st
 export type PeriodSummary = {
   totalIncome: number
   totalExpense: number
-  categories: { name: string; amount: number }[]
+  categories: { id: string; name: string; amount: number }[]
 }
 
 // Income/expense/category totals for one period — used both for the default
@@ -34,6 +37,7 @@ export async function getPeriodSummary(
   period: PeriodType,
   start: string,
 ): Promise<PeriodSummary> {
+  const locale = await getLocale()
   const { startDate, endDate } = getDateRange(period, start)
 
   // Earned income and spending exclude transfers, loan principal and corrections.
@@ -41,7 +45,7 @@ export async function getPeriodSummary(
   const { data: rows } = await onlyOperatingTransactions(
     supabase
       .from('transactions')
-      .select('type, amount, categories(name)')
+      .select('type, amount, categories(id, name, default_key, name_is_custom, system_key)')
       .eq('user_id', userId)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate),
@@ -50,22 +54,16 @@ export async function getPeriodSummary(
 
   let totalIncome = 0
   let totalExpense = 0
-  const catMap = new Map<string, number>()
 
   for (const row of rows ?? []) {
     const amt = Number(row.amount)
     if (row.type === 'income') { totalIncome += amt; continue }
     totalExpense += amt
-    const name = (row.categories as unknown as { name: string } | null)?.name
-    if (name) catMap.set(name, (catMap.get(name) ?? 0) + amt)
   }
 
   return {
     totalIncome,
     totalExpense,
-    categories: [...catMap.entries()]
-      .map(([name, amount]) => ({ name, amount }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 8),
+    categories: categoryTotals((rows ?? []).filter(row => row.type === 'expense') as unknown as { amount: number; categories: { id: string; name: string } | null }[]).slice(0, 8).map(category => ({ ...category, name: getCategoryName(category, locale) })),
   }
 }

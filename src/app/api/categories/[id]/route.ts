@@ -6,10 +6,12 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   const body = await request.json()
   const { name, icon, color } = body
 
-  if (!name?.trim()) return badRequest('Name is required.')
+  if (name !== undefined && (typeof name !== 'string' || !name.trim())) return badRequest('nameIsRequired')
 
   return updateOwnedRow(supabase, 'categories', { id, userId: user.id }, {
-    name: name.trim(), icon: icon?.trim() || null, color: color || null,
+    ...(name !== undefined ? { name: name.trim(), name_is_custom: true } : {}),
+    ...(icon !== undefined ? { icon: typeof icon === 'string' ? icon.trim() || null : null } : {}),
+    ...(color !== undefined ? { color: color || null } : {}),
   })
 })
 
@@ -29,12 +31,12 @@ export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user
     .or(`user_id.eq.${user.id},user_id.is.null`)
     .maybeSingle()
 
-  if (!category) return notFound('Category not found.')
+  if (!category) return notFound('categoryNotFound')
   if (!category.user_id) {
-    return badRequest('This is one of the built-in starter categories and cannot be deleted.')
+    return badRequest('thisIsOneOfTheBuiltInStarterCategoriesAndCannotBe')
   }
   if (category.system_key) {
-    return badRequest('This category keeps your debt and balance-adjustment totals correct. It cannot be deleted.')
+    return badRequest('thisCategoryKeepsYourDebtAndBalanceAdjustmentTotalsCorrectItCannot')
   }
 
   return deleteOwnedRow(supabase, 'categories', { id, userId: user.id })

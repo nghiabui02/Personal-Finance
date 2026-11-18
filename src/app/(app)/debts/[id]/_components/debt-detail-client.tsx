@@ -1,4 +1,5 @@
 'use client'
+import { useLocale, useTranslations } from 'next-intl'
 
 import Link from 'next/link'
 import { useState } from 'react'
@@ -25,6 +26,8 @@ export default function DebtDetailClient({
   debt: DebtWithPayments
   wallets: WalletChoice[]
 }) {
+  const locale = useLocale()
+  const t = useTranslations('debts')
   const [payOpen, setPayOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
 
@@ -44,8 +47,7 @@ export default function DebtDetailClient({
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
         </svg>
-        Debts
-      </Link>
+        {t('debts')}</Link>
 
       {/* Hero */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5 mb-5">
@@ -71,24 +73,23 @@ export default function DebtDetailClient({
                 onClick={() => setAddOpen(true)}
                 className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
               >
-                + Add
-              </button>
-              <Button onClick={() => setPayOpen(true)}>Record payment</Button>
+                {t('add')}</button>
+              <Button onClick={() => setPayOpen(true)}>{t('recordPayment')}</Button>
             </div>
           )}
         </div>
 
         {/* Amounts */}
         <div className="flex justify-between text-sm mb-2 tabular-nums">
-          <span className="text-gray-400">Paid {formatVND(paidAmount)}</span>
-          <span className="font-semibold text-gray-900 dark:text-gray-100">{formatVND(debt.remaining_amount)} left</span>
+          <span className="text-gray-400">{t('sentencePaid', { value0: formatVND(paidAmount) })}</span>
+          <span className="font-semibold text-gray-900 dark:text-gray-100">{t('sentenceLeft', { value0: formatVND(debt.remaining_amount) })}</span>
         </div>
         <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
           <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
         </div>
         <div className="flex justify-between text-xs text-gray-400 mt-1.5 tabular-nums">
-          <span>{Math.round(pct)}% paid</span>
-          <span>of {formatVND(debt.amount)}</span>
+          <span>{t('sentencePaid', { value0: Math.round(pct) })}</span>
+          <span>{t('sentenceOf', { value0: formatVND(debt.amount) })}</span>
         </div>
 
         {debt.note && (
@@ -100,11 +101,11 @@ export default function DebtDetailClient({
       </div>
 
       {/* Timeline */}
-      <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">History</p>
+      <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">{t('history')}</p>
 
       {events.length === 0 ? (
         <div className="py-10 text-center">
-          <p className="text-sm text-gray-400">No activity yet.</p>
+          <p className="text-sm text-gray-400">{t('noActivityYet')}</p>
         </div>
       ) : (
         <div className="relative">
@@ -138,11 +139,11 @@ export default function DebtDetailClient({
                     <div className="bg-white dark:bg-gray-900 rounded-xl border border-hairline px-3 py-2.5 flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {isAddition ? 'Added to debt' : 'Payment recorded'}
+                          {isAddition ? t('addedToDebt') : t('paymentRecorded')}
                         </p>
                         {ev.note && <p className="text-xs text-gray-400 truncate mt-0.5">{ev.note}</p>}
                         <p className="text-[10px] text-gray-400 mt-0.5">
-                          {formatMonthDayYear(new Date(ev.paid_at + 'T00:00:00'))}
+                          {formatMonthDayYear(new Date(ev.paid_at + 'T00:00:00'), locale)}
                         </p>
                       </div>
                       <p className={`text-sm font-semibold tabular-nums shrink-0 ${

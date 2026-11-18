@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin'
 
 // frame-ancestors 'none' blocks clickjacking in modern browsers; X-Frame-Options
 // is the fallback for older ones. unsafe-inline on script/style is required by
@@ -34,4 +35,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default createNextIntlPlugin('./src/i18n/request.ts')(nextConfig);

@@ -1,3 +1,6 @@
+import { getCategoryName } from '@/i18n/category'
+import { getLocale } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
@@ -11,7 +14,10 @@ import ReportsClient from './_components/reports-client'
 import type { ChartPoint, CategoryData } from './_components/types'
 import { sumByType } from '@/lib/utils/totals'
 
-export const metadata: Metadata = { title: 'Reports' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('navigation')
+  return { title: t('reports') }
+}
 export const dynamic = 'force-dynamic'
 
 function getDefaultStart(period: PeriodType): string {
@@ -45,12 +51,12 @@ type RawTx = {
   categories: (CategoryRef & { system_key: string | null }) | null
 }
 
-function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): ChartPoint[] {
+function buildChartData(txs: RawTx[], period: PeriodType, startDate: string, locale: string): ChartPoint[] {
   if (period === 'week') {
     return Array.from({ length: 7 }, (_, i) => {
       const ymd = shiftLocalDate(startDate, i)
       const [y, m, d] = ymd.split('-').map(Number)
-      const label = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short' })
+      const label = new Date(y, m - 1, d).toLocaleDateString(locale, { weekday: 'short' })
       const day   = txs.filter(t => t.transaction_date === ymd)
       return { label, income: sumByType(day, 'income'), expense: sumByType(day, 'expense') }
     })
@@ -69,7 +75,7 @@ function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): Ch
 
   if (period === 'quarter') {
     const [y, m] = startDate.split('-').map(Number)
-    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const MONTHS = Array.from({ length: 12 }, (_, index) => new Date(y, index, 1).toLocaleDateString(locale, { month: 'short' }))
     return Array.from({ length: 3 }, (_, i) => {
       const mi     = m + i
       const prefix = `${y}-${String(mi).padStart(2, '0')}`
@@ -80,7 +86,7 @@ function buildChartData(txs: RawTx[], period: PeriodType, startDate: string): Ch
 
   // year — 12 months
   const y      = parseInt(startDate)
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const MONTHS = Array.from({ length: 12 }, (_, index) => new Date(y, index, 1).toLocaleDateString(locale, { month: 'short' }))
   return Array.from({ length: 12 }, (_, i) => {
     const prefix = `${y}-${String(i + 1).padStart(2, '0')}`
     const month  = txs.filter(t => t.transaction_date.startsWith(prefix))
@@ -93,6 +99,7 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<{ period?: string; start?: string }>
 }) {
+  const locale = await getLocale()
   const params = await searchParams
   const period = (['week','month','quarter','year'].includes(params.period ?? '')
     ? params.period : 'week') as PeriodType
@@ -113,7 +120,7 @@ export default async function ReportsPage({
     budgetRows,
   ] = await Promise.all([
     supabase.from('transactions')
-      .select('type, amount, note, transaction_date, transfer_pair_id, categories(id, name, icon, color, system_key)')
+      .select('type, amount, note, transaction_date, transfer_pair_id, categories(id, name, icon, color, system_key, default_key, name_is_custom)')
       .eq('user_id', user.id)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate),
@@ -160,13 +167,13 @@ export default async function ReportsPage({
     .slice(0, 5)
     .map(r => ({
       note: (r as unknown as RawTx).note ?? null,
-      category: (r.categories as unknown as CategoryRef | null)?.name ?? null,
+      category: (r.categories as unknown as CategoryRef | null) ? getCategoryName(r.categories as unknown as CategoryRef, locale) : null,
       amount: Number(r.amount),
       date: r.transaction_date,
     }))
 
   const aiBudgets = budgetRows.filter(b => b.active).map(b => ({
-    name: (b.categories as unknown as { name: string } | null)?.name ?? 'Other',
+    name: b.categories ? getCategoryName(b.categories, locale) : (locale === 'en' ? 'Other' : 'Khác'),
     budgeted: b.effectiveAmount,
     spent: b.category_id ? (catMap.get(b.category_id)?.amount ?? 0) : 0,
   }))
@@ -185,10 +192,11 @@ export default async function ReportsPage({
 
   return (
     <ReportsClient
+      userId={user.id}
       period={period}
       start={start}
       prevStart={prevStart}
-      chartData={buildChartData(reportRows, period, startDate)}
+      chartData={buildChartData(reportRows, period, startDate, locale)}
       byCategory={[...catMap.values()].sort((a, b) => b.amount - a.amount).slice(0, 8)}
       nonOperatingFlows={nonOperatingFlows}
       totalIncome={totalIncome}

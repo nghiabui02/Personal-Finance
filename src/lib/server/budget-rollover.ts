@@ -37,7 +37,7 @@ export async function getBudgetsForMonth(
   // and rollover math below.
   const { data: current } = await supabase
     .from('budgets')
-    .select('id, category_id, amount, month, rollover, active, categories(id, name, icon, color)')
+    .select('id, category_id, amount, month, rollover, active, categories(id, name, icon, color, default_key, name_is_custom, system_key)')
     .eq('user_id', userId)
     .eq('month', startDate)
     .order('created_at')

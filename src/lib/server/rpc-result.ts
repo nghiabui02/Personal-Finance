@@ -58,11 +58,11 @@ export async function transactionWithRelations(
 ): Promise<unknown> {
   const row = firstTransaction(result)
   if (!row) return result
-  if ('categories' in row) return row
+  if (row.categories === null || (isEnvelope(row.categories) && 'name_is_custom' in row.categories)) return row
 
   const { data } = await supabase
     .from('transactions')
-    .select('*, categories(id, name, icon, color), wallets(id, name)')
+    .select('*, categories(id, name, icon, color, default_key, name_is_custom, system_key), wallets(id, name)')
     .eq('id', String(row.id))
     .single()
 

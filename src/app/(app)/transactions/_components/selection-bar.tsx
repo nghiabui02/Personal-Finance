@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
 import { CategorySelect } from '@/components/ui/category-select'
@@ -31,6 +32,7 @@ export function SelectionBar({
   onDelete: () => void
   onCancel: () => void
 }) {
+  const t = useTranslations('transactions')
   const types = new Set(selected.map(tx => tx.type))
   const overLimit = selected.length > MAX_BULK_TRANSACTIONS
   const categorizable = selected.length > 0 && types.size === 1 && selected.every(isStandalone)
@@ -43,18 +45,13 @@ export function SelectionBar({
     >
       <div className="rounded-2xl border border-hairline bg-white dark:bg-gray-900 shadow-lg p-3 space-y-2">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium flex-1">
-            {selected.length} selected
-          </p>
-          <Button variant="secondary" onClick={onCancel} disabled={isPending}>Cancel</Button>
+          <p className="text-sm font-medium flex-1">{t('sentenceSelected', { value0: selected.length })}</p>
+          <Button variant="secondary" onClick={onCancel} disabled={isPending}>{t('cancel')}</Button>
           <Button variant="danger" onClick={onDelete} disabled={isPending || overLimit || selected.length === 0}>
-            Delete
-          </Button>
+            {t('delete')}</Button>
         </div>
         {overLimit ? (
-          <p className="text-xs text-amber-600 dark:text-amber-400">
-            A batch is {MAX_BULK_TRANSACTIONS} transactions at most. Untick some to continue.
-          </p>
+          <p className="text-xs text-amber-600 dark:text-amber-400">{t('sentenceABatchIsTransactionsAtMostUntickSomeTo', { value0: MAX_BULK_TRANSACTIONS })}</p>
         ) : categorizable ? (
           <CategorySelect
             label=""
@@ -63,14 +60,12 @@ export function SelectionBar({
             value=""
             // A second pick while the first is still saving would send both.
             onChange={categoryId => { if (categoryId && !isPending) onCategorize(categoryId) }}
-            placeholder="Move all to category…"
+            placeholder={t('moveAllToCategory')}
             searchable
           />
         ) : selected.length > 0 && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Mixing income with expense, a transfer or a debt repayment leaves only Delete:
-            those carry a category their own record decides.
-          </p>
+            {t('mixingIncomeWithExpenseATransferOrADebtRepaymentLeavesOnly')}</p>
         )}
       </div>
     </div>

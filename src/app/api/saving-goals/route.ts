@@ -6,7 +6,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const { name, icon, target_amount, deadline, note } = body
 
   if (!name?.trim() || !target_amount) {
-    return badRequest('Name and target amount are required.')
+    return badRequest('nameAndTargetAmountAreRequired')
   }
 
   const { data, error } = await supabase

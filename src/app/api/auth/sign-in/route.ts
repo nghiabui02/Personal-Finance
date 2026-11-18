@@ -1,3 +1,5 @@
+import { getLocale } from 'next-intl/server'
+import { LOCALE_COOKIE, LOCALE_COOKIE_OPTIONS, normalizeLocale } from '@/i18n/locale'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { withRoute, badRequest, jsonError, tooManyRequests } from '@/lib/server/route'
@@ -11,15 +13,19 @@ export const POST = withRoute(async (request) => {
   const { email, password } = await request.json()
 
   if (!email || !password) {
-    return badRequest('Please fill in all fields.')
+    return badRequest('pleaseFillInAllFields')
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    return jsonError(401, 'Invalid email or password.')
+    return jsonError(401, 'invalidEmailOrPassword')
   }
 
-  return NextResponse.json({ success: true })
+  const response = NextResponse.json({ success: true })
+  response.cookies.set(LOCALE_COOKIE, normalizeLocale(data.user?.user_metadata.locale) ?? await getLocale(), {
+    ...LOCALE_COOKIE_OPTIONS, secure: request.nextUrl.protocol === 'https:',
+  })
+  return response
 })

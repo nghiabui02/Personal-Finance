@@ -16,15 +16,6 @@ export type Wallet = {
   payment_due_day: number | null
 }
 
-export const WALLET_TYPE_LABELS: Record<Wallet['type'], string> = {
-  cash: 'Cash',
-  bank: 'Bank Account',
-  e_wallet: 'E-Wallet',
-  investment: 'Investment',
-  other: 'Other',
-  credit: 'Credit Card',
-}
-
 /** Fallback icon when a wallet has no custom one. */
 export const WALLET_TYPE_ICONS: Record<Wallet['type'], string> = {
   cash: '💵',
@@ -51,8 +42,8 @@ export type WalletTransaction = {
 /** The few wallet fields a picker needs. */
 export type WalletChoice = Pick<Wallet, 'id' | 'name' | 'color' | 'is_default'>
 
-/** Options for a wallet picker, led by the entry that means "none". */
-export function toWalletOptions(wallets: Pick<Wallet, 'id' | 'name' | 'color'>[], emptyLabel = 'No wallet') {
+/** Options for a wallet picker, led by the entry that means 'none'. */
+export function toWalletOptions(wallets: Pick<Wallet, 'id' | 'name' | 'color'>[], emptyLabel: string) {
   return [
     { value: '', label: emptyLabel },
     ...wallets.map(wallet => ({ value: wallet.id, label: wallet.name, color: wallet.color })),
@@ -62,7 +53,7 @@ export function toWalletOptions(wallets: Pick<Wallet, 'id' | 'name' | 'color'>[]
 export const WALLET_COLUMNS = 'id, user_id, name, type, balance, color, icon, is_default, credit_limit, statement_day, payment_due_day'
 
 /** Columns a `WalletTransaction` needs. */
-export const WALLET_TX_COLUMNS = 'id, type, amount, note, bank_fee, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color)'
+export const WALLET_TX_COLUMNS = 'id, type, amount, note, bank_fee, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color, default_key, name_is_custom, system_key)'
 
 export const WALLET_TX_PAGE_SIZE = 20
 

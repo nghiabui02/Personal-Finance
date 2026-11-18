@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -23,6 +24,7 @@ export function ProfileSection({
   initialPhone: string
   initialAvatarUrl: string
 }) {
+  const t = useTranslations('settings')
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
   const { status, saving, run } = useStatusAction()
@@ -61,7 +63,7 @@ export function ProfileSection({
       }
       await settingsApi.updateProfile({ full_name: name, phone, avatar_url: finalAvatarUrl })
       router.refresh()
-      return 'Profile updated.'
+      return t('profileUpdated')
     })
   }
 
@@ -73,15 +75,15 @@ export function ProfileSection({
       setAvatarPreview('')
       setAvatarFile(null)
       router.refresh()
-      return 'Photo removed.'
+      return t('photoRemoved')
     })
   }
 
   return (
-    <Section title="Profile">
+    <Section title={t('profile')}>
       <div className="flex items-center gap-4 mb-5">
         <div className="relative shrink-0">
-          <Avatar src={avatarPreview} name={name || currentEmail} size="xl" tone="brand" alt="Avatar" />
+          <Avatar src={avatarPreview} name={name || currentEmail} size="xl" tone="brand" alt={t('avatar')} />
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
@@ -95,27 +97,25 @@ export function ProfileSection({
         <div>
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => fileRef.current?.click()} className="text-sm text-brand hover:underline font-medium">
-              Change photo
-            </button>
+              {t('changePhoto')}</button>
             {avatarPreview && (
               <button type="button" onClick={removeAvatar} disabled={saving} className="text-sm text-rose-500 hover:underline disabled:opacity-50">
-                Remove
-              </button>
+                {t('remove')}</button>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-0.5">JPG, PNG · max 2MB</p>
+          <p className="text-xs text-gray-400 mt-0.5">{t('jpgPngMax2mb')}</p>
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
       </div>
 
       <div className="space-y-4">
-        <Input label="Full name" name="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" clearable={false} />
-        <Input label="Phone (optional)" name="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+84 xxx xxx xxx" clearable={false} />
+        <Input label={t('fullName')} name="name" value={name} onChange={e => setName(e.target.value)} placeholder={t('yourName')} clearable={false} />
+        <Input label={t('phoneOptional')} name="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+84 xxx xxx xxx" clearable={false} />
       </div>
 
       <StatusLine status={status} />
       <Button onClick={saveProfile} disabled={saving} className="mt-4">
-        {saving ? 'Saving...' : 'Save changes'}
+        {saving ? t('saving') : t('saveChanges')}
       </Button>
     </Section>
   )

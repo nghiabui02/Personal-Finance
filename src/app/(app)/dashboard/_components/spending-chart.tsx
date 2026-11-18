@@ -1,4 +1,6 @@
 'use client'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { formatVND } from '@/lib/utils/currency'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
@@ -17,7 +19,6 @@ type CategorySpend = {
   amount: number
 }
 
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
@@ -33,13 +34,16 @@ const renderActiveShape = (props: any) => {
   )
 }
 
-export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; totalExpense: number }) {
+export function SpendingChart({ data: categories, totalExpense }: { data: CategorySpend[]; totalExpense: number }) {
+  const locale = useLocale()
+  const data = categories.map(category => ({ ...category, name: getCategoryName(category, locale) }))
+  const t = useTranslations('dashboard')
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   if (data.length === 0) {
     return (
-      <SectionCard title="Spending by category" className="flex flex-col flex-1">
-        <SectionEmpty message="No spending this month" action={{ label: 'Record an expense', href: '/transactions' }} />
+      <SectionCard title={t('spendingByCategory')} className="flex flex-col flex-1">
+        <SectionEmpty message={t('noSpendingThisMonth')} action={{ label: t('recordAnExpense'), href: '/transactions' }} />
       </SectionCard>
     )
   }
@@ -56,8 +60,8 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
 
   return (
     <SectionCard
-      title="Spending by category"
-      action={{ label: 'Breakdown', href: '/reports' }}
+      title={t('spendingByCategory')}
+      action={{ label: t('breakdown'), href: '/reports' }}
       className="flex flex-col flex-1"
     >
       <div className="relative">
@@ -90,11 +94,11 @@ export function SpendingChart({ data, totalExpense }: { data: CategorySpend[]; t
                 <p className="mt-1 text-lg font-semibold leading-none text-gray-900 dark:text-gray-100 tabular-nums">
                   {formatVND(active.amount)}
                 </p>
-                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">{pct}% of spend</p>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">{t('sentenceOfSpend', { value0: pct ?? 0 })}</p>
               </>
             ) : (
               <>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Total spent</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t('totalSpent')}</p>
                 <p className="mt-1 text-lg font-semibold leading-none text-gray-900 dark:text-gray-100 tabular-nums">
                   {formatVND(totalExpense)}
                 </p>

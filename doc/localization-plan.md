@@ -1,6 +1,6 @@
 # System-wide Localization Plan
 
-Review date: 18 November 2026. Status: proposal, not implemented.
+Review date: 18 November 2026. Status: Phase 1 web implementation prepared locally; both category migrations applied on 18 November 2026. Post-migration functional acceptance remains manual. See [implementation notes](../README.md#languages).
 
 ## 1. Scope and Proposed Principles
 
@@ -15,7 +15,7 @@ Review date: 18 November 2026. Status: proposal, not implemented.
 - Translation administration screens, machine translation of user content, and multiple currencies are outside this scope.
 - Category Store is a separate feature scheduled after localization; see the [Category Store plan](category-store-plan.md). This phase keeps the existing shared default category model and does not add template adoption, personal copies, or Store-specific migrations. User-created custom category names remain untranslated.
 
-## 2. Current State Verified in the Repository
+## 2. Pre-implementation State Verified in the Repository
 
 | Area | Current state | Source |
 |---|---|---|
@@ -74,7 +74,7 @@ Do not automatically translate user-defined wallet names, custom categories, bor
 ### 4.1. Locale and Translation Management
 
 - Use one shared i18n layer for Server Components, Client Components, metadata, and route handlers. Use `next-intl` as the proposed solution rather than building custom pluralization and interpolation.
-- Documentation reviewed for `next-intl` 4.14.9 supports cookie-based locale resolution in request configuration, a client provider, and server translation APIs without requiring URL changes. No dependency has been installed or version selected.
+- Documentation reviewed for `next-intl` 4.14.9 supports cookie-based locale resolution in request configuration, a client provider, and server translation APIs without requiring URL changes. The web implementation now pins `next-intl` 4.14.9.
 - Proposed files: `src/i18n/request.ts`, `src/i18n/locale.ts`, `messages/vi.json`, `messages/en.json`. Organize namespaces by domain: `common`, `auth`, `dashboard`, `transactions`, `wallets`, `categories`, `budgets`, `debts`, `recurring`, `savingGoals`, `reports`, `settings`, `notifications`, `errors`.
 - Store the account preference in `user_metadata.locale`, consistent with existing profile storage. Use a cookie for signed-out users and initial rendering; localStorage alone is insufficient because the server also needs the locale.
 - Signed-in precedence: valid account locale, valid cookie, `Accept-Language`, then `vi`. Signed-out precedence: cookie, `Accept-Language`, then `vi`.
@@ -83,7 +83,7 @@ Do not automatically translate user-defined wallet names, custom categories, bor
 - When another account signs in on the same browser, prioritize that account's locale. Keep the cookie after sign-out for the sign-in screen; a later signed-out selection must not update the previous account.
 - Changing locale must refresh data containing translated sentences, including notifications, CSV exports, and AI results. Do not mix translations across requests or accounts.
 - Use semantic keys and translate complete sentences with parameters instead of joining sentence fragments. Support plural forms for `0/1/n` and embedded emphasis within complete messages where needed.
-- Runtime fallback: unsupported locales use the default; missing keys use the corresponding `vi` message and emit diagnostics. The repository has no CI, so add `tests/messages.test.mjs` (same `node --test` pattern as the existing tests) that rejects missing keys, mismatched parameters, and invalid ICU syntax between `vi.json` and `en.json`; fallback does not count as completed translation.
+- Runtime fallback: unsupported locales use the default; missing keys use the corresponding `vi` message and emit diagnostics. The project owner performs manual acceptance; do not add or run automated tests. Review missing keys, mismatched parameters, and invalid ICU syntax between `vi.json` and `en.json` manually; fallback does not count as completed translation.
 - At registration, write the current locale into `user_metadata.locale` (`signUp` `options.data`) so the account starts with the language chosen on the sign-up screen.
 - `global-error` needs a minimal translation set independent of the main provider. Do not expose raw technical errors to users.
 
@@ -152,7 +152,7 @@ Do not create a separate category for each language. Preserve existing IDs so tr
 - Change `CsvError` to carry a message key plus parameters (row number, limits). Update every site that creates it.
 - The import screen translates client-side errors with the UI locale.
 - The two routes translate with the request locale before responding and keep the `{ error: string }` contract. Raw keys or missing parameters must never reach the user.
-- Extend `tests/bank-csv.test.mjs` to assert keys and parameters instead of sentences.
+- Manually verify CSV error keys, parameters, translated sentences, and row numbers in both languages.
 
 **Phase 2:**
 - Stable RPC error codes, including server-side import errors raised by the CSV import RPC. Until then, RPC error text is shown as today (documented exception).
@@ -199,7 +199,7 @@ Each step is its own reviewable change. Phase 1 is complete when steps 0–6 pas
 |---|---|---|---|
 | 0. Group by ID (existing bug) | 1 | `period-summary`, CSV export grouping, and CSV budget matching use `category_id` instead of `name` | Two categories with the same name stay separate in reports, CSV, and AI comparison; totals unchanged otherwise |
 | 1. Confirm conventions | 1 | Keep the confirmed `vi/en` scope; settle fallback, terminology, category renaming rules, and ambiguous historical data handling; inspect schema/email/cron/other clients | Data inventory and list of unverified items; no data changes yet |
-| 2. i18n foundation | 1 | Locale resolver, cookie + metadata, dictionaries/provider, Auth/Settings selectors, shared formatters, `tests/messages.test.mjs` | Valid/unsupported locales, `Accept-Language` quality values, account switching, reloads, matching SSR/client language, save failures |
+| 2. i18n foundation | 1 | Locale resolver, cookie + metadata, dictionaries/provider, Auth/Settings selectors, shared formatters, manual dictionary review | Valid/unsupported locales, `Accept-Language` quality values, account switching, reloads, matching SSR/client language, save failures |
 | 3. Categories | 1 | Stable keys, `name_is_custom` (API + trigger), resolver, joins/types | 13 defaults + six system categories; custom names matching defaults; explicit same-value rename stays custom; preserved IDs/FKs; migration rehearsed in a test database |
 | 4. UI coverage | 1 | Translate the Phase 1 areas of section 3, including secondary states and accessibility content | Vietnamese/English desktop/mobile smoke tests, modal/dedicated page, long text, toast/Undo, date picker, chart tooltips, 404/500 |
 | 5. Notifications and errors | 1 | Notifications rendered in the request locale; route-handler validation messages translated; `CsvError` carries key + parameters; import/preview routes translate it with the request locale | Notification read/dismiss state preserved across locale changes; invalid input, 401/429 in both languages; CSV size/row-count/separator/quote/row errors in both languages with correct row numbers, checked through the browser parser, the preview API, and the import API |
@@ -227,7 +227,7 @@ Resolve schema drift before writing/running i18n migrations. New migrations must
 - [ ] AI language changes do not reuse the previous locale's cache; output is no longer fixed to Vietnamese; the parser preserves user text.
 - [ ] CSV imports preserve number/date meaning and duplicate identities.
 - [ ] Tooltips, placeholders, aria-labels, screen-reader text, emoji search, and 404/global errors have been checked.
-- [ ] `tests/messages.test.mjs` passes; tests/fixtures are updated within scope; hardcoded-string regex scans are not treated as the sole evidence of completeness.
+- [ ] The owner has manually reviewed dictionary/ICU/parameter coverage and relevant flows; hardcoded-string regex scans are not treated as the sole evidence of completeness.
 
 ### 6.2. Phase 2
 
@@ -240,6 +240,8 @@ Resolve schema drift before writing/running i18n migrations. New migrations must
 - [ ] Verify the iOS client and content sources outside this repository, if still used, before declaring the entire system complete.
 
 ## 7. Review Limitations
+
+This section records the original proposal review. The [implementation notes](../README.md#languages) supersedes its delivery status.
 
 Source code, migrations, fixtures, and repository documentation were reviewed; only this proposal document was added. The app and browser flows have not been tested; live DB data, Supabase email templates/cron configuration, email delivery, and AI calls have not been checked. No implementation, migration execution, commit, or push has been performed.
 

@@ -5,6 +5,8 @@ export type Category = {
   id: string
   user_id: string | null
   name: string
+  default_key: string | null
+  name_is_custom: boolean
   icon: string | null
   color: string | null
   type: TransactionType
@@ -14,7 +16,7 @@ export type Category = {
 }
 
 /** Columns a `Category` needs — keep in sync with the type above. */
-export const CATEGORY_COLUMNS = 'id, user_id, name, icon, color, type, is_default, parent_id, system_key'
+export const CATEGORY_COLUMNS = 'id, user_id, name, icon, color, type, is_default, parent_id, system_key, default_key, name_is_custom'
 
 export const categoriesApi = {
   create(payload: { name: string; icon?: string; color?: string; type: TransactionType }): Promise<Category> {
@@ -24,7 +26,7 @@ export const categoriesApi = {
     })
   },
 
-  update(id: string, payload: { name: string; icon?: string; color?: string }): Promise<Category> {
+  update(id: string, payload: { name?: string; icon?: string; color?: string }): Promise<Category> {
     return apiFetch(`/api/categories/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),

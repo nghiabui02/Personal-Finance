@@ -1,5 +1,6 @@
 'use client'
 
+import { LanguageSelector } from '@/i18n/language-selector'
 import { AccountSection } from './account-section'
 import { AppearanceSection } from './appearance-section'
 import { EmailSection } from './email-section'
@@ -39,6 +40,7 @@ export default function SettingsClient({
       <div className="space-y-4">
         <PasswordSection />
         <AppearanceSection />
+        <div className="rounded-2xl border border-hairline bg-white dark:bg-gray-900 p-5"><LanguageSelector /></div>
         <AccountSection />
       </div>
     </div>

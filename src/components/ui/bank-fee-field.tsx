@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { AmountInput } from './amount-input'
 
@@ -23,6 +24,7 @@ export function BankFeeField({
   /** The line under the field saying what the fee does to the total. */
   children: React.ReactNode
 }) {
+  const t = useTranslations('common')
   return (
     <div className="border-t border-hairline pt-3">
       {!isOpen ? (
@@ -31,16 +33,14 @@ export function BankFeeField({
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
           </svg>
-          Add bank fee (for international transactions)
-        </button>
+          {t('addBankFeeForInternationalTransactions')}</button>
       ) : (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Bank fee</p>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{t('bankFee')}</p>
             <button type="button" onClick={() => onOpenChange(false)}
               className="text-xs text-gray-400 hover:text-rose-500 transition-colors">
-              Remove
-            </button>
+              {t('remove')}</button>
           </div>
           <AmountInput label="" name="fee" defaultValue={defaultValue} onValueChange={onValueChange} autoFocus />
           <p className="text-xs text-gray-400 dark:text-gray-500">{children}</p>

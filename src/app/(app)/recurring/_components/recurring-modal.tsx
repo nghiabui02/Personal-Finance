@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { BankFeeField } from '@/components/ui/bank-fee-field'
@@ -12,7 +13,7 @@ import { Modal, useModalClose } from '@/components/ui/modal'
 import { localYMD } from '@/lib/utils/date'
 import { type Category } from '@/lib/api/categories'
 import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
-import { type RecurringTransaction, FREQUENCY_LABELS, recurringApi } from '@/lib/api/recurring-transactions'
+import { type RecurringTransaction, recurringApi } from '@/lib/api/recurring-transactions'
 import { useState } from 'react'
 import { FormError } from '@/components/ui/form-error'
 import { ModalActions } from '@/components/ui/modal-actions'
@@ -31,6 +32,8 @@ export function RecurringModal({
   wallets: Wallet[]
   onClose: () => void
 }) {
+  const common = useTranslations('common')
+  const t = useTranslations('recurring')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
@@ -41,7 +44,7 @@ export function RecurringModal({
   const [endDate, setEndDate] = useState(editing?.end_date ?? '')
   const [showFee, setShowFee] = useState(Number(editing?.bank_fee) > 0)
 
-  const walletOptions = toWalletOptions(wallets)
+  const walletOptions = toWalletOptions(wallets, t('none'))
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -51,8 +54,8 @@ export function RecurringModal({
     const note = readField(form, 'note')
     const fee = showFee ? Number(readField(form, 'fee') || '0') : 0
 
-    if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
-    if (!startDate) { setError('Start date is required.'); return }
+    if (!amount || amount <= 0) { setError(t('pleaseEnterAValidAmount')); return }
+    if (!startDate) { setError(t('startDateIsRequired')); return }
 
     submit(async () => {
       if (editing) {
@@ -78,12 +81,12 @@ export function RecurringModal({
   }
 
   return (
-    <Modal title={editing ? 'Edit recurring' : 'New recurring transaction'} size="md" onClose={onClose}>
+    <Modal title={editing ? t('editRecurring') : t('newRecurringTransaction')} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Type */}
         {!editing && (
           <TabGroup
-            tabs={[{ key: 'expense', label: '− Expense' }, { key: 'income', label: '+ Income' }]}
+            tabs={[{ key: 'expense', label: t('expense') }, { key: 'income', label: t('income') }]}
             value={txType}
             onChange={t => { setTxType(t); setCategoryId('') }}
             activeColors={{ expense: MONEY_OUT, income: MONEY_IN }}
@@ -92,11 +95,11 @@ export function RecurringModal({
 
         {/* Amount + Frequency */}
         <div className="grid grid-cols-2 gap-3">
-          <AmountInput label="Amount" name="amount" defaultValue={editing?.amount} required />
+          <AmountInput label={t('amount')} name="amount" defaultValue={editing?.amount} required />
           <CustomSelect
-            label="Repeat"
+            label={t('repeat')}
             name="frequency"
-            options={Object.entries(FREQUENCY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+            options={(['daily', 'weekly', 'monthly', 'yearly'] as const).map(value => ({ value, label: common(`frequencies.${value}`) }))}
             value={frequency}
             onChange={v => setFrequency(v as RecurringTransaction['frequency'])}
           />
@@ -108,35 +111,34 @@ export function RecurringModal({
             categories={categories} filterType={txType}
             value={categoryId} onChange={setCategoryId} searchable />
           {wallets.length > 0
-            ? <CustomSelect label="Wallet" name="wallet_id" options={walletOptions}
-                value={walletId} onChange={setWalletId} placeholder="None" />
+            ? <CustomSelect label={t('wallet')} name="wallet_id" options={walletOptions}
+                value={walletId} onChange={setWalletId} placeholder={t('none')} />
             : <div />}
         </div>
 
         {/* Start + End date */}
         {!editing ? (
           <div className="grid grid-cols-2 gap-3">
-            <DatePicker label="Start date" name="start_date" value={startDate} onChange={setStartDate} required />
-            <DatePicker label="End date (optional)" name="end_date" value={endDate} onChange={setEndDate} />
+            <DatePicker label={t('startDate')} name="start_date" value={startDate} onChange={setStartDate} required />
+            <DatePicker label={t('endDateOptional')} name="end_date" value={endDate} onChange={setEndDate} />
           </div>
         ) : (
-          <DatePicker label="End date (optional)" name="end_date" value={endDate} onChange={setEndDate} />
+          <DatePicker label={t('endDateOptional')} name="end_date" value={endDate} onChange={setEndDate} />
         )}
 
-        <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="e.g. Netflix subscription" />
+        <Input label={t('noteOptional')} name="note" defaultValue={editing?.note ?? ''} placeholder={t('eGNetflixSubscription')} />
 
         {/* Bank fee — persisted on the rule, then folded into every generated
             transaction (amount + fee), same as the transaction modal */}
         {txType === 'expense' && !!walletId && (
           <BankFeeField isOpen={showFee} onOpenChange={setShowFee} defaultValue={editing?.bank_fee ?? 0}>
-            Included in each generated transaction — the total charged will be amount + fee.
-          </BankFeeField>
+            {t('includedInEachGeneratedTransactionTheTotalChargedWillBeAmountFee')}</BankFeeField>
         )}
 
         <FormError message={error} />
         <ModalActions
           isPending={isPending}
-          submitLabel="Save"
+          submitLabel={t('save')}
           onCancel={close}
         />
       </form>

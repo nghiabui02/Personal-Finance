@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 interface PeriodNavProps {
   label: string
   onPrev: () => void
@@ -13,12 +14,13 @@ export function PeriodNav({
   labelClassName = 'min-w-0 sm:min-w-36',
   className = '',
 }: PeriodNavProps) {
+  const t = useTranslations('common')
   return (
     <div className={`flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit ${className}`}>
       <button
         type="button"
         onClick={onPrev}
-        aria-label="Previous"
+        aria-label={t('previous')}
         className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -31,7 +33,7 @@ export function PeriodNav({
       <button
         type="button"
         onClick={onNext}
-        aria-label="Next"
+        aria-label={t('next')}
         className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

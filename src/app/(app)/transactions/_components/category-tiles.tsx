@@ -1,4 +1,7 @@
 'use client'
+import { sortCategories } from '@/i18n/category'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { CategorySelect } from '@/components/ui/category-select'
 import { type Category } from '@/lib/api/categories'
@@ -37,15 +40,17 @@ export function CategoryTiles({
   onToggleMore: () => void
   onChange: (id: string) => void
 }) {
+  const locale = useLocale()
+  const t = useTranslations('transactions')
   const selectedCat = categories.find(c => c.id === categoryId)
-  const visibleCategories = categories.filter(c => c.type === txType).slice(0, 3)
+  const visibleCategories = sortCategories(categories, locale).filter(c => c.type === txType).slice(0, 3)
   const selectedInGrid = visibleCategories.some(c => c.id === categoryId)
   // A category picked from the full list has no tile of its own; "More" shows it instead.
   const overflowSelected = !selectedInGrid && selectedCat ? selectedCat : null
 
   return (
     <div>
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Category</p>
+      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('category')}</p>
       <div className="grid grid-cols-4 gap-2">
         {visibleCategories.map(c => {
           const active = c.id === categoryId
@@ -59,7 +64,7 @@ export function CategoryTiles({
             >
               <span className="text-xl leading-none">{c.icon ?? '🏷️'}</span>
               <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 truncate w-full text-center">
-                {c.name}
+                {getCategoryName(c, locale)}
               </span>
             </button>
           )
@@ -78,7 +83,7 @@ export function CategoryTiles({
             </svg>
           )}
           <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 truncate w-full text-center">
-            {overflowSelected ? overflowSelected.name : 'More'}
+            {overflowSelected ? getCategoryName(overflowSelected, locale) : t('more')}
           </span>
         </button>
       </div>
@@ -90,7 +95,7 @@ export function CategoryTiles({
           className="mt-2 flex items-center gap-1.5 rounded-full border border-dashed border-hairline px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand transition-colors"
         >
           <span className="leading-none">{suggestedCategory.icon ?? '🏷️'}</span>
-          <span>Last time this was <span className="font-medium">{suggestedCategory.name}</span> — use it</span>
+          <span>{t.rich('sentenceLastTimeThisWasUseIt', { value0: () => <span className="font-medium">{getCategoryName(suggestedCategory, locale)}</span> })}</span>
         </button>
       )}
       {moreOpen && (

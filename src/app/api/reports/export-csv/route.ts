@@ -1,3 +1,4 @@
+import { categoryTotals } from '@/lib/utils/category-totals'
 import { getReportingGroup, summarizeNonOperatingFlows } from '@/lib/server/transaction-reporting'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { NextResponse } from 'next/server'
@@ -47,7 +48,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const [{ data: txRows }, { data: walletRows }] = await Promise.all([
     supabase
       .from('transactions')
-      .select('id, type, amount, note, transaction_date, payment_method, transfer_pair_id, categories(name, icon, system_key), wallets(name)')
+      .select('id, type, amount, note, transaction_date, payment_method, transfer_pair_id, categories(id, name, icon, system_key, default_key, name_is_custom), wallets(name)')
       .eq('user_id', user.id)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate)
@@ -68,7 +69,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     transaction_date: string
     payment_method: string | null
     transfer_pair_id: string | null
-    categories: { name: string; icon: string | null; system_key: string | null } | null
+    categories: { id: string; name: string; icon: string | null; system_key: string | null } | null
     wallets: { name: string } | null
   }
   const txs = (txRows ?? []) as unknown as TxRow[]
@@ -83,13 +84,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const savingsRate  = totalIncome > 0 ? ((net / totalIncome) * 100).toFixed(1) : '0'
 
   // Category breakdown
-  const catMap = new Map<string, { amount: number; count: number }>()
-  for (const t of flowTxs.filter(t => t.type === 'expense')) {
-    const name = t.categories?.name ?? 'Uncategorized'
-    const prev = catMap.get(name) ?? { amount: 0, count: 0 }
-    catMap.set(name, { amount: prev.amount + Number(t.amount), count: prev.count + 1 })
-  }
-  const catList = [...catMap.entries()].sort((a, b) => b[1].amount - a[1].amount)
+  const catList = categoryTotals(flowTxs.filter(t => t.type === 'expense'))
 
   // Time breakdown — group by day for week/month, by month for quarter/year
   const groupKey = (date: string) =>
@@ -153,10 +148,10 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   // ── SECTION 3: CATEGORY BREAKDOWN ─────────────────────────────
   lines.push('=== SPENDING BY CATEGORY ===')
   lines.push(row('Category', 'Total spent', '% of spending', 'Transactions', 'Avg / transaction', 'Budget', 'Remaining'))
-  for (const [name, { amount, count }] of catList) {
+  for (const { id, name, amount, count } of catList) {
     const pct = totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) + '%' : '0%'
     const avg = count > 0 ? Math.round(amount / count) : 0
-    const budget = budgets.find(b => b.categories?.name === name)
+    const budget = budgets.find(b => b.category_id === id)
     const budgetAmt = budget ? Number(budget.effectiveAmount) : null
     const remaining = budgetAmt !== null ? budgetAmt - amount : null
     lines.push(row(

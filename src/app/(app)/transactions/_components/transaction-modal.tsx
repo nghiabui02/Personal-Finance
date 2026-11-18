@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Category } from '@/lib/api/categories'
@@ -34,10 +35,11 @@ export function TransactionModal({
   defaultDate?: string
   onClose: () => void
 }) {
+  const t = useTranslations('transactions')
   const close = useModalClose()
 
   return (
-    <Modal title={editing ? 'Edit transaction' : 'New transaction'} size="md" onClose={onClose}>
+    <Modal title={editing ? t('editTransaction') : t('newTransaction')} size="md" onClose={onClose}>
       <TransactionForm
         editing={editing}
         categories={categories}

@@ -1,8 +1,12 @@
+import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import SettingsClient from './_components/settings-client'
 
-export const metadata: Metadata = { title: 'Settings' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('navigation')
+  return { title: t('settings') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {

@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 import { amountSuggestions, formatWithDots } from '@/components/ui/amount-input'
@@ -27,6 +28,7 @@ export function CenteredAmountInput({
   onValueChange?: (value: number) => void
   autoFocus?: boolean
 }) {
+  const t = useTranslations('common')
   const [display, setDisplay] = useState(
     defaultValue ? formatWithDots(String(defaultValue)) : ''
   )
@@ -72,6 +74,7 @@ export function CenteredAmountInput({
         <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
           {suggestions.map(s => (
             <button
+              aria-label={t('clearAmount')}
               key={s}
               type="button"
               onMouseDown={keepFocus}

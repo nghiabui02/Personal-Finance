@@ -1,7 +1,9 @@
+import { LanguageSelector } from '@/i18n/language-selector'
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-safe pb-safe">
-      <div className="w-full max-w-sm">{children}</div>
+      <div className="w-full max-w-sm">{children}<div className="mt-4"><LanguageSelector /></div></div>
     </div>
   )
 }

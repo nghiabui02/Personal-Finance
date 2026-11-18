@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useSyncExternalStore } from 'react'
 import { useTheme } from 'next-themes'
@@ -23,19 +24,20 @@ const MonitorIcon = () => (
 )
 
 const THEME_OPTIONS = [
-  { value: 'light',  label: 'Light',  Icon: SunIcon  },
-  { value: 'dark',   label: 'Dark',   Icon: MoonIcon },
-  { value: 'system', label: 'Device', Icon: MonitorIcon },
+  { value: 'light',  label: 'light',  Icon: SunIcon  },
+  { value: 'dark',   label: 'dark',   Icon: MoonIcon },
+  { value: 'system', label: 'device', Icon: MonitorIcon },
 ] as const
 
 export function AppearanceSection() {
+  const t = useTranslations('settings')
   const { theme, setTheme } = useTheme()
   // The stored theme is unknown on the server, so nothing is drawn until the
   // browser has mounted — otherwise the wrong option flashes as selected.
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
 
   return (
-    <Section title="Appearance">
+    <Section title={t('appearance')}>
       {mounted && (
         <div className="grid grid-cols-3 gap-3">
           {THEME_OPTIONS.map(({ value, label, Icon }) => {
@@ -52,7 +54,7 @@ export function AppearanceSection() {
                 }`}
               >
                 <Icon />
-                <span className="text-xs font-medium">{label}</span>
+                <span className="text-xs font-medium">{t(label)}</span>
                 {isActive && <div className="w-1.5 h-1.5 rounded-full bg-brand-fill" />}
               </button>
             )

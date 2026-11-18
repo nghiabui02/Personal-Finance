@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server'
+import { csvErrorMessage } from '@/i18n/csv'
 import { NextResponse } from 'next/server'
 import { withAuth, badRequest, rpcError } from '@/lib/server/route'
 import { importDatabaseError, importWallet, parseImportRequest } from '@/lib/server/bank-import'
@@ -16,7 +18,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     console.info('[bank-import] completed', { userId: user.id, walletId, imported: data.imported, skipped: data.skipped })
     return NextResponse.json(data)
   } catch (error) {
-    if (error instanceof CsvError) return badRequest(error.message)
+    if (error instanceof CsvError) return badRequest(csvErrorMessage(error, await getTranslations('csv')))
     throw error
   }
 })

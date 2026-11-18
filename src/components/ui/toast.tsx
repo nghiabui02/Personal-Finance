@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useSyncExternalStore } from 'react'
 import { errorMessage } from '@/lib/utils/errors'
@@ -78,6 +79,7 @@ const TONE_ICONS: Record<ToastTone, React.ReactNode> = {
 }
 
 export function Toaster() {
+  const translate = useTranslations('common')
   const items = useSyncExternalStore(subscribe, () => toasts, () => EMPTY)
   if (items.length === 0) return null
 
@@ -112,7 +114,7 @@ export function Toaster() {
           <button
             type="button"
             onClick={() => dismiss(t.id)}
-            aria-label="Dismiss"
+            aria-label={translate('dismiss')}
             className="shrink-0 -mr-1 -mt-0.5 p-1 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
           >
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">

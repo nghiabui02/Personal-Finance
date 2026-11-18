@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
@@ -10,17 +11,17 @@ import { QuickAddButton } from './quick-add-button'
 import { Toaster } from '@/components/ui/toast'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/transactions': 'Transactions',
-  '/wallets': 'Wallets',
-  '/budgets': 'Budgets',
-  '/reports': 'Reports',
-  '/debts': 'Debts',
-  '/recurring': 'Recurring',
-  '/saving-goals': 'Saving Goals',
-  '/categories': 'Categories',
-  '/settings': 'Settings',
-  '/more': 'More',
+  '/dashboard': 'dashboard',
+  '/transactions': 'transactions',
+  '/wallets': 'wallets',
+  '/budgets': 'budgets',
+  '/reports': 'reports',
+  '/debts': 'debts',
+  '/recurring': 'recurring',
+  '/saving-goals': 'savingGoals',
+  '/categories': 'categories',
+  '/settings': 'settings',
+  '/more': 'more',
 }
 
 // Sub-pages of the account hub that show a back button on mobile
@@ -54,13 +55,14 @@ const MONEY_ICON = (
  * tab and switch with a SegmentNav inside the screen.
  */
 const BOTTOM_NAV = [
-  { href: '/dashboard',   label: 'Overview',     icon: OVERVIEW_ICON,     group: ['/dashboard'] },
-  { href: '/transactions', label: 'Transactions', icon: TRANSACTIONS_ICON, group: ['/transactions'] },
-  { href: '/reports',     label: 'Plan',         icon: PLAN_ICON,         group: ['/reports', '/budgets'] },
-  { href: '/wallets',     label: 'Money',        icon: MONEY_ICON,        group: ['/wallets', '/debts', '/saving-goals', '/recurring'] },
+  { href: '/dashboard',   label: 'overview',     icon: OVERVIEW_ICON,     group: ['/dashboard'] },
+  { href: '/transactions', label: 'transactions', icon: TRANSACTIONS_ICON, group: ['/transactions'] },
+  { href: '/reports',     label: 'plan',         icon: PLAN_ICON,         group: ['/reports', '/budgets'] },
+  { href: '/wallets',     label: 'money',        icon: MONEY_ICON,        group: ['/wallets', '/debts', '/saving-goals', '/recurring'] },
 ]
 
 function MobileBottomNav({ pathname }: { pathname: string }) {
+  const t = useTranslations('navigation')
   const tab = (item: (typeof BOTTOM_NAV)[number]) => {
     const active = item.group.some(p => pathname === p || pathname.startsWith(p + '/'))
     return (
@@ -73,7 +75,7 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
         }`}
       >
         <span className={active ? 'opacity-100' : 'opacity-60'}>{item.icon}</span>
-        <span className="text-[9px] font-medium tracking-wide">{item.label}</span>
+        <span className="text-[9px] font-medium tracking-wide">{t(item.label)}</span>
       </Link>
     )
   }
@@ -103,6 +105,7 @@ export default function AppShell({
   children: ReactNode
   user: User
 }) {
+  const nav = useTranslations('navigation')
   const pathname = usePathname()
 
   const title = PAGE_TITLES[pathname] ?? Object.entries(PAGE_TITLES).find(([k]) => pathname.startsWith(k + '/'))?.at(1) ?? 'Finance'
@@ -113,7 +116,7 @@ export default function AppShell({
       {/* Full-width header */}
       <Header
         user={user}
-        title={title}
+        title={title === 'Finance' ? title : nav(title)}
         backHref={isAccountSubPage ? '/more' : undefined}
       />
 

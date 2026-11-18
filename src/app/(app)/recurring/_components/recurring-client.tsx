@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
@@ -33,10 +34,11 @@ export default function RecurringClient({
   categories: Category[]
   wallets: Wallet[]
 }) {
+  const t = useTranslations('recurring')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<RecurringTransaction | null>(null)
   const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
-    id => recurringApi.delete(id), 'Could not delete the recurring rule.',
+    id => recurringApi.delete(id), t('couldNotDeleteTheRecurringRule'),
   )
 
   const active  = items.filter(i => !i.end_date || i.end_date >= localYMD())
@@ -57,37 +59,37 @@ export default function RecurringClient({
   return (
     <>
       <ScreenHeader
-        eyebrow="Money"
+        eyebrow={t('money')}
         headline={
           running.length === 0
-            ? <>No rules are running — add one for rent, a subscription, or your salary.</>
+            ? <>{t('noRulesAreRunningAddOneForRentASubscriptionOrYour')}</>
             : monthlyIn > 0
-            ? <>Standing rules move <Em tone="bad">{formatVND(monthlyOut)}</Em> out and <Em tone="good">{formatVND(monthlyIn)}</Em> in every month.</>
-            : <>Standing rules move <Em tone="bad">{formatVND(monthlyOut)}</Em> out every month.</>
+            ? <>{t.rich('sentenceStandingRulesMoveOutAndInEveryMonth', { value0: () => <Em tone="bad">{formatVND(monthlyOut)}</Em>, value1: () => <Em tone="good">{formatVND(monthlyIn)}</Em> })}</>
+            : <>{t.rich('sentenceStandingRulesMoveOutEveryMonth', { value0: () => <Em tone="bad">{formatVND(monthlyOut)}</Em> })}</>
         }
         support={
           <>
-            <span>{running.length} running</span>
-            {pausedCount > 0 && <><Dot /><span>{pausedCount} paused</span></>}
-            {nextRun && <><Dot /><span>next on {nextRun}</span></>}
+            <span>{t('sentenceRunning', { value0: running.length })}</span>
+            {pausedCount > 0 && <><Dot /><span>{t('sentencePaused', { value0: pausedCount })}</span></>}
+            {nextRun && <><Dot /><span>{t('sentenceNextOn', { value0: nextRun })}</span></>}
           </>
         }
         segments={MONEY_SEGMENTS}
         action={
-          <AddButton onClick={() => { setEditingItem(null); setModalOpen(true) }}>New rule</AddButton>
+          <AddButton onClick={() => { setEditingItem(null); setModalOpen(true) }}>{t('newRule')}</AddButton>
         }
       />
 
       {items.length === 0 ? (
         <EmptyState
-          message="No recurring transactions yet."
-          action={{ label: 'Add your first one', onClick: () => { setEditingItem(null); setModalOpen(true) } }}
+          message={t('noRecurringTransactionsYet')}
+          action={{ label: t('addYourFirstOne'), onClick: () => { setEditingItem(null); setModalOpen(true) } }}
         />
       ) : (
         <div className="space-y-6">
           {active.length > 0 && (
             <section>
-              <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">Active ({active.length})</p>
+              <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">{t('sentenceActive', { value0: active.length })}</p>
               <div className="space-y-2">
                 {active.map(item => (
                   <RecurringCard key={item.id} item={item}
@@ -99,7 +101,7 @@ export default function RecurringClient({
           )}
           {expired.length > 0 && (
             <section>
-              <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">Ended ({expired.length})</p>
+              <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">{t('sentenceEnded', { value0: expired.length })}</p>
               <div className="space-y-2">
                 {expired.map(item => (
                   <RecurringCard key={item.id} item={item}
@@ -120,9 +122,9 @@ export default function RecurringClient({
 
       {confirmId && (
         <ConfirmModal
-          title="Delete recurring transaction?"
-          description="Future transactions won't be created. Past transactions already created are kept."
-          confirmLabel="Delete"
+          title={t('deleteRecurringTransaction')}
+          description={t('futureTransactionsWonTBeCreatedPastTransactionsAlreadyCreatedAreKept')}
+          confirmLabel={t('delete')}
           isPending={isPending}
           onConfirm={confirm}
           onClose={cancel} />

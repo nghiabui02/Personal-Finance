@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { authApi } from '@/lib/api/auth'
 import { Button } from '@/components/ui/button'
@@ -11,6 +12,7 @@ import { AuthCard, AuthHeading } from '../_components/auth-card'
 import { readField } from '@/lib/utils/form'
 
 export default function RegisterPage() {
+  const t = useTranslations('auth')
   const router = useRouter()
   const { error, isPending, submit } = useAuthForm()
 
@@ -23,28 +25,24 @@ export default function RegisterPage() {
     submit(async () => {
       await authApi.signUp({ email, password })
       router.push('/login?message=check_email')
-    }, { fallback: 'Sign up failed.' })
+    }, { fallback: t('signUpFailed') })
   }
 
   return (
     <AuthCard>
-      <AuthHeading title="Create account">Start managing your finances today</AuthHeading>
+      <AuthHeading title={t('createAccount')}>{t('startManagingYourFinancesToday')}</AuthHeading>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" />
-        <Input label="Password" name="password" type="password" autoComplete="new-password" required placeholder="At least 6 characters" />
+        <Input label={t('email')} name="email" type="email" autoComplete="email" required placeholder="you@example.com" />
+        <Input label={t('password')} name="password" type="password" autoComplete="new-password" required placeholder={t('atLeast6Characters')} />
         <FormError message={error} />
         <Button type="submit" disabled={isPending} fullWidth>
-          {isPending ? 'Creating account...' : 'Create account'}
+          {isPending ? t('creatingAccount') : t('createAccount')}
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-sm text-gray-400">
-        Already have an account?{' '}
-        <Link href="/login" className="font-medium text-brand hover:underline">
-          Sign in
-        </Link>
-      </p>
+      <p className="mt-5 text-center text-sm text-gray-400">{t.rich('sentenceAlreadyHaveAnAccountSignIn', { value0: ' ', value1: () => <Link href="/login" className="font-medium text-brand hover:underline">
+          {t('signIn')}</Link> })}</p>
     </AuthCard>
   )
 }

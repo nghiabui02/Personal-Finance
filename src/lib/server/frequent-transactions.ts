@@ -1,3 +1,4 @@
+import { getCategoryName } from '@/i18n/category'
 import type { TransactionType } from '@/lib/constants'
 import type { RecentTransaction } from './recent-transactions'
 
@@ -29,7 +30,7 @@ export interface FrequentTransaction {
 
 /** Pure: the rows come from `getRecentTransactions`, which every caller
  *  already loads for the category and duplicate checks. */
-export function toFrequentTransactions(rows: RecentTransaction[]): FrequentTransaction[] {
+export function toFrequentTransactions(rows: RecentTransaction[], locale = 'vi'): FrequentTransaction[] {
   const buckets = new Map<string, FrequentTransaction>()
 
   for (const raw of rows) {
@@ -49,7 +50,7 @@ export function toFrequentTransactions(rows: RecentTransaction[]): FrequentTrans
       type: raw.type === 'income' ? 'income' : 'expense',
       amount,
       categoryId: raw.category_id,
-      categoryName: raw.categories?.name ?? 'Uncategorized',
+      categoryName: raw.categories ? getCategoryName(raw.categories, locale) : (locale === 'en' ? 'Uncategorized' : 'Chưa phân loại'),
       categoryIcon: raw.categories?.icon ?? null,
       walletId: raw.wallet_id,
       note: raw.note,

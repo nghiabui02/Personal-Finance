@@ -6,9 +6,9 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
 
   const { name, color } = await request.json()
 
-  if (typeof name !== 'string' || !name.trim()) return badRequest('Name is required.')
+  if (typeof name !== 'string' || !name.trim()) return badRequest('nameIsRequired')
   if (color !== undefined && color !== null && typeof color !== 'string') {
-    return badRequest('Color must be a string.')
+    return badRequest('colorMustBeAString')
   }
 
   return updateOwnedRow(supabase, 'wallets', { id, userId: user.id }, {

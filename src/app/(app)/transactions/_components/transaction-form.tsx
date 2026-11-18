@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { BankFeeField } from '@/components/ui/bank-fee-field'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -42,6 +43,7 @@ interface TransactionFormProps {
 }
 
 export function TransactionForm({ editing, categories, wallets, debts, frequent = [], recent = [], defaultDate, onDone, onCancel }: TransactionFormProps) {
+  const t = useTranslations('transactions')
   const { error, setError, isPending, submit } = useFormSubmit(onDone)
   const {
     txType, categoryId, walletId, date, note, amountValue, feeValue, showFee, selectedDebtId, preset, moreOpen,
@@ -52,7 +54,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
     suggestedCategory, duplicate, canAddFee,
   } = useTransactionForm({ editing, categories, wallets, debts, recent, defaultDate })
 
-  const walletOptions = toWalletOptions(wallets)
+  const walletOptions = toWalletOptions(wallets, t('none'))
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -61,8 +63,8 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
     const amount = Number(readField(form, 'amount'))
     const fee    = Number(readField(form, 'fee') || '0')
 
-    if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
-    if (!date) { setError('Please pick a date.'); return }
+    if (!amount || amount <= 0) { setError(t('pleaseEnterAValidAmount')); return }
+    if (!date) { setError(t('pleasePickADate')); return }
     if (overdrawn) { setError(overdraftMessage); return }
 
     submit(async () => {
@@ -94,7 +96,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
       {!editing && <QuickParse onDraft={applyDraft} />}
 
       <TabGroup
-        tabs={[{ key: 'expense', label: '− Expense' }, { key: 'income', label: '+ Income' }]}
+        tabs={[{ key: 'expense', label: t('expense2') }, { key: 'income', label: t('income2') }]}
         value={txType}
         onChange={changeType}
         activeTextColors={{ expense: MONEY_OUT, income: MONEY_IN }}
@@ -131,39 +133,37 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
       <div className="grid grid-cols-2 gap-3">
         {wallets.length > 0
           ? <div>
-              <CustomSelect label="Wallet" name="wallet_id" options={walletOptions}
-                value={walletId} onChange={setWalletId} placeholder="None" />
+              <CustomSelect label={t('wallet')} name="wallet_id" options={walletOptions}
+                value={walletId} onChange={setWalletId} placeholder={t('none')} />
               {selectedWallet && (
                 <p className="mt-1 text-xs tabular-nums text-gray-400 dark:text-gray-500">
-                  {formatVND(selectedWallet.balance)} {selectedWallet.type === 'credit' ? 'credit left' : 'available'}
+                  {formatVND(selectedWallet.balance)} {selectedWallet.type === 'credit' ? t('creditLeft') : t('available')}
                 </p>
               )}
             </div>
           : <div />}
-        <DatePicker label="Date" name="transaction_date" value={date} onChange={setDate} required />
+        <DatePicker label={t('date')} name="transaction_date" value={date} onChange={setDate} required />
       </div>
 
       {/* Debt selector — shown when category is Repay Debt / Collect Debt */}
       {showDebtSelector && (
         <div className="space-y-1.5">
           <CustomSelect
-            label={isRepay ? 'Link to debt (borrowed)' : 'Link to debt (lent)'}
+            label={isRepay ? t('linkToDebtBorrowed') : t('linkToDebtLent')}
             name="debt_id"
             options={debtOptions}
             value={selectedDebtId}
             onChange={setSelectedDebtId}
-            placeholder="Not linked"
+            placeholder={t('notLinked')}
           />
           {selectedDebt && (
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Remaining: {formatVND(selectedDebt.remaining_amount)} · Linking updates the debt record automatically
-            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{t('sentenceRemainingLinkingUpdatesTheDebtRecordAutomatically', { value0: formatVND(selectedDebt.remaining_amount) })}</p>
           )}
         </div>
       )}
 
-      <Input label="Note (optional)" name="note" value={note} onChange={e => setNote(e.target.value)}
-        placeholder="e.g. Lunch with colleagues" />
+      <Input label={t('noteOptional')} name="note" value={note} onChange={e => setNote(e.target.value)}
+        placeholder={t('eGLunchWithColleagues')} />
 
       {canAddFee && (
         <BankFeeField
@@ -171,26 +171,20 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
           onOpenChange={setShowFee}
           defaultValue={Number(editing?.bank_fee) || 0}
           onValueChange={setFeeValue}
-        >
-          Included in this transaction — total charged will be{' '}
-          <span className="font-medium text-gray-600 dark:text-gray-300 tabular-nums">
+        >{t.rich('sentenceIncludedInThisTransactionTotalChargedWillBe', { value0: ' ', value1: () => <span className="font-medium text-gray-600 dark:text-gray-300 tabular-nums">
             {formatVND(amountValue + feeValue)}
-          </span>.
-        </BankFeeField>
+          </span> })}</BankFeeField>
       )}
 
       {duplicate && (
         <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
-          {selectedWallet?.name} already has {formatVND(spendTotal)} on this day
-          {duplicate.note ? ` — “${duplicate.note}”` : ''}. Saving records it a second time.
+          {t('duplicateWarning', { wallet: selectedWallet?.name ?? '', amount: formatVND(spendTotal), note: duplicate.note ?? '', hasNote: duplicate.note ? 'yes' : 'no' })}
         </p>
       )}
 
       {editing?.debt_payment_id && (
         <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
-          This is a debt repayment. Changing the amount moves the debt with it;
-          the direction and category are fixed.
-        </p>
+          {t('thisIsADebtRepaymentChangingTheAmountMovesTheDebtWith')}</p>
       )}
 
       <FormError message={error} />
@@ -198,7 +192,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
       <ModalActions
         isPending={isPending}
         disabled={overdrawn}
-        submitLabel="Save transaction"
+        submitLabel={t('saveTransaction')}
         submitVariant="success"
         onCancel={onCancel}
       />

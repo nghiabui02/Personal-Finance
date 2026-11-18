@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
+import type { CategoryRef } from '@/lib/types'
 import type { HistoryTransaction } from '@/lib/transaction-matching'
 
 /**
@@ -16,7 +17,7 @@ const LOOKBACK_DAYS = 90
 const MAX_ROWS = 1000
 
 export interface RecentTransaction extends HistoryTransaction {
-  categories: { name: string; icon: string | null } | null
+  categories: CategoryRef | null
 }
 
 export async function getRecentTransactions(
@@ -28,7 +29,7 @@ export async function getRecentTransactions(
   // belongs in a suggestion or a duplicate warning.
   const { data, error } = await supabase
     .from('transactions')
-    .select('type, amount, note, transaction_date, category_id, wallet_id, categories(name, icon)')
+    .select('type, amount, note, transaction_date, category_id, wallet_id, categories(id, name, icon, color, default_key, name_is_custom, system_key)')
     .eq('user_id', userId)
     .is('transfer_pair_id', null)
     .is('debt_payment_id', null)

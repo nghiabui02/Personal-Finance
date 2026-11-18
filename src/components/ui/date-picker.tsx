@@ -1,4 +1,5 @@
 'use client'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { useCallback, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -6,7 +7,6 @@ import { useAnchoredPanel, useOutsideClose } from './use-anchored-panel'
 import { formatMonthYear, toYMD } from '@/lib/utils/date'
 
 // Week starts Monday
-const DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 
 // Convert JS getDay() (0=Sun) to Monday-first index (0=Mon … 6=Sun)
 function mondayIndex(date: Date): number {
@@ -62,6 +62,9 @@ const PANEL_HEIGHT = 380
 const PANEL_MIN_WIDTH = 268
 
 export function DatePicker({ label, name, value, onChange, required }: DatePickerProps) {
+  const locale = useLocale()
+  const weekdays = Array.from({ length: 7 }, (_, index) => new Date(2026, 0, 5 + index).toLocaleDateString(locale, { weekday: 'short' }))
+  const t = useTranslations('common')
   const [open, setOpen]         = useState(false)
   const [viewYear, setViewYear]     = useState(new Date().getFullYear())
   const [viewMonth, setViewMonth]   = useState(new Date().getMonth() + 1)
@@ -97,7 +100,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
   const today        = todayYMD()
   const calendarDays = getCalendarDays(viewYear, viewMonth)
-  const monthLabel   = formatMonthYear(new Date(viewYear, viewMonth - 1, 1))
+  const monthLabel   = formatMonthYear(new Date(viewYear, viewMonth - 1, 1), locale)
 
   return (
     <div ref={ref} className="relative">
@@ -129,7 +132,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
         {/* Right icon: × when has value and clearable, else chevron */}
         {value && !required ? (
           <span
-            role="button"
+            role="button" aria-label={t('clearField', { label })}
             onClick={e => { e.stopPropagation(); onChange(''); setOpen(false) }}
             className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-0.5"
           >
@@ -155,14 +158,14 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
           {/* Month header */}
           <div className="flex items-center justify-between mb-3">
-            <button type="button" onClick={() => navigate(-1)}
+            <button type="button" aria-label={t('previous')} onClick={() => navigate(-1)}
               className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
               </svg>
             </button>
             <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{monthLabel}</span>
-            <button type="button" onClick={() => navigate(1)}
+            <button type="button" aria-label={t('next')} onClick={() => navigate(1)}
               className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -172,7 +175,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
 
           {/* Day headers (Mon-first) */}
           <div className="grid grid-cols-7 mb-1">
-            {DAYS.map(d => (
+            {weekdays.map(d => (
               <div key={d} className="text-center text-xs font-medium text-gray-400 py-1">{d}</div>
             ))}
           </div>
@@ -213,8 +216,7 @@ export function DatePicker({ label, name, value, onChange, required }: DatePicke
             <div className="mt-2 pt-2 border-t border-hairline text-center">
               <button type="button" onClick={() => { onChange(today); setOpen(false) }}
                 className="text-xs text-brand hover:underline">
-                Today
-              </button>
+                {t('today')}</button>
             </div>
           )}
         </div>,

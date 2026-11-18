@@ -39,7 +39,7 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
   const { actual_balance, note, date, category_id } = await request.json()
 
   const actual = Number(actual_balance)
-  if (!Number.isFinite(actual)) return badRequest('Enter the balance shown by your bank.')
+  if (!Number.isFinite(actual)) return badRequest('enterTheBalanceShownByYourBank')
 
   // Read once to work out which way the gap goes, so only the category that is
   // actually needed gets created. The function re-reads the balance under a
@@ -51,7 +51,7 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
     .eq('user_id', user.id)
     .single()
 
-  if (!wallet) return notFound('Wallet not found.')
+  if (!wallet) return notFound('walletNotFound')
 
   const expectedUp = actual - Number(wallet.balance) > 0
   const direction = expectedUp ? 'income' : 'expense'
@@ -59,12 +59,12 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
   // A gap is not always a bookkeeping error. A savings pocket that pays daily
   // interest grows on its own, and that growth is real income — filing it as a
   // correction would keep it out of the month's totals, where it belongs.
-  // Default stays "correction"; the caller names a category to say otherwise.
+  // Default stays 'correction'; the caller names a category to say otherwise.
   const categoryId = category_id
     ? await resolveUserCategory(supabase, user.id, category_id, direction)
     : await ensureSystemCategory(supabase, user.id, expectedUp ? 'adjust_up' : 'adjust_down')
 
-  if (!categoryId) return badRequest('That category does not match the direction of this change.')
+  if (!categoryId) return badRequest('thatCategoryDoesNotMatchTheDirectionOfThisChange')
 
   const { data, error } = await supabase.rpc('reconcile_wallet', {
     p_wallet_id: id,

@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast, toastError } from '@/components/ui/toast'
@@ -11,6 +12,7 @@ import { isStandalone, type Transaction, transactionsApi } from '@/lib/api/trans
  * still asks first: reversing one touches a record Undo cannot rebuild.
  */
 export function useTransactionDeletion(transactions: Transaction[]) {
+  const t = useTranslations('transactions')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -50,8 +52,8 @@ export function useTransactionDeletion(transactions: Transaction[]) {
         await transactionsApi.delete(tx.id)
         router.refresh()
         toast.success(
-          'Transaction deleted.',
-          isStandalone(tx) ? { label: 'Undo', onClick: () => restore(tx) } : undefined,
+          t('transactionDeleted'),
+          isStandalone(tx) ? { label: t('undo'), onClick: () => restore(tx) } : undefined,
         )
       } catch (err) {
         toastError(err, 'Could not delete the transaction.')

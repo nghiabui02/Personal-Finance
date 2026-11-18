@@ -1,3 +1,6 @@
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
+
 import { formatVND } from '@/lib/utils/currency'
 import { BRAND_HEX, MONEY_OUT, WARNING } from '@/lib/utils/colors'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
@@ -10,10 +13,12 @@ type BudgetItem = {
 }
 
 export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
+  const locale = useLocale()
+  const t = useTranslations('dashboard')
   return (
-    <SectionCard title="Budgets" action={{ label: 'Manage', href: '/budgets' }}>
+    <SectionCard title={t('budgets')} action={{ label: t('manage'), href: '/budgets' }}>
       {budgets.length === 0 ? (
-        <SectionEmpty message="No budgets set" action={{ label: 'Create a budget', href: '/budgets' }} />
+        <SectionEmpty message={t('noBudgetsSet')} action={{ label: t('createABudget'), href: '/budgets' }} />
       ) : (
         <ul className="space-y-3.5">
           {budgets.map((b, idx) => {
@@ -27,7 +32,7 @@ export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {
                   <div className="flex items-baseline gap-1.5 min-w-0">
                     {b.category?.icon && <span className="text-sm leading-none shrink-0">{b.category.icon}</span>}
                     <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300 truncate">
-                      {b.category?.name ?? 'Uncategorized'}
+                      {(b.category ? getCategoryName(b.category, locale) : undefined) ?? t('uncategorized')}
                     </span>
                   </div>
                   <span className="text-[11px] tabular-nums shrink-0">

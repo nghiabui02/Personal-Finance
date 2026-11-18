@@ -1,4 +1,5 @@
 'use client'
+import { useLocale, useTranslations } from 'next-intl'
 
 import Link from 'next/link'
 import { toastError } from '@/components/ui/toast'
@@ -23,6 +24,8 @@ function patchNotifications(action: 'read' | 'dismiss', ids: string[]) {
 }
 
 export function NotificationBell() {
+  const t = useTranslations('common')
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +41,7 @@ export function NotificationBell() {
       .catch(() => { /* the bell is ambient; a failed poll retries on next navigation */ })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [pathname])
+  }, [pathname, locale])
 
   // Opening persists the read marks, but items stay highlighted until the
   // panel closes so the user can still tell which ones are new
@@ -60,7 +63,7 @@ export function NotificationBell() {
     // next load and the user cannot tell why.
     patchNotifications('dismiss', [id]).catch(err => {
       if (removed) setItems(prev => prev.some(i => i.id === id) ? prev : [...prev, removed])
-      toastError(err, 'Could not dismiss the notification.')
+      toastError(err, t('couldNotDismissTheNotification'))
     })
   }
 
@@ -74,7 +77,7 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => (open ? closePanel() : openPanel())}
-        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+        aria-label={unreadCount > 0 ? t('unreadNotifications', { count: unreadCount }) : t('notifications')}
         className="relative p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -90,7 +93,7 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-full mt-2 z-40 w-[min(22rem,calc(100vw-2rem))] bg-white dark:bg-gray-900 rounded-2xl border border-hairline shadow-lg overflow-hidden animate-dropdown-in">
           <div className="px-4 py-3 border-b border-hairline flex items-center justify-between">
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('notifications')}</p>
             {count > 0 && (
               <span className="text-xs text-gray-400 dark:text-gray-500">{count}</span>
             )}
@@ -98,13 +101,13 @@ export function NotificationBell() {
 
           <div className="max-h-[min(24rem,60vh)] overflow-y-auto">
             {loading ? (
-              <p className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading…</p>
+              <p className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">{t('loading')}</p>
             ) : count === 0 ? (
               <div className="px-4 py-10 text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="mx-auto text-gray-300 dark:text-gray-600 mb-2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                <p className="text-sm text-gray-500 dark:text-gray-400">You&apos;re all caught up</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('youReAllCaughtUp')}</p>
               </div>
             ) : (
               <div className="py-1">
@@ -130,7 +133,7 @@ export function NotificationBell() {
                     <button
                       type="button"
                       onClick={() => dismiss(n.id)}
-                      aria-label="Dismiss notification"
+                      aria-label={t('dismissNotification')}
                       className="absolute right-2 top-2 p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-600 dark:hover:text-gray-300 dark:hover:bg-gray-800 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

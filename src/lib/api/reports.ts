@@ -4,7 +4,7 @@ import type { PeriodType } from '@/lib/utils/period'
 export type PeriodSummary = {
   totalIncome: number
   totalExpense: number
-  categories: { name: string; amount: number }[]
+  categories: { id: string; name: string; amount: number }[]
 }
 
 export const reportsApi = {

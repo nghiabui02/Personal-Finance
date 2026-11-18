@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import type { Analysis, Insight } from './ai-insights-types'
 
 const INSIGHT_COLORS: Record<Insight['type'], string> = {
@@ -27,6 +28,7 @@ function Callout({ icon, label, text }: { icon: string; label: string; text: str
 
 /** The finished analysis: score and summary, the two callouts, then the insights. */
 export function AnalysisResult({ analysis }: { analysis: Analysis }) {
+  const t = useTranslations('reports')
   const tone = scoreTone(analysis.score)
 
   return (
@@ -34,7 +36,7 @@ export function AnalysisResult({ analysis }: { analysis: Analysis }) {
       <div className="flex items-center gap-4">
         <div className="shrink-0 text-center">
           <p className={`text-3xl font-bold tabular-nums leading-none ${tone.text}`}>{analysis.score}</p>
-          <p className="text-[9px] text-white/35 uppercase tracking-wider mt-0.5">score</p>
+          <p className="text-[9px] text-white/35 uppercase tracking-wider mt-0.5">{t('score')}</p>
         </div>
         <div className="flex-1 min-w-0">
           <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-2">
@@ -43,8 +45,8 @@ export function AnalysisResult({ analysis }: { analysis: Analysis }) {
           <p className="text-sm text-slate-300 leading-relaxed">{analysis.summary}</p>
         </div>
       </div>
-      {analysis.topSpend && <Callout icon="🏆" label="Top spending" text={analysis.topSpend} />}
-      {analysis.assets && <Callout icon="💼" label="Current assets" text={analysis.assets} />}
+      {analysis.topSpend && <Callout icon="🏆" label={t('topSpending')} text={analysis.topSpend} />}
+      {analysis.assets && <Callout icon="💼" label={t('currentAssets')} text={analysis.assets} />}
       <div className="space-y-2">
         {analysis.insights.map((ins, i) => (
           <div

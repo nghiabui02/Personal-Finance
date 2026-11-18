@@ -4,13 +4,13 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   const { id } = params
 
   const { amount, rollover, active } = await request.json()
-  if (amount !== undefined && (!amount || Number(amount) <= 0)) return badRequest('Amount is required.')
+  if (amount !== undefined && (!amount || Number(amount) <= 0)) return badRequest('amountIsRequired')
 
   return updateOwnedRow(supabase, 'budgets', { id, userId: user.id }, {
     amount: amount !== undefined ? Number(amount) : undefined,
     rollover: rollover !== undefined ? !!rollover : undefined,
     active: active !== undefined ? !!active : undefined,
-  }, '*, categories(id, name, icon, color)')
+  }, '*, categories(id, name, icon, color, default_key, name_is_custom, system_key)')
 })
 
 export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {

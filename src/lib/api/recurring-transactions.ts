@@ -19,13 +19,6 @@ export type RecurringTransaction = {
   wallets: { id: string; name: string } | null
 }
 
-export const FREQUENCY_LABELS: Record<RecurringTransaction['frequency'], string> = {
-  daily:   'Every day',
-  weekly:  'Every week',
-  monthly: 'Every month',
-  yearly:  'Every year',
-}
-
 export const recurringApi = {
   create(payload: {
     type: TransactionType

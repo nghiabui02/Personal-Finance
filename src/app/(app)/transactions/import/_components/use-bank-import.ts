@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { bankImportApi, type ImportFile, type ImportPreviewRow, type ImportResult } from '@/lib/api/bank-import'
@@ -8,6 +9,7 @@ import type { ReviewedRow } from './import-review'
 
 /** File reading and CSV settings stay separate from a confirmed review. */
 export function useCsvSource() {
+  const t = useTranslations('transactions')
   const [csv, setCsv] = useState('')
   const [delimiter, setDelimiter] = useState(',')
   const [mapping, setMapping] = useState(EMPTY_MAPPING)
@@ -23,14 +25,14 @@ export function useCsvSource() {
     setCsv(''); setError(null); setMapping(EMPTY_MAPPING)
     if (!selected) return
     try {
-      if (!/\.csv$/i.test(selected.name)) throw new Error('Choose a CSV file. Export Excel files as CSV UTF-8 first.')
-      if (selected.size > MAX_CSV_BYTES) throw new Error('Choose a CSV file of at most 1 MB.')
+      if (!/\.csv$/i.test(selected.name)) throw new Error(t('chooseACsvFileExportExcelFilesAsCsvUtf'))
+      if (selected.size > MAX_CSV_BYTES) throw new Error(t('chooseACsvFileOfAtMost1Mb'))
       const text = new TextDecoder('utf-8', { fatal: true }).decode(await selected.arrayBuffer())
-      if (!text.trim()) throw new Error('The CSV file is empty. Export a statement with at least one transaction.')
+      if (!text.trim()) throw new Error(t('theCsvFileIsEmptyExportAStatementWithAt'))
       if (version === fileVersion.current) setCsv(text)
     } catch (error) {
       if (version !== fileVersion.current) return
-      setError(error instanceof TypeError ? 'Could not decode the file. Export it as CSV UTF-8 and retry.' : errorMessage(error, 'Could not read the CSV file.'))
+      setError(error instanceof TypeError ? t('couldNotDecodeTheFileExportItAsCsvUtf') : errorMessage(error, t('couldNotReadTheCsvFile')))
     }
   }
 

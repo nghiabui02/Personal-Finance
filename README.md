@@ -166,8 +166,6 @@ Choose the separator and header row, then map transaction date, bank
 description, debit, credit, and preferably the bank reference. Dates accept
 `DD/MM/YYYY` or `YYYY-MM-DD`; choose the decimal separator to match the file.
 Blank records are ignored; remove statement totals/footer records beforehand.
-`tests/fixtures/vcb-statement.csv` is a synthetic example of the supported
-layout, not a verified export from Vietcombank.
 
 Review every selected row and enter its title. The title uses the existing
 transaction `note` field; original bank descriptions and references are retained
@@ -194,30 +192,64 @@ importer. It adds an RLS-protected identity table and atomic import functions;
 it relies on the existing money functions and live schema described above.
 No bank credentials, API keys, or new environment variables are needed.
 
-Parser checks: `node --experimental-strip-types --test tests/bank-csv.test.mjs`.
-`tests/bank-import.sql` covers atomicity, retries, ownership, category checks,
-and deleted-entry retries. Run it as postgres only against a disposable local
-Supabase database with the complete schema and migrations; it rolls back its
-fixtures. Do not run it against the live database.
+## Verification
 
-## Tests
-
-```bash
-node --experimental-strip-types --test tests/bank-csv.test.mjs          # CSV parser
-node --experimental-strip-types --test tests/transaction-matching.test.mjs  # category suggestion, duplicate check
-node --experimental-strip-types --test tests/rpc-params.test.mjs         # request body → money function arguments
-node --experimental-strip-types --test tests/totals.test.mjs             # income/expense totals, net, debts owed
-node --experimental-strip-types --test tests/currency.test.mjs           # signed amounts
-```
-
-`tests/bank-import.sql` and `tests/bulk-delete.sql` cover the money functions —
-atomicity, retries, ownership, and the balance after a refused batch. Run them
-as postgres against a disposable local Supabase database with the full schema;
-each rolls its fixtures back. Do not run them against the live database.
+The project owner performs functional testing manually. Do not add or run
+automated tests for this project. Run lint, typecheck and build as appropriate
+for the change.
 
 Apply `supabase/migrations/20261110000000_bulk_delete_transactions.sql` before
 using batch delete. It adds `delete_transactions(uuid[])`, which loops the
 existing `delete_transaction` inside one transaction.
+
+## Languages
+
+The web app supports Vietnamese (`vi`) and English (`en`) using `next-intl`.
+Choose a language on an authentication screen or in Settings. A signed-in
+account's `user_metadata.locale` takes precedence over the `finance_locale`
+cookie, then `Accept-Language`, then Vietnamese. Signing out retains the cookie.
+Language changes refresh the current route and preserve mounted form drafts.
+
+VND values and amount inputs retain Vietnamese separators in both languages.
+Ledger dates, reporting periods, Monday-first weeks, IDs, and user-entered names
+and notes are unchanged. Default/system category labels come from stable keys;
+customized names are displayed verbatim. Notifications retain their read/dismiss
+IDs. AI caches include language and period dates; browser caches also include
+the account ID.
+
+**Database status (18 November 2026):** both localization migrations were
+applied to the connected Personal Finance project through Supabase MCP. For an
+existing database with the same verified shared-category inventory, apply
+`20261118084407_capture_category_system_schema.sql`, then
+`20261118084415_category_localization.sql` in a migration transaction after
+reviewing the inventory. Other projects need their own verified inventory before
+backfill. The web code selects the new category columns, so deploy it together
+with that schema.
+The second migration checks a SHA-256 fingerprint of the ten verified shared
+rows, including their IDs, and stops if the inventory has changed. It creates no
+categories and rewrites no names. The three missing planned defaults (housing, education, bills) remain absent. Legacy Vietnamese or
+custom system names remain custom; exact app-generated English names are the
+generated translation group. Existing foreign keys, RLS and money functions stay
+in place.
+
+Phase 2 remains separate: RPC business-error codes, generated notes, localized
+CSV exports, Supabase Auth email templates/delivery/callbacks and PWA manifest.
+Those surfaces retain their existing text. Live email, paid AI calls and the iOS
+client remain unverified. After migration, read-only SQL checks confirmed the
+new columns, keys, trigger, index and existing RLS; category names/IDs and all
+wallet, transaction, debt and budget rows matched their pre-migration snapshots.
+
+Translations live in `messages/vi.json` and `messages/en.json`. Add the same
+semantic key and ICU parameters to both files. Translate complete sentences;
+use ICU plurals/selects and rich tags for emphasis. Do not translate database
+codes, user content or bank statement text. English missing-key fallback uses
+the corresponding Vietnamese message and logs the missing key; it does not
+replace translation coverage.
+
+Localization acceptance is manual: review dictionary keys and ICU parameters,
+locale selection, category labels, CSV errors, notifications and AI language.
+Run `pnpm lint`, `pnpm exec tsc --noEmit` and `pnpm build` when applicable; the
+Next build intentionally skips TypeScript checks, so typecheck runs separately.
 
 ## Scripts
 

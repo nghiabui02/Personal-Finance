@@ -1,3 +1,4 @@
+import { clientTranslator } from '@/i18n/client'
 import { createClient } from '@/lib/supabase/client'
 
 const BUCKET = 'Avatar'
@@ -20,7 +21,10 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
   const path = `${userId}/avatar.${ext}`
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
-  if (error) throw new Error(error.message)
+  if (error) {
+    console.error('[avatar] upload failed:', error.name)
+    throw new Error(clientTranslator('common')('unexpectedError'))
+  }
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
   return `${data.publicUrl}?t=${Date.now()}`
 }

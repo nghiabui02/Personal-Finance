@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 
@@ -43,6 +44,7 @@ interface AmountInputProps {
 }
 
 export function AmountInput({ label, name, defaultValue, required, placeholder = '0', onValueChange, autoFocus }: AmountInputProps) {
+  const t = useTranslations('common')
   const [display, setDisplay] = useState(
     defaultValue ? formatWithDots(String(defaultValue)) : ''
   )
@@ -74,6 +76,7 @@ export function AmountInput({ label, name, defaultValue, required, placeholder =
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
           {display && (
             <button
+              aria-label={t('clearField', { label })}
               type="button"
               onClick={() => handleChange('')}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"

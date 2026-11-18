@@ -1,4 +1,7 @@
 'use client'
+import { sortCategories, categorySearchTerms } from '@/i18n/category'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { Button } from '@/components/ui/button'
@@ -39,6 +42,8 @@ export function FilterModal({
   wallets: Wallet[]
   onClose: () => void
 }) {
+  const locale = useLocale()
+  const t = useTranslations('transactions')
   const close = useModalClose()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -53,10 +58,10 @@ export function FilterModal({
   const selectableCategories = type === 'all' ? categories : categories.filter(c => c.type === type)
 
   const categoryOptions = [
-    { value: '', label: 'Any category' },
-    ...selectableCategories.map(c => ({ value: c.id, label: `${c.icon ?? ''} ${c.name}`.trim() })),
+    { value: '', label: t('anyCategory') },
+    ...sortCategories(selectableCategories, locale).map(c => ({ value: c.id, label: `${c.icon ?? ''} ${getCategoryName(c, locale)}`.trim(), searchText: categorySearchTerms(c) })),
   ]
-  const walletOptions = toWalletOptions(wallets, 'Any wallet')
+  const walletOptions = toWalletOptions(wallets, t('anyWallet'))
 
   function apply() {
     router.push(buildFilterUrl(new URLSearchParams(searchParams.toString()), {
@@ -75,15 +80,15 @@ export function FilterModal({
   }
 
   return (
-    <Modal title="Filter transactions" size="md" onClose={onClose}>
+    <Modal title={t('filterTransactions')} size="md" onClose={onClose}>
       <div className="space-y-4">
         <div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Direction</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('direction')}</p>
           <TabGroup
             tabs={[
-              { key: 'all', label: 'All' },
-              { key: 'expense', label: 'Expense' },
-              { key: 'income', label: 'Income' },
+              { key: 'all', label: t('all') },
+              { key: 'expense', label: t('expense') },
+              { key: 'income', label: t('income') },
             ]}
             value={type}
             onChange={t => { setType(t); setCategoryId('') }}
@@ -91,7 +96,7 @@ export function FilterModal({
         </div>
 
         <CustomSelect
-          label="Category"
+          label={t('category')}
           name="cat"
           options={categoryOptions}
           value={categoryId}
@@ -100,7 +105,7 @@ export function FilterModal({
         />
 
         <CustomSelect
-          label="Wallet"
+          label={t('wallet')}
           name="wallet"
           options={walletOptions}
           value={walletId}
@@ -108,18 +113,17 @@ export function FilterModal({
         />
 
         <div className="grid grid-cols-2 gap-3">
-          <AmountInput label="From" name="min" defaultValue={filters.min} onValueChange={setMin} placeholder="0" />
-          <AmountInput label="To" name="max" defaultValue={filters.max} onValueChange={setMax} placeholder="Any" />
+          <AmountInput label={t('from')} name="min" defaultValue={filters.min} onValueChange={setMin} placeholder="0" />
+          <AmountInput label={t('to')} name="max" defaultValue={filters.max} onValueChange={setMax} placeholder={t('any')} />
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" onClick={clearAll} className="flex-1">Clear all</Button>
-          <Button type="button" onClick={apply} className="flex-1">Apply</Button>
+          <Button type="button" variant="secondary" onClick={clearAll} className="flex-1">{t('clearAll')}</Button>
+          <Button type="button" onClick={apply} className="flex-1">{t('apply')}</Button>
         </div>
 
         <button type="button" onClick={close} className="w-full text-center text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-          Cancel
-        </button>
+          {t('cancel')}</button>
       </div>
     </Modal>
   )

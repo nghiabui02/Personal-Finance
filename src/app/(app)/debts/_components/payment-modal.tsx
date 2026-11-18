@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 import { AmountInput } from '@/components/ui/amount-input'
@@ -26,13 +27,14 @@ export function PaymentModal({
   wallets: WalletChoice[]
   onClose: () => void
 }) {
+  const t = useTranslations('debts')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
   const [date, setDate] = useState(localYMD())
   const [amount, setAmount] = useState(0)
 
-  const walletOptions = toWalletOptions(wallets)
+  const walletOptions = toWalletOptions(wallets, t('none'))
 
   const overpaying = amount > debt.remaining_amount
   const remainingAfter = Math.max(0, debt.remaining_amount - amount)
@@ -42,8 +44,8 @@ export function PaymentModal({
     const form = e.currentTarget
     const note = readField(form, 'note')
 
-    if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
-    if (amount > debt.remaining_amount) { setError(`Max is ${formatVND(debt.remaining_amount)}.`); return }
+    if (!amount || amount <= 0) { setError(t('pleaseEnterAValidAmount')); return }
+    if (amount > debt.remaining_amount) { setError(t('maximumAmount', { amount: formatVND(debt.remaining_amount) })); return }
 
     submit(async () => {
       await debtsApi.addPayment(debt.id, { amount, note: note || undefined, wallet_id: walletId || undefined, date })
@@ -51,41 +53,41 @@ export function PaymentModal({
   }
 
   return (
-    <Modal title="Record payment" onClose={onClose}>
+    <Modal title={t('recordPayment')} onClose={onClose}>
       <div className="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-sm flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs text-gray-400 mb-0.5">Remaining</p>
+          <p className="text-xs text-gray-400 mb-0.5">{t('remaining')}</p>
           <p className="font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{formatVND(debt.remaining_amount)}</p>
         </div>
         {amount > 0 && (
           <div className="text-right">
-            <p className="text-xs text-gray-400 mb-0.5">After this payment</p>
+            <p className="text-xs text-gray-400 mb-0.5">{t('afterThisPayment')}</p>
             <p className={`font-semibold tabular-nums ${
               overpaying ? 'text-rose-600 dark:text-rose-400' : remainingAfter === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100'
             }`}>
-              {overpaying ? 'Exceeds remaining' : formatVND(remainingAfter)}
+              {overpaying ? t('exceedsRemaining') : formatVND(remainingAfter)}
             </p>
           </div>
         )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <AmountInput label="Payment amount" name="amount" required onValueChange={setAmount} />
+          <AmountInput label={t('paymentAmount')} name="amount" required onValueChange={setAmount} />
           <CustomSelect
-            label={debt.type === 'lend' ? 'Receive to wallet' : 'Pay from wallet'}
+            label={debt.type === 'lend' ? t('receiveToWallet') : t('payFromWallet')}
             name="wallet_id"
             options={walletOptions}
             value={walletId}
             onChange={setWalletId}
-            placeholder="None"
+            placeholder={t('none')}
           />
         </div>
-        <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
-        <Input label="Note (optional)" name="note" placeholder="e.g. Bank transfer" />
+        <DatePicker label={t('date')} name="date" value={date} onChange={setDate} required />
+        <Input label={t('noteOptional')} name="note" placeholder={t('eGBankTransfer')} />
         <FormError message={error} />
         <ModalActions
           isPending={isPending}
-          submitLabel="Record"
+          submitLabel={t('record')}
           onCancel={close}
         />
       </form>

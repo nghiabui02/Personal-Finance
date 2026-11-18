@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
@@ -16,7 +17,6 @@ import { DebtModal } from './debt-modal'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 import { sumRemaining } from '@/lib/utils/totals'
 import { AddButton } from '@/components/ui/add-button'
-
 
 // ── Debt Section ──────────────────────────────────────────────────────────────
 
@@ -41,6 +41,7 @@ function DebtSection({
   onAddMore: (d: Debt) => void
   onAdd: () => void
 }) {
+  const t = useTranslations('debts')
   const colorCls = color === 'indigo'
     ? { amount: 'text-brand', badge: 'bg-brand-soft text-brand', toggle: 'text-brand hover:text-brand-strong' }
     : { amount: 'text-orange-600 dark:text-orange-400', badge: 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400', toggle: 'text-orange-500 hover:text-orange-700 dark:hover:text-orange-300' }
@@ -59,8 +60,8 @@ function DebtSection({
 
       {debts.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 py-8 flex flex-col items-center gap-2">
-          <p className="text-sm text-gray-400">No debts yet</p>
-          <button onClick={onAdd} className={`text-xs font-medium ${colorCls.toggle} transition-colors`}>+ Add</button>
+          <p className="text-sm text-gray-400">{t('noDebtsYet')}</p>
+          <button onClick={onAdd} className={`text-xs font-medium ${colorCls.toggle} transition-colors`}>{t('add')}</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -85,13 +86,14 @@ export default function DebtsClient({
   debts: Debt[]
   wallets: WalletChoice[]
 }) {
+  const t = useTranslations('debts')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null)
   const [defaultType, setDefaultType] = useState<'lend' | 'borrow'>('lend')
   const [payingDebt, setPayingDebt] = useState<Debt | null>(null)
   const [addingDebt, setAddingDebt] = useState<Debt | null>(null)
   const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
-    id => debtsApi.delete(id), 'Could not delete the debt.',
+    id => debtsApi.delete(id), t('couldNotDeleteTheDebt'),
   )
 
   const [tab, setTab] = useState<'active' | 'completed'>('active')
@@ -119,29 +121,29 @@ export default function DebtsClient({
   return (
     <>
       <ScreenHeader
-        eyebrow="Money"
+        eyebrow={t('money')}
         headline={
           activeCount === 0
-            ? <>Nothing outstanding — no money lent out and none borrowed.</>
+            ? <>{t('nothingOutstandingNoMoneyLentOutAndNoneBorrowed')}</>
             : netPosition === 0
-            ? <>Lending and borrowing cancel out at <Em>{formatVND(totalLent)}</Em> each way.</>
+            ? <>{t.rich('sentenceLendingAndBorrowingCancelOutAtEachWay', { value0: () => <Em>{formatVND(totalLent)}</Em> })}</>
             : netPosition > 0
-            ? <>You&rsquo;re owed <Em tone="good">{formatVND(netPosition)}</Em> more than you owe.</>
-            : <>You owe <Em tone="bad">{formatVND(-netPosition)}</Em> more than you&rsquo;re owed.</>
+            ? <>{t.rich('sentenceYouReOwedMoreThanYouOwe', { value0: () => <Em tone="good">{formatVND(netPosition)}</Em> })}</>
+            : <>{t.rich('sentenceYouOweMoreThanYouReOwed', { value0: () => <Em tone="bad">{formatVND(-netPosition)}</Em> })}</>
         }
         support={activeCount > 0
           ? <>
-              <span>{formatVND(totalLent)} lent</span><Dot />
-              <span>{formatVND(totalBorrowed)} borrowed</span>
-              {nextDue && <><Dot /><span>next due {nextDue.due_date}</span></>}
+              <span>{t('sentenceLent', { value0: formatVND(totalLent) })}</span><Dot />
+              <span>{t('sentenceBorrowed', { value0: formatVND(totalBorrowed) })}</span>
+              {nextDue && <><Dot /><span>{t('sentenceNextDue', { value0: nextDue.due_date ?? '' })}</span></>}
             </>
           : undefined}
         segments={MONEY_SEGMENTS}
         controls={
           <TabGroup
             tabs={[
-              { key: 'active', label: `Active (${activeCount})` },
-              { key: 'completed', label: `Completed (${completedCount})` },
+              { key: 'active', label: t('activeCount', { count: activeCount }) },
+              { key: 'completed', label: t('completedCount', { count: completedCount }) },
             ]}
             value={tab}
             onChange={setTab}
@@ -149,13 +151,13 @@ export default function DebtsClient({
           />
         }
         action={
-          <AddButton onClick={() => openNew('lend')}>New debt</AddButton>
+          <AddButton onClick={() => openNew('lend')}>{t('newDebt')}</AddButton>
         }
       />
 
       <div className="space-y-8">
         <DebtSection
-          title="Lent"
+          title={t('lent')}
           color="indigo"
           debts={lendDebts}
           totalActive={totalLent}
@@ -166,7 +168,7 @@ export default function DebtsClient({
           onAdd={() => openNew('lend')}
         />
         <DebtSection
-          title="Borrowed"
+          title={t('borrowed')}
           color="orange"
           debts={borrowDebts}
           totalActive={totalBorrowed}
@@ -195,9 +197,9 @@ export default function DebtsClient({
       )}
       {confirmId && (
         <ConfirmModal
-          title="Delete debt?"
-          description="The debt and its payment history will be permanently deleted. Wallet transactions already recorded stay — the money really did move."
-          confirmLabel="Delete"
+          title={t('deleteDebt2')}
+          description={t('theDebtAndItsPaymentHistoryWillBePermanentlyDeletedWalletTransactions')}
+          confirmLabel={t('delete')}
           isPending={isPending}
           onConfirm={confirm}
           onClose={cancel}

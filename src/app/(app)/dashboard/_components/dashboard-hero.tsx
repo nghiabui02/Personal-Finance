@@ -1,4 +1,5 @@
 'use client'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { formatVND } from '@/lib/utils/currency'
 import { formatMonthYear, localYM } from '@/lib/utils/date'
@@ -32,25 +33,26 @@ interface DashboardHeroProps {
  * The opening sentence. A total on its own cannot tell the user whether to
  * change anything — the comparison against their own recent months can.
  */
-function paceHeadline(pace: SpendingPace, isCurrentMonth: boolean) {
+function PaceHeadline({ pace, isCurrentMonth }: { pace: SpendingPace; isCurrentMonth: boolean }) {
+  const t = useTranslations('dashboard')
   if (pace.deltaPct === null) {
     return isCurrentMonth
-      ? <>You&rsquo;ve spent <Em>{formatVND(pace.actual)}</Em> so far. No earlier months to compare against yet.</>
-      : <>You spent <Em>{formatVND(pace.actual)}</Em> this month. No earlier months to compare against.</>
+      ? <>{t.rich('sentenceYouVeSpentSoFarNoEarlierMonthsTo', { value0: () => <Em>{formatVND(pace.actual)}</Em> })}</>
+      : <>{t.rich('sentenceYouSpentThisMonthNoEarlierMonthsToCompare', { value0: () => <Em>{formatVND(pace.actual)}</Em> })}</>
   }
 
   const pct = Math.abs(Math.round(pace.deltaPct * 100))
   if (pct < 5) {
     return isCurrentMonth
-      ? <>You&rsquo;re spending <Em>in line</Em> with your 3-month average.</>
-      : <>You spent <Em>in line</Em> with your 3-month average.</>
+      ? <>{t.rich('sentenceYouReSpendingInLineWithYour3Month', { value0: chunks => <Em>{chunks}</Em> })}</>
+      : <>{t.rich('sentenceYouSpentInLineWithYour3MonthAverage', { value0: chunks => <Em>{chunks}</Em> })}</>
   }
 
   const faster = pace.deltaPct > 0
-  const rate = <Em tone={faster ? 'bad' : 'good'}>{pct}% {faster ? 'faster' : 'slower'}</Em>
+  const values = { percent: pct, direction: faster ? 'faster' : 'slower', strong: (chunks: React.ReactNode) => <Em tone={faster ? 'bad' : 'good'}>{chunks}</Em> }
   return isCurrentMonth
-    ? <>You&rsquo;re spending {rate} than your 3-month average.</>
-    : <>You spent {rate} than your 3-month average.</>
+    ? <>{t.rich('spendingPace', values)}</>
+    : <>{t.rich('spentPace', values)}</>
 }
 
 const PREV_ICON = (
@@ -84,6 +86,8 @@ export function DashboardHero({
   pace,
   budgetHeadroom,
 }: DashboardHeroProps) {
+  const locale = useLocale()
+  const t = useTranslations('dashboard')
   const router = useRouter()
 
   const isCurrentMonth = month === localYM()
@@ -96,7 +100,7 @@ export function DashboardHero({
   }
 
   const [year, monthNum] = month.split('-').map(Number)
-  const monthLabel = formatMonthYear(new Date(year, monthNum - 1, 1))
+  const monthLabel = formatMonthYear(new Date(year, monthNum - 1, 1), locale)
 
   const net = totalIncome - totalExpense
   const netPositive = net >= 0
@@ -110,14 +114,14 @@ export function DashboardHero({
             {monthLabel}
             <button
               onClick={() => navigate(-1)}
-              aria-label="Previous month"
+              aria-label={t('previousMonth')}
               className="ml-1 w-6 h-6 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               {PREV_ICON}
             </button>
             <button
               onClick={() => navigate(1)}
-              aria-label="Next month"
+              aria-label={t('nextMonth')}
               disabled={isCurrentMonth}
               className="w-6 h-6 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-25 disabled:pointer-events-none"
             >
@@ -125,23 +129,23 @@ export function DashboardHero({
             </button>
           </span>
         }
-        headline={paceHeadline(pace, isCurrentMonth)}
+        headline={<PaceHeadline pace={pace} isCurrentMonth={isCurrentMonth} />}
         support={
           <>
             {isCurrentMonth && pace.daysLeft > 0 && (
-              <><span>{pace.daysLeft} days left</span><Dot /></>
+              <><span>{t('sentenceDaysLeft', { value0: pace.daysLeft })}</span><Dot /></>
             )}
             {budgetHeadroom !== null && (
               <>
                 <span>
                   {budgetHeadroom >= 0
-                    ? `${formatVND(budgetHeadroom)} of budget left`
-                    : `${formatVND(-budgetHeadroom)} over budget`}
+                    ? t('budgetLeft', { amount: formatVND(budgetHeadroom) })
+                    : t('budgetOver', { amount: formatVND(-budgetHeadroom) })}
                 </span>
                 <Dot />
               </>
             )}
-            <span>{formatVND(pace.actual)} out</span>
+            <span>{t('sentenceOut', { value0: formatVND(pace.actual) })}</span>
           </>
         }
       />
@@ -150,13 +154,11 @@ export function DashboardHero({
         {/* Net cash flow */}
         <div className="rounded-2xl bg-white dark:bg-gray-900 border border-hairline dark:border-gray-800 p-5 sm:p-6 flex flex-col">
           <div className="flex items-start justify-between gap-3">
-            <p className="eyebrow text-gray-400 dark:text-gray-500">Net cash flow</p>
+            <p className="eyebrow text-gray-400 dark:text-gray-500">{t('netCashFlow')}</p>
             {savingRate !== null && (
               <span className={`text-[11px] font-semibold tabular-nums ${
                 netPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'
-              }`}>
-                {savingRate}% saved
-              </span>
+              }`}>{t('sentenceSaved', { value0: savingRate })}</span>
             )}
           </div>
           <p className={`mt-2.5 text-[2rem] sm:text-[2.5rem] leading-none font-semibold tabular-nums tracking-tight ${netPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
@@ -166,15 +168,13 @@ export function DashboardHero({
             <div>
               <p className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                 <span className="w-1 h-1 rounded-full bg-emerald-500 shrink-0" />
-                Income
-              </p>
+                {t('income')}</p>
               <p className="mt-1.5 text-base font-semibold tabular-nums text-gray-900 dark:text-gray-100">{formatVND(totalIncome)}</p>
             </div>
             <div className="pl-4 border-l border-hairline dark:border-gray-800">
               <p className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                 <span className="w-1 h-1 rounded-full bg-rose-500 shrink-0" />
-                Expense
-              </p>
+                {t('expense')}</p>
               <p className="mt-1.5 text-base font-semibold tabular-nums text-gray-900 dark:text-gray-100">{formatVND(totalExpense)}</p>
             </div>
           </div>
@@ -182,38 +182,37 @@ export function DashboardHero({
 
         {/* Net worth */}
         <div className="rounded-2xl bg-panel dark:bg-gray-900 dark:border dark:border-gray-800 p-5 sm:p-6 flex flex-col">
-          <p className="eyebrow text-white/45">Net worth</p>
+          <p className="eyebrow text-white/45">{t('netWorth')}</p>
           <p className={`mt-2.5 text-[2rem] sm:text-[2.5rem] leading-none font-semibold tabular-nums tracking-tight ${netWorth >= 0 ? 'text-white' : 'text-rose-400'}`}>
             {formatVND(netWorth)}
           </p>
           {/* Composition: one row per part, so the number above is explainable at a glance */}
           <dl className="mt-auto pt-6 space-y-1.5">
             <div className="flex items-baseline justify-between gap-4 text-xs">
-              <dt className="text-white/55">Cash</dt>
+              <dt className="text-white/55">{t('cash')}</dt>
               <dd className="font-medium tabular-nums text-white">{formatVND(totalWalletBalance)}</dd>
             </div>
             {totalLent > 0 && (
               <div className="flex items-baseline justify-between gap-4 text-xs">
-                <dt className="text-white/55">Lent out</dt>
+                <dt className="text-white/55">{t('lentOut')}</dt>
                 <dd className="font-medium tabular-nums text-emerald-300">+{formatVND(totalLent)}</dd>
               </div>
             )}
             {totalCreditDebt > 0 && (
               <div className="flex items-baseline justify-between gap-4 text-xs">
-                <dt className="text-white/55">Credit used</dt>
+                <dt className="text-white/55">{t('creditUsed')}</dt>
                 <dd className="font-medium tabular-nums text-rose-300">−{formatVND(totalCreditDebt)}</dd>
               </div>
             )}
             {totalBorrowed > 0 && (
               <div className="flex items-baseline justify-between gap-4 text-xs">
-                <dt className="text-white/55">Borrowed</dt>
+                <dt className="text-white/55">{t('borrowed')}</dt>
                 <dd className="font-medium tabular-nums text-rose-300">−{formatVND(totalBorrowed)}</dd>
               </div>
             )}
           </dl>
           <p className="mt-3 text-[11px] leading-relaxed text-white/40">
-            What you own on paper. Money you&rsquo;ve lent counts here even though it isn&rsquo;t in a wallet yet.
-          </p>
+            {t('whatYouOwnOnPaperMoneyYouVeLentCountsHereEven')}</p>
         </div>
       </div>
 

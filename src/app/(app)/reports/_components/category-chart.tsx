@@ -1,12 +1,15 @@
 'use client'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { useEffect, useState } from 'react'
 import { formatVND } from '@/lib/utils/currency'
 import type { CategoryData } from './types'
 import { CATEGORY_PALETTE } from '@/lib/utils/colors'
 
-
 export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; totalExpense: number }) {
+  const locale = useLocale()
+  const t = useTranslations('reports')
   const [ready, setReady] = useState(false)
 
   // Restart the bar-fill animation when the data changes: reset during render
@@ -26,13 +29,11 @@ export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; to
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline p-5">
       <p className="eyebrow text-gray-400 dark:text-gray-500 mb-5">
-        Spending Breakdown
-      </p>
+        {t('spendingBreakdown')}</p>
 
       {data.length === 0 ? (
         <div className="h-32 flex items-center justify-center text-sm text-gray-400">
-          No expense data for this period
-        </div>
+          {t('noExpenseDataForThisPeriod')}</div>
       ) : (
         <ul className="space-y-4">
           {data.map((item, i) => {
@@ -45,7 +46,7 @@ export function CategoryChart({ data, totalExpense }: { data: CategoryData[]; to
                     {item.icon ?? '·'}
                   </span>
                   <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate min-w-0">
-                    {item.name}
+                    {getCategoryName(item, locale)}
                   </span>
                   <span className="text-xs text-gray-400 tabular-nums shrink-0 w-9 text-right">
                     {pct.toFixed(0)}%

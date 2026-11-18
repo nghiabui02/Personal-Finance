@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -15,6 +16,7 @@ export interface Segment {
 }
 
 export function SegmentNav({ items }: { items: Segment[] }) {
+  const t = useTranslations('navigation')
   const pathname = usePathname()
 
   return (
@@ -33,7 +35,7 @@ export function SegmentNav({ items }: { items: Segment[] }) {
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
-              {item.label}
+              {t(item.label)}
             </Link>
           )
         })}
@@ -44,13 +46,13 @@ export function SegmentNav({ items }: { items: Segment[] }) {
 
 /** The two route groups the bottom nav collapses into. */
 export const REPORT_SEGMENTS: Segment[] = [
-  { href: '/reports', label: 'Reports' },
-  { href: '/budgets', label: 'Budgets' },
+  { href: '/reports', label: 'reports' },
+  { href: '/budgets', label: 'budgets' },
 ]
 
 export const MONEY_SEGMENTS: Segment[] = [
-  { href: '/wallets', label: 'Wallets' },
-  { href: '/debts', label: 'Debts' },
-  { href: '/saving-goals', label: 'Goals' },
-  { href: '/recurring', label: 'Recurring' },
+  { href: '/wallets', label: 'wallets' },
+  { href: '/debts', label: 'debts' },
+  { href: '/saving-goals', label: 'goals' },
+  { href: '/recurring', label: 'recurring' },
 ]

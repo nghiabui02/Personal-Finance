@@ -1,4 +1,6 @@
 'use client'
+import { normalizeSearch } from '@/i18n/category'
+import { useTranslations } from 'next-intl'
 
 import { useCallback, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -7,6 +9,7 @@ import { useAnchoredPanel, useOutsideClose } from './use-anchored-panel'
 type SelectOption = {
   value: string
   label: string | null
+  searchText?: string
   icon?: string | null
   color?: string | null
 }
@@ -25,6 +28,7 @@ function SearchBox({
   onQueryChange: (query: string) => void
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void
 }) {
+  const t = useTranslations('common')
   return (
     <div className="px-2 pt-2 pb-1">
       <div className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 py-1.5">
@@ -37,7 +41,7 @@ function SearchBox({
           value={query}
           onChange={e => onQueryChange(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Search..."
+          placeholder={t('search')}
           className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none"
         />
         {query && (
@@ -118,10 +122,11 @@ export function CustomSelect({
   options,
   value,
   onChange,
-  placeholder = 'Select...',
+  placeholder,
   searchable = false,
   autoOpen = false,
 }: CustomSelectProps) {
+  const t = useTranslations('common')
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
@@ -153,7 +158,7 @@ export function CustomSelect({
   }, [])
 
   const filtered = searchable && query.trim()
-    ? options.filter(o => o.label?.toLowerCase().includes(query.toLowerCase()))
+    ? options.filter(o => normalizeSearch(o.searchText ?? o.label ?? '').includes(normalizeSearch(query)))
     : options
 
   // Closing the dropdown always clears the search query — every close path
@@ -213,7 +218,7 @@ export function CustomSelect({
               <span className="text-gray-900 dark:text-gray-100 truncate">{selected.label}</span>
             </>
           ) : (
-            <span className="text-gray-400">{placeholder}</span>
+            <span className="text-gray-400">{placeholder ?? t('selectPlaceholder')}</span>
           )}
         </span>
         <svg
@@ -241,7 +246,7 @@ export function CustomSelect({
           )}
           <ul className="max-h-52 overflow-y-auto overscroll-contain py-1">
             {searchable && filtered.length === 0 ? (
-              <li className="px-3 py-4 text-center text-sm text-gray-400">No results</li>
+              <li className="px-3 py-4 text-center text-sm text-gray-400">{t('noResults')}</li>
             ) : filtered.map((option, index) => (
               <OptionRow
                 key={option.value}

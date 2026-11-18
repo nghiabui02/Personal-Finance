@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
 import { localYM } from '@/lib/utils/date'
@@ -6,7 +7,10 @@ import { getBudgetSuggestions } from '@/lib/server/budget-suggestions'
 import BudgetsClient from './_components/budgets-client'
 import { categoriesQuery } from '@/lib/server/queries'
 
-export const metadata: Metadata = { title: 'Budgets' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('navigation')
+  return { title: t('budgets') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function BudgetsPage({

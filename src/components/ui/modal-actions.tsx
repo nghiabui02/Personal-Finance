@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { Button, type ButtonVariant } from './button'
 
 /**
@@ -11,7 +12,7 @@ export function ModalActions({
   isPending,
   disabled = false,
   submitLabel,
-  pendingLabel = 'Saving...',
+  pendingLabel,
   submitVariant = 'primary',
   onCancel,
 }: {
@@ -22,11 +23,12 @@ export function ModalActions({
   submitVariant?: ButtonVariant
   onCancel: () => void
 }) {
+  const t = useTranslations('common')
   return (
     <div className="flex gap-2 pt-1">
-      <Button type="button" variant="secondary" fullWidth onClick={onCancel}>Cancel</Button>
+      <Button type="button" variant="secondary" fullWidth onClick={onCancel}>{t('cancel')}</Button>
       <Button type="submit" variant={submitVariant} disabled={isPending || disabled} fullWidth>
-        {isPending ? pendingLabel : submitLabel}
+        {isPending ? pendingLabel ?? t('saving') : submitLabel}
       </Button>
     </div>
   )

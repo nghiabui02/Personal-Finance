@@ -7,15 +7,15 @@ import {
 
 /** Reparse the original file server-side; reviewed amounts and identities cannot be edited. */
 export function parseImportRequest(body: unknown) {
-  if (!body || typeof body !== 'object') throw new CsvError('Choose a CSV file and a bank wallet.')
+  if (!body || typeof body !== 'object') throw new CsvError('fileAndWallet')
   const input = body as Record<string, unknown>
   if (typeof input.csv !== 'string' || input.csv.length > MAX_CSV_BYTES || input.csv.includes('\uFFFD')) {
-    throw new CsvError('Choose a UTF-8 CSV file of at most 1 MB.')
+    throw new CsvError('utf8File')
   }
   if (!isUuid(input.wallet_id)) {
-    throw new CsvError('Choose a bank wallet.')
+    throw new CsvError('bankWallet')
   }
-  if (typeof input.delimiter !== 'string') throw new CsvError('Choose the CSV separator.')
+  if (typeof input.delimiter !== 'string') throw new CsvError('separatorRequired')
   const rows = readStatement(parseCsv(input.csv, input.delimiter), input.mapping as CsvMapping)
   return { walletId: input.wallet_id, rows: rows.map(row => ({ ...row, source_key: sourceKey(row) })), decisions: input.decisions }
 }
@@ -28,7 +28,7 @@ export async function importWallet(supabase: SupabaseClient, userId: string, wal
   const { data, error } = await supabase.from('wallets').select('id, balance')
     .eq('id', walletId).eq('user_id', userId).eq('type', 'bank').maybeSingle()
   if (error) throw error
-  if (!data) throw new CsvError('Choose one of your bank wallets.')
+  if (!data) throw new CsvError('ownedBankWallet')
   return data
 }
 

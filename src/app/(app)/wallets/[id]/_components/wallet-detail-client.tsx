@@ -1,4 +1,6 @@
 'use client'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import Link from 'next/link'
 import { BRAND_HEX } from '@/lib/utils/colors'
@@ -7,17 +9,17 @@ import { ReconcileModal } from '../../_components/reconcile-modal'
 import { type Category } from '@/lib/api/categories'
 import { formatVND } from '@/lib/utils/currency'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
-import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_ICONS, WALLET_TYPE_LABELS } from '@/lib/api/wallets'
+import { walletsApi, type Wallet, type WalletTransaction, WALLET_TYPE_ICONS } from '@/lib/api/wallets'
 import { DateGroupHeader } from '@/components/ui/date-group-header'
 import { netOf } from '@/lib/utils/totals'
 import { SignedAmount } from '@/components/ui/signed-amount'
 
-function formatDateHeader(dateStr: string): string {
+function formatDateHeader(dateStr: string, locale: string): string {
   const today = localYMD()
-  if (dateStr === today) return 'Today'
-  if (dateStr === shiftLocalDate(today, -1)) return 'Yesterday'
+  if (dateStr === today) return locale === 'en' ? 'Today' : 'Hôm nay'
+  if (dateStr === shiftLocalDate(today, -1)) return locale === 'en' ? 'Yesterday' : 'Hôm qua'
   const [y, m, d] = dateStr.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+  return new Date(y, m - 1, d).toLocaleDateString(locale, {
     weekday: 'short', day: 'numeric', month: 'short',
     year: dateStr.slice(0, 4) !== today.slice(0, 4) ? 'numeric' : undefined,
   })
@@ -44,6 +46,9 @@ export default function WalletDetailClient({
   totalIncome: number
   totalExpense: number
 }) {
+  const locale = useLocale()
+  const common = useTranslations('common')
+  const t = useTranslations('wallets')
   const bg = wallet.color ?? '#3b82f6'
   const defaultIcon = WALLET_TYPE_ICONS[wallet.type]
   const [reconcileOpen, setReconcileOpen] = useState(false)
@@ -98,8 +103,7 @@ export default function WalletDetailClient({
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
         </svg>
-        Wallets
-      </Link>
+        {t('wallets')}</Link>
 
       {/* Hero */}
       <div
@@ -109,10 +113,10 @@ export default function WalletDetailClient({
         <div className="flex items-center gap-2 mb-3">
           <span className="text-2xl">{wallet.icon || defaultIcon}</span>
           <span className="text-xs font-medium opacity-80 bg-white/20 px-2 py-0.5 rounded-full">
-            {WALLET_TYPE_LABELS[wallet.type]}
+            {common(`walletTypes.${wallet.type}`)}
           </span>
           {wallet.is_default && (
-            <span className="text-xs font-medium bg-white/20 px-2 py-0.5 rounded-full">Default</span>
+            <span className="text-xs font-medium bg-white/20 px-2 py-0.5 rounded-full">{t('default')}</span>
           )}
         </div>
         <p className="font-semibold text-base mb-2">{wallet.name}</p>
@@ -122,11 +126,11 @@ export default function WalletDetailClient({
         <div className="flex items-end justify-between gap-4 mt-4 pt-4 border-t border-white/20">
           <div className="flex gap-5">
           <div>
-            <p className="eyebrow opacity-60 mb-0.5">In</p>
+            <p className="eyebrow opacity-60 mb-0.5">{t('in')}</p>
             <p className="text-sm font-semibold tabular-nums">+{formatVND(totalIncome)}</p>
           </div>
           <div>
-            <p className="eyebrow opacity-60 mb-0.5">Out</p>
+            <p className="eyebrow opacity-60 mb-0.5">{t('out')}</p>
             <p className="text-sm font-semibold tabular-nums">−{formatVND(totalExpense)}</p>
           </div>
           </div>
@@ -140,8 +144,7 @@ export default function WalletDetailClient({
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z" />
             </svg>
-            Reconcile
-          </button>
+            {t('reconcile')}</button>
         </div>
       </div>
 
@@ -152,13 +155,13 @@ export default function WalletDetailClient({
       {/* History */}
       {transactions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-gray-400 text-sm">No transactions yet.</p>
+          <p className="text-gray-400 text-sm">{t('noTransactionsYet')}</p>
         </div>
       ) : (
         <div className="space-y-4">
           {groups.map(([date, txs]) => (
             <div key={date}>
-              <DateGroupHeader label={formatDateHeader(date)} net={netOf(txs)} />
+              <DateGroupHeader label={formatDateHeader(date, locale)} net={netOf(txs)} />
 
               <div className="bg-white dark:bg-gray-900 rounded-2xl border border-hairline divide-y divide-hairline">
                 {txs.map(tx => {
@@ -182,7 +185,7 @@ export default function WalletDetailClient({
                       {/* Label */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                          {isTransfer ? (tx.type === 'income' ? 'Transfer in' : 'Transfer out') : (cat?.name ?? 'Uncategorized')}
+                          {isTransfer ? (tx.type === 'income' ? t('transferIn') : t('transferOut')) : ((cat ? getCategoryName(cat, locale) : undefined) ?? t('uncategorized'))}
                         </p>
                         {tx.note && (
                           <p className="text-xs text-gray-400 truncate">{tx.note}</p>
@@ -193,9 +196,7 @@ export default function WalletDetailClient({
                       <div className="text-right shrink-0">
                         <SignedAmount amount={tx.amount} positive={tx.type === 'income'} className="block text-sm" />
                         {Number(tx.bank_fee) > 0 && (
-                          <p className="text-[10px] text-gray-400 tabular-nums">
-                            incl. {formatVND(tx.bank_fee!)} fee
-                          </p>
+                          <p className="text-[10px] text-gray-400 tabular-nums">{t('sentenceInclFee', { value0: formatVND(tx.bank_fee!) })}</p>
                         )}
                       </div>
                     </div>

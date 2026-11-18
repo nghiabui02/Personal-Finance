@@ -5,9 +5,9 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
   const { name, type, balance, icon, color, is_default, credit_limit, statement_day, payment_due_day } = body
 
-  if (!name?.trim()) return badRequest('Name is required.')
+  if (!name?.trim()) return badRequest('nameIsRequired')
   if (!['cash', 'bank', 'e_wallet', 'investment', 'other', 'credit'].includes(type)) {
-    return badRequest('Invalid wallet type.')
+    return badRequest('invalidWalletType')
   }
 
   if (is_default) {

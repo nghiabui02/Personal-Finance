@@ -1,3 +1,4 @@
+import type { Locale } from '@/i18n/locale'
 import { localYMD } from '@/lib/utils/date'
 import { sumAmounts } from '@/lib/utils/totals'
 import { periodLengthInDays, type BalanceSheet, type DebtRow, type PeriodType } from './spending-analysis'
@@ -8,24 +9,28 @@ import { periodLengthInDays, type BalanceSheet, type DebtRow, type PeriodType } 
  * arithmetic; the route loads the rows and calls the model.
  */
 
-const SYSTEM_PROMPT = [
-  'You are a personal finance advisor for a Vietnamese user (currency unit: đồng, symbol "đ").',
-  'You receive a PERSONAL FINANCE REPORT with 2 parts: (1) this period\'s cash flow (income/expense), (2) current assets & debts (balance sheet). Advice must connect both — e.g. how this period\'s spending affects the emergency fund, where surplus cash should go first.',
-  '',
-  'Mandatory rules:',
-  '- Income and expense represent earned income and actual spending. Loan principal, transfers, credit card principal payments and ledger adjustments are excluded. Never describe borrowing or debt collection as earnings.',
-  '- ONLY use the figures given in this message. Never invent numbers, never compute percentages yourself — every number and % you need is already calculated.',
-  '- Only discuss trends/comparisons if a "COMPARISON PERIOD" section is present — that period may NOT be the immediately preceding one, read its note carefully for how to refer to it correctly. Only mention specific transactions or dates if they appear in the data.',
-  '- Every insight must reference a specific category name or a real number. No generic advice like "spend more wisely", "track your spending", "consider cutting back".',
-  '- Friendly, natural tone, address the user as "bạn". Each insight is at most 2 short sentences.',
-  '- Money format: 1.234.567đ. Never write "VND".',
-  '- Write ALL user-facing text (summary, topSpend, assets, insights[].text) in VIETNAMESE — the user is Vietnamese. These instructions are in English only to help you follow them precisely; your output content must not be.',
-  '- Return raw JSON matching the schema, no markdown, no extra commentary.',
+function systemPrompt(locale: Locale): string {
+  const language = locale === 'en' ? 'English' : 'Vietnamese'
+  return [
+    'You are a personal finance advisor. Currency: Vietnamese đồng (đ), independently of the output language.',
+    'You receive a PERSONAL FINANCE REPORT with 2 parts: (1) this period\'s cash flow (income/expense), (2) current assets & debts (balance sheet). Advice must connect both — e.g. how this period\'s spending affects the emergency fund, where surplus cash should go first.',
+    '',
+    'Mandatory rules:',
+    '- Income and expense represent earned income and actual spending. Loan principal, transfers, credit card principal payments and ledger adjustments are excluded. Never describe borrowing or debt collection as earnings.',
+    '- ONLY use the figures given in this message. Never invent numbers, never compute percentages yourself — every number and % you need is already calculated.',
+    '- Only discuss trends/comparisons if a "COMPARISON PERIOD" section is present — that period may NOT be the immediately preceding one, read its note carefully for how to refer to it correctly. Only mention specific transactions or dates if they appear in the data.',
+    '- Every insight must reference a specific category name or a real number. No generic advice like "spend more wisely", "track your spending", "consider cutting back".',
+    `- Friendly, natural tone; address the user as ${locale === 'en' ? '"you"' : '"bạn"'}. Each insight is at most 2 short sentences.`,
+    '- Money format: 1.234.567đ. Never write "VND".',
+    `- Write ALL user-facing text (summary, topSpend, assets, insights[].text) in ${language}. Preserve user-entered names and notes.`,
+    '- Return raw JSON matching the schema, no markdown, no extra commentary.',
 ].join('\n')
+}
 
 interface GoalRow { target_amount: number | string; current_amount: number | string }
 
 interface AnalysisInput {
+  locale: Locale
   periodType: PeriodType
   periodLabel: string
   /** Start of the viewed period, as sent by the client; anything else means today. */
@@ -55,10 +60,11 @@ export function buildAnalysisPrompt(input: AnalysisInput): { system: string; use
   } = input
   const { liquidAssets, investments, creditLimitTotal, creditUsed, receivable, payable, netWorth } = input.sheet
 
+  const language = input.locale === 'en' ? 'English' : 'Vietnamese'
   const net = totalIncome - totalExpense
   const fmt = (n: number) => n.toLocaleString('vi-VN')
 
-  const cats = ((categories ?? []) as { name: string; icon: string | null; amount: number }[])
+  const cats = ((categories ?? []) as { id: string; name: string; icon: string | null; amount: number }[])
   const catList = cats
     .slice(0, 8)
     .map(c => {
@@ -138,7 +144,7 @@ export function buildAnalysisPrompt(input: AnalysisInput): { system: string; use
   // Score computed here so the model never does arithmetic. Weeks are scored on
   // spending control vs the previous week — salary lands once a month, so a week
   // without income is normal, NOT a deficit. Other periods use the savings-rate band.
-  const prev = previous as { label?: string; totalIncome: number; totalExpense: number; categories?: { name: string; amount: number }[] } | undefined
+  const prev = previous as { label?: string; totalIncome: number; totalExpense: number; categories?: { id: string; name: string; amount: number }[] } | undefined
   let suggestedScore: number
   if (periodType === 'week') {
     // Always the IMMEDIATELY preceding week, never the user-picked comparison
@@ -195,7 +201,7 @@ export function buildAnalysisPrompt(input: AnalysisInput): { system: string; use
     }
     const catChanges = cats
       .map(c => {
-        const old = prev.categories?.find(p => p.name === c.name)?.amount ?? 0
+        const old = prev.categories?.find(p => p.id === c.id)?.amount ?? 0
         const ch = pctChange(c.amount, old)
         return ch !== null && Math.abs(ch) >= 15
           ? `  - ${c.name}: ${ch >= 0 ? 'up' : 'down'} ${Math.abs(ch)}% (${fmt(old)}đ → ${fmt(c.amount)}đ)`
@@ -263,12 +269,12 @@ export function buildAnalysisPrompt(input: AnalysisInput): { system: string; use
     '=== OUTPUT JSON ===',
     '{',
     periodType === 'week'
-      ? '  "summary": "1-2 sentences in Vietnamese: total spending this week, vs the comparison period (if data given), the dominant category. Do NOT mention a deficit or weekly savings rate.",'
-      : '  "summary": "1-2 sentences in Vietnamese: this period\'s situation, savings rate, dominant category",',
-    `  "topSpend": "in Vietnamese, based exactly on the first line of the category list — e.g.: ${topCat ? `${topCat.name} chiếm ${topCatPct}% chi tiêu (${fmt(topCat.amount)}đ)` : 'Ăn uống chiếm 45% chi tiêu (2.250.000đ)'}",`,
-    '  "assets": "1-2 sentences in Vietnamese assessing current asset health: net worth, emergency fund coverage in months, debt (if any) — use the exact figures from the ASSETS & CASH POSITION section",',
+      ? `  "summary": "1-2 sentences in ${language}: total spending this week, vs the comparison period (if data given), the dominant category. Do NOT mention a deficit or weekly savings rate.",`
+      : `  "summary": "1-2 sentences in ${language}: this period's situation, savings rate, dominant category",`,
+    `  "topSpend": "in ${language}, based exactly on the first category: ${topCat ? `${topCat.name}, ${topCatPct}% (${fmt(topCat.amount)}đ)` : 'no spending data'}",`,
+    `  "assets": "1-2 sentences in ${language} assessing net worth, emergency fund coverage and debts, using exact supplied figures",`,
     '  "insights": [',
-    '    { "emoji": "<emoji matching the content>", "text": "<insight in Vietnamese>", "type": "warning|tip|good" }',
+    `    { "emoji": "<emoji matching the content>", "text": "<insight in ${language}>", "type": "warning|tip|good" }`,
     '  ],',
     `  "score": ${suggestedScore}`,
     '}',
@@ -288,5 +294,5 @@ export function buildAnalysisPrompt(input: AnalysisInput): { system: string; use
     '7. If there are no spending transactions this period: the summary should encourage the user to start tracking, include 2 tips to get started, and still assess the asset section in "assets".',
   ].filter(Boolean).join('\n')
 
-  return { system: SYSTEM_PROMPT, user: userMsg }
+  return { system: systemPrompt(input.locale), user: userMsg }
 }

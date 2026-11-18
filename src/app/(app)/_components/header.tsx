@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -14,9 +15,10 @@ export default function Header({
   title?: string
   backHref?: string
 }) {
+  const t = useTranslations('common')
   const meta = user.user_metadata ?? {}
   const avatarUrl = meta.avatar_url as string | undefined
-  const displayName = (meta.full_name as string) || user.email?.split('@')[0] || 'User'
+  const displayName = (meta.full_name as string) || user.email?.split('@')[0] || t('user')
 
   return (
     <header className="shrink-0 pt-safe w-full bg-gray-50/90 dark:bg-gray-950/90 backdrop-blur-sm md:border-b md:border-gray-200 md:dark:border-gray-800">
@@ -33,7 +35,7 @@ export default function Header({
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
               </svg>
-              <span className="text-base font-semibold">{title ?? 'Back'}</span>
+              <span className="text-base font-semibold">{title ?? t('back')}</span>
             </Link>
             {/* Desktop: plain title */}
             <span className="hidden md:block text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100 flex-1">
@@ -51,7 +53,7 @@ export default function Header({
         {/* Mobile only — on desktop the user block lives at the bottom of the sidebar.
             It is also the way into Categories and Settings now that the bottom
             nav spends its slots on the four daily screens. */}
-        <Link href="/more" aria-label="Account" className="flex md:hidden items-center gap-2 rounded-full">
+        <Link href="/more" aria-label={t('account')} className="flex md:hidden items-center gap-2 rounded-full">
           <Avatar src={avatarUrl} name={displayName} size="sm" />
           <span className="hidden sm:block text-sm font-medium text-gray-600 dark:text-gray-300 max-w-36 truncate">
             {displayName}

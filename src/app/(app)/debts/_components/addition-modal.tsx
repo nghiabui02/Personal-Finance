@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 import { Modal, useModalClose } from '@/components/ui/modal'
@@ -27,13 +28,14 @@ export function AdditionModal({
   wallets: WalletChoice[]
   onClose: () => void
 }) {
+  const t = useTranslations('debts')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [date, setDate] = useState(localYMD())
   const [walletId, setWalletId] = useState(debt.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
   const [amount, setAmount] = useState(0)
 
-  const walletOptions = toWalletOptions(wallets)
+  const walletOptions = toWalletOptions(wallets, t('none'))
 
   const remainingAfter = debt.remaining_amount + amount
 
@@ -41,39 +43,39 @@ export function AdditionModal({
     e.preventDefault()
     const form = e.currentTarget
     const note = readField(form, 'note')
-    if (!amount || amount <= 0) { setError('Please enter a valid amount.'); return }
+    if (!amount || amount <= 0) { setError(t('pleaseEnterAValidAmount')); return }
     submit(async () => {
       await debtsApi.addDebt(debt.id, { amount, note: note || undefined, date, wallet_id: walletId || undefined })
     })
   }
 
-  const walletLabel = debt.type === 'lend' ? 'Lend from wallet' : 'Receive to wallet'
+  const walletLabel = debt.type === 'lend' ? t('lendFromWallet') : t('receiveToWallet')
 
   return (
-    <Modal title="Add to debt" onClose={onClose}>
+    <Modal title={t('addToDebt')} onClose={onClose}>
       <div className="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-sm flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs text-gray-400 mb-0.5">Current remaining</p>
+          <p className="text-xs text-gray-400 mb-0.5">{t('currentRemaining')}</p>
           <p className="font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{formatVND(debt.remaining_amount)}</p>
         </div>
         {amount > 0 && (
           <div className="text-right">
-            <p className="text-xs text-gray-400 mb-0.5">After this addition</p>
+            <p className="text-xs text-gray-400 mb-0.5">{t('afterThisAddition')}</p>
             <p className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{formatVND(remainingAfter)}</p>
           </div>
         )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <AmountInput label="Amount to add" name="amount" required onValueChange={setAmount} />
-          <CustomSelect label={walletLabel} name="wallet_id" options={walletOptions} value={walletId} onChange={setWalletId} placeholder="None" />
+          <AmountInput label={t('amountToAdd')} name="amount" required onValueChange={setAmount} />
+          <CustomSelect label={walletLabel} name="wallet_id" options={walletOptions} value={walletId} onChange={setWalletId} placeholder={t('none')} />
         </div>
-        <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
-        <Input label="Note (optional)" name="note" placeholder="e.g. Dinner at Pizza Hut" />
+        <DatePicker label={t('date')} name="date" value={date} onChange={setDate} required />
+        <Input label={t('noteOptional')} name="note" placeholder={t('eGDinnerAtPizzaHut')} />
         <FormError message={error} />
         <ModalActions
           isPending={isPending}
-          submitLabel="Add"
+          submitLabel={t('add2')}
           onCancel={close}
         />
       </form>

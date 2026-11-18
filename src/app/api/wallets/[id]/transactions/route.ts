@@ -10,7 +10,7 @@ export const GET = withAuth<{ id: string }>(async (request, { supabase, user, pa
   const limit = Math.min(Number(request.nextUrl.searchParams.get('limit') ?? WALLET_TX_PAGE_SIZE), 100)
 
   if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit <= 0) {
-    return badRequest('Invalid offset or limit.')
+    return badRequest('invalidOffsetOrLimit')
   }
 
   const { data, error } = await walletTransactionsQuery(supabase, user.id, id).range(offset, offset + limit - 1)

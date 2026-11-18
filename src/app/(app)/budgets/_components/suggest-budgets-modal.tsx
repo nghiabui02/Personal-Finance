@@ -1,4 +1,6 @@
 'use client'
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
 import { Modal, useModalClose } from '@/components/ui/modal'
@@ -9,7 +11,6 @@ import { monthRange } from '@/lib/utils/date'
 import type { BudgetSuggestion } from '@/lib/server/budget-suggestions'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { plural } from '@/lib/utils/plural'
 
 /**
  * Review the proposed budgets before they exist. Each row can be dropped; the
@@ -25,6 +26,8 @@ export function SuggestBudgetsModal({
   month: string
   onClose: () => void
 }) {
+  const locale = useLocale()
+  const t = useTranslations('budgets')
   const close = useModalClose()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -55,22 +58,20 @@ export function SuggestBudgetsModal({
             month: monthRange(month).startDate,
           })
         }
-        toast.success(`Created ${plural(chosen.length, 'budget')}. Edit any of them anytime.`)
+        toast.success(t('createdBudgets', { count: chosen.length }))
         router.refresh()
         onClose()
       } catch (err) {
-        toastError(err, 'Could not create the budgets.')
+        toastError(err, t('couldNotCreateTheBudgets'))
       }
     })
   }
 
   return (
-    <Modal title="Suggested budgets" size="md" onClose={onClose}>
+    <Modal title={t('suggestedBudgets')} size="md" onClose={onClose}>
       <div className="space-y-4">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Median of what you actually spent in each category over the last 3 months,
-          rounded. Nothing is created until you confirm.
-        </p>
+          {t('medianOfWhatYouActuallySpentInEachCategoryOverTheLast')}</p>
 
         <ul className="divide-y divide-hairline rounded-xl border border-hairline overflow-hidden">
           {suggestions.map(s => {
@@ -92,11 +93,9 @@ export function SuggestBudgetsModal({
                   </span>
                   <span className={`flex-1 min-w-0 ${isSkipped ? 'opacity-40' : ''}`}>
                     <span className="block text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {s.category.name}
+                      {getCategoryName(s.category, locale)}
                     </span>
-                    <span className="block text-xs text-gray-400 dark:text-gray-500">
-                      from {plural(s.monthsObserved, 'month')} of spending
-                    </span>
+                    <span className="block text-xs text-gray-400 dark:text-gray-500">{t('sentenceFromOfSpending', { value0: t('monthsOfSpending', { count: s.monthsObserved }) })}</span>
                   </span>
                   <span className={`text-sm font-semibold tabular-nums shrink-0 ${isSkipped ? 'opacity-40 line-through' : 'text-gray-900 dark:text-gray-100'}`}>
                     {formatVND(s.amount)}
@@ -109,17 +108,15 @@ export function SuggestBudgetsModal({
 
         <div className="flex items-baseline justify-between gap-4 text-sm">
           <span className="text-gray-500 dark:text-gray-400">
-            {plural(chosen.length, 'budget')}
+            {t('budgetCount', { count: chosen.length })}
           </span>
-          <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-            {formatVND(total)} total
-          </span>
+          <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{t('sentenceTotal', { value0: formatVND(total) })}</span>
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Button type="button" variant="secondary" onClick={close} className="flex-1">Cancel</Button>
+          <Button type="button" variant="secondary" onClick={close} className="flex-1">{t('cancel')}</Button>
           <Button type="button" onClick={handleCreate} disabled={isPending || chosen.length === 0} className="flex-1">
-            {isPending ? 'Creating…' : `Create ${chosen.length}`}
+            {isPending ? t('creating') : t('createCount', { count: chosen.length })}
           </Button>
         </div>
       </div>

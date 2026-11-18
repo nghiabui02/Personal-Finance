@@ -1,3 +1,5 @@
+import { getLocale } from 'next-intl/server'
+import { normalizeLocale } from '@/i18n/locale'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getNonOperatingCategoryIds, onlyOperatingTransactions } from '@/lib/server/transaction-reporting'
 import { NextResponse } from 'next/server'
@@ -35,11 +37,12 @@ async function getPreviousWeekExpense(
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   if (isRateLimited(request, { key: `ai-analysis:${user.id}`, limit: ANALYSES_PER_MINUTE, windowMs: ONE_MINUTE_MS })) {
-    return tooManyRequests('Too many requests. Try again in a minute.')
+    return tooManyRequests('tooManyRequestsTryAgainInAMinute')
   }
 
+  const locale = normalizeLocale(await getLocale()) ?? 'vi'
   const groq = createGroqClient()
-  if (!groq) return jsonError(500, 'Groq is not configured.')
+  if (!groq) return jsonError(500, 'groqIsNotConfigured')
 
   const { periodLabel, period, start, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo, force } = await request.json()
   const periodType: PeriodType = period ?? 'month'
@@ -73,11 +76,11 @@ export const POST = withAuth(async (request, { supabase, user }) => {
 
   // Check DB cache (skip if force-refresh). Version prefix invalidates old
   // cached results whenever the prompt changes materially. Comparison period
-  // (label + totals) is part of the key — switching "compare with" must miss
+  // (dates + totals) is part of the key — switching "compare with" must miss
   // the cache, not silently return an analysis written for a different one.
-  const prevForKey = previous as { label?: string; totalIncome?: number; totalExpense?: number } | undefined
-  const compareKeyPart = prevForKey ? `${prevForKey.label ?? ''}::${prevForKey.totalIncome ?? 0}::${prevForKey.totalExpense ?? 0}` : 'none'
-  const cacheKey = `v10::${periodType}::${periodLabel}::${totalIncome}::${totalExpense}::${netWorth}::${compareKeyPart}`
+  const prevForKey = previous as { period?: string; start?: string; totalIncome?: number; totalExpense?: number } | undefined
+  const compareKeyPart = prevForKey ? `${prevForKey.period ?? periodType}::${prevForKey.start ?? ''}::${prevForKey.totalIncome ?? 0}::${prevForKey.totalExpense ?? 0}` : 'none'
+  const cacheKey = `v11::${locale}::${periodType}::${start}::${totalIncome}::${totalExpense}::${netWorth}::${compareKeyPart}`
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_insights_cache')
@@ -93,7 +96,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     : 0
 
   const { system, user: userMsg } = buildAnalysisPrompt({
-    periodType, periodLabel, start, totalIncome, totalExpense, categories, budgets, previous,
+    locale, periodType, periodLabel, start, totalIncome, totalExpense, categories, budgets, previous,
     topTransactions, timeline, netWorthInfo, sheet, debtRows, goalRows, recentExpenseRows, prevWeekExpense,
   })
 
@@ -119,9 +122,9 @@ export const POST = withAuth(async (request, { supabase, user }) => {
       if (e?.status === 429) {
         return jsonError(429, 'rate_limit')
       }
-      return jsonError(500, 'Analysis failed')
+      return jsonError(500, 'analysisFailed')
     }
   }
 
-  return jsonError(500, 'Analysis failed')
+  return jsonError(500, 'analysisFailed')
 })

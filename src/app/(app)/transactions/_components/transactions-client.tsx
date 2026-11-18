@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
@@ -9,7 +10,6 @@ import type { DebtOption } from '@/lib/types'
 import type { FrequentTransaction } from '@/lib/server/frequent-transactions'
 import type { HistoryTransaction } from '@/lib/transaction-matching'
 import { countActiveFilters, type TransactionFilters } from '@/lib/server/transaction-filters'
-import { plural } from '@/lib/utils/plural'
 import { FilterModal } from './filter-modal'
 import { PeriodNavigator, type ViewMode } from './period-navigator'
 import { SelectionBar } from './selection-bar'
@@ -56,6 +56,7 @@ export default function TransactionsClient({
   searchQuery = '',
   filters,
 }: TransactionsClientProps) {
+  const t = useTranslations('transactions')
   const [filter, setFilter] = useState<Filter>('all')
   const [modalOpen, setModalOpen] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
@@ -187,9 +188,9 @@ export default function TransactionsClient({
 
       {selection.isConfirmingDelete && (
         <ConfirmModal
-          title={`Delete ${plural(selection.selected.length, 'transaction')}?`}
-          description="Every amount goes back to the wallet it came from, and a debt repayment reopens its debt. A batch this size is not offered as an undo, so it is confirmed here instead."
-          confirmLabel="Delete"
+          title={t('deleteCount', { count: selection.selected.length })}
+          description={t('everyAmountGoesBackToTheWalletItCameFromAndA')}
+          confirmLabel={t('delete')}
           isPending={selection.isPending}
           onConfirm={selection.deleteSelected}
           onClose={selection.cancelDelete}
@@ -198,9 +199,9 @@ export default function TransactionsClient({
 
       {deletion.isConfirming && (
         <ConfirmModal
-          title="Delete transaction?"
+          title={t('deleteTransaction2')}
           description={deletion.consequence}
-          confirmLabel="Delete"
+          confirmLabel={t('delete')}
           isPending={deletion.isPending}
           onConfirm={deletion.confirm}
           onClose={deletion.cancel}

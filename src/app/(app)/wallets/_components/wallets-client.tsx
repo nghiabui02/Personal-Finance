@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
@@ -12,15 +13,15 @@ import { WalletCard } from './wallet-card'
 import { WalletModal } from './wallet-modal'
 import { TransferModal } from './transfer-modal'
 import { CreditPaymentModal } from './credit-payment-modal'
-import { plural } from '@/lib/utils/plural'
 import { useDeleteConfirmation } from '@/lib/hooks/use-delete-confirmation'
 import { AddButton } from '@/components/ui/add-button'
 
 export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
+  const t = useTranslations('wallets')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
   const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
-    id => walletsApi.delete(id), 'Could not delete the wallet.',
+    id => walletsApi.delete(id), t('couldNotDeleteTheWallet'),
   )
   const [transferOpen, setTransferOpen] = useState(false)
   const [transferFromId, setTransferFromId] = useState<string | undefined>(undefined)
@@ -43,26 +44,26 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
   return (
     <>
       <ScreenHeader
-        eyebrow="Money"
+        eyebrow={t('money')}
         headline={
           wallets.length === 0
-            ? <>No wallets yet — add one to start tracking where your money sits.</>
-            : <>You hold <Em>{formatVND(totalAssets)}</Em> across {plural(spendable.length, 'wallet')}.</>
+            ? <>{t('noWalletsYetAddOneToStartTrackingWhereYourMoneySits')}</>
+            : <>{t.rich('walletHoldings', { amount: formatVND(totalAssets), count: spendable.length, strong: chunks => <Em>{chunks}</Em> })}</>
         }
         support={creditOwed > 0
-          ? <><span className="text-rose-600 dark:text-rose-400">{formatVND(creditOwed)} owed on cards</span><Dot /><span>{wallets.length} accounts total</span></>
+          ? <><span className="text-rose-600 dark:text-rose-400">{t('sentenceOwedOnCards', { value0: formatVND(creditOwed) })}</span><Dot /><span>{t('sentenceAccountsTotal', { value0: wallets.length })}</span></>
           : undefined}
         segments={MONEY_SEGMENTS}
         action={
-          <AddButton onClick={() => openModal()}>New wallet</AddButton>
+          <AddButton onClick={() => openModal()}>{t('newWallet')}</AddButton>
         }
       />
 
       <div>
       {wallets.length === 0 ? (
         <EmptyState
-          message="No wallets yet."
-          action={{ label: 'Add your first wallet', onClick: () => openModal() }}
+          message={t('noWalletsYet')}
+          action={{ label: t('addYourFirstWallet'), onClick: () => openModal() }}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -111,13 +112,13 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
 
       {confirmId && confirmWallet && (
         <ConfirmModal
-          title={`Delete "${confirmWallet.name}"?`}
+          title={t('deleteNamedWallet', { name: confirmWallet.name })}
           description={
             confirmWallet.type !== 'credit' && Number(confirmWallet.balance) > 0
-              ? `This wallet has a remaining balance of ${formatVND(Number(confirmWallet.balance))}. It will be automatically transferred to your default wallet before deletion.`
-              : 'This wallet will be permanently deleted. Existing transactions linked to it will not be deleted.'
+              ? t('deleteWithBalance', { amount: formatVND(Number(confirmWallet.balance)) })
+              : t('thisWalletWillBePermanentlyDeletedExistingTransactionsLinkedToItWill')
           }
-          confirmLabel="Delete wallet"
+          confirmLabel={t('deleteWallet')}
           isPending={isPending}
           onConfirm={confirm}
           onClose={cancel}

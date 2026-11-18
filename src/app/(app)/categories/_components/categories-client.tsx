@@ -1,4 +1,7 @@
 'use client'
+import { getCategoryName } from '@/i18n/category'
+import { sortCategories } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { EmptyState } from '@/components/ui/empty-state'
 import { ScreenHeader } from '@/components/ui/screen-header'
@@ -20,17 +23,19 @@ export default function CategoriesClient({
   categories: Category[]
   initialTab: 'income' | 'expense'
 }) {
+  const locale = useLocale()
+  const t = useTranslations('categories')
   const router = useRouter()
   const [tab, setTab] = useState<'income' | 'expense'>(initialTab)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
-    id => categoriesApi.delete(id), 'Could not delete the category.',
+    id => categoriesApi.delete(id), t('couldNotDeleteTheCategory'),
   )
 
   const confirmCategory = categories.find(c => c.id === confirmId)
 
-  const filtered = categories.filter(c => c.type === tab)
+  const filtered = sortCategories(categories, locale).filter(c => c.type === tab)
   const defaults = filtered.filter(c => c.user_id === null)
   const custom = filtered.filter(c => c.user_id !== null)
 
@@ -47,34 +52,34 @@ export default function CategoriesClient({
   return (
     <>
       <ScreenHeader
-        eyebrow="Account"
+        eyebrow={t('account')}
         headline={
           custom.length === 0
-            ? <>You&rsquo;re using the <Em>{filtered.length}</Em> built-in {tab} categories.</>
-            : <>You&rsquo;ve added <Em>{custom.length}</Em> {tab} categor{custom.length === 1 ? 'y' : 'ies'} of your own.</>
+            ? <>{t.rich('usingDefaults', { count: filtered.length, type: tab, strong: chunks => <Em>{chunks}</Em> })}</>
+            : <>{t.rich('customCount', { count: custom.length, type: tab, strong: chunks => <Em>{chunks}</Em> })}</>
         }
-        support={<span>{filtered.length} in total</span>}
+        support={<span>{t('sentenceInTotal', { value0: filtered.length })}</span>}
         controls={
           <TabGroup
-            tabs={[{ key: 'expense', label: 'Expense' }, { key: 'income', label: 'Income' }]}
+            tabs={[{ key: 'expense', label: t('expense') }, { key: 'income', label: t('income') }]}
             value={tab}
             onChange={switchTab}
             className="w-fit"
           />
         }
         action={
-          <AddButton onClick={() => openModal()}>New category</AddButton>
+          <AddButton onClick={() => openModal()}>{t('newCategory')}</AddButton>
         }
       />
 
       {filtered.length === 0 ? (
         <EmptyState
-          message={`No ${tab} categories yet.`}
-          action={{ label: 'Create your first one', onClick: () => openModal() }}
+          message={t('emptyType', { type: tab })}
+          action={{ label: t('createYourFirstOne'), onClick: () => openModal() }}
         />
       ) : (
         <div className="space-y-6">
-          {[{ title: 'Custom', list: custom }, { title: 'Default', list: defaults }].map(({ title, list }) =>
+          {[{ title: t('custom'), list: custom }, { title: t('default'), list: defaults }].map(({ title, list }) =>
             list.length > 0 && (
               <section key={title}>
                 <p className="eyebrow text-gray-400 dark:text-gray-500 mb-3">{title}</p>
@@ -98,9 +103,9 @@ export default function CategoriesClient({
 
       {confirmId && (
         <ConfirmModal
-          title={`Delete "${confirmCategory?.name}"?`}
-          description="This category will be permanently deleted. Transactions using it will become uncategorized."
-          confirmLabel="Delete category"
+          title={t('deleteNamedCategory', { name: confirmCategory ? getCategoryName(confirmCategory, locale) : '' })}
+          description={t('thisCategoryWillBePermanentlyDeletedTransactionsUsingItWillBecomeUncategorized')}
+          confirmLabel={t('deleteCategory')}
           isPending={isPending}
           onConfirm={confirm}
           onClose={cancel}

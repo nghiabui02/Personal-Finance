@@ -1,3 +1,6 @@
+import { getCategoryName } from '@/i18n/category'
+import { useLocale, useTranslations } from 'next-intl'
+
 import { type Category } from '@/lib/api/categories'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 
@@ -9,6 +12,8 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, onEdit, onDelete, isDeleting }: CategoryCardProps) {
+  const locale = useLocale()
+  const t = useTranslations('categories')
   const isOwned = category.user_id !== null
 
   return (
@@ -21,14 +26,14 @@ export function CategoryCard({ category, onEdit, onDelete, isDeleting }: Categor
           <span>{category.icon}</span>
         ) : (
           <span className="text-sm font-semibold" style={{ color: category.color ?? '#6b7280' }}>
-            {category.name[0].toUpperCase()}
+            {getCategoryName(category, locale)[0].toUpperCase()}
           </span>
         )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{category.name}</p>
-        {!isOwned && <p className="text-xs text-gray-400">Default</p>}
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{getCategoryName(category, locale)}</p>
+        {!isOwned && <p className="text-xs text-gray-400">{t('default')}</p>}
       </div>
 
       {category.color && (
@@ -37,8 +42,8 @@ export function CategoryCard({ category, onEdit, onDelete, isDeleting }: Categor
 
       {isOwned && (
         <div className="flex items-center gap-0.5">
-          <IconButton label="Edit category" onClick={onEdit}>{EditIcon}</IconButton>
-          <IconButton label="Delete category" onClick={onDelete} disabled={isDeleting} tone="danger">{TrashIcon}</IconButton>
+          <IconButton label={t('editCategory')} onClick={onEdit}>{EditIcon}</IconButton>
+          <IconButton label={t('deleteCategory')} onClick={onDelete} disabled={isDeleting} tone="danger">{TrashIcon}</IconButton>
         </div>
       )}
     </div>

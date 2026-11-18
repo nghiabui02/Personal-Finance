@@ -1,4 +1,6 @@
 'use client'
+import { authErrorKey } from '@/i18n/auth-error'
+import { useTranslations } from 'next-intl'
 
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -10,6 +12,8 @@ import { AuthCard, AuthHeading } from '../_components/auth-card'
 import { readField } from '@/lib/utils/form'
 
 export default function ResetPasswordPage() {
+  const t = useTranslations('auth')
+  const errors = useTranslations('errors')
   const router = useRouter()
   const { error, setError, isPending, submit } = useAuthForm()
 
@@ -20,18 +24,18 @@ export default function ResetPasswordPage() {
     const confirm = readField(form, 'confirm')
 
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      setError(t('passwordsDoNotMatch'))
       return
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
+      setError(t('passwordMustBeAtLeast6Characters'))
       return
     }
 
     submit(async () => {
       const supabase = createClient()
       const { error } = await supabase.auth.updateUser({ password })
-      if (error) throw new Error(error.message)
+      if (error) throw new Error(errors(authErrorKey(error.code)))
       router.push('/dashboard')
       router.refresh()
     })
@@ -39,11 +43,11 @@ export default function ResetPasswordPage() {
 
   return (
     <AuthCard>
-      <AuthHeading title="Set new password">Choose a strong password for your account.</AuthHeading>
+      <AuthHeading title={t('setNewPassword')}>{t('chooseAStrongPasswordForYourAccount')}</AuthHeading>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="New password"
+          label={t('newPassword')}
           name="password"
           type="password"
           autoComplete="new-password"
@@ -51,7 +55,7 @@ export default function ResetPasswordPage() {
           placeholder="••••••••"
         />
         <Input
-          label="Confirm password"
+          label={t('confirmPassword')}
           name="confirm"
           type="password"
           autoComplete="new-password"
@@ -60,7 +64,7 @@ export default function ResetPasswordPage() {
         />
         <FormError message={error} />
         <Button type="submit" disabled={isPending} fullWidth>
-          {isPending ? 'Saving...' : 'Set new password'}
+          {isPending ? t('saving') : t('setNewPassword')}
         </Button>
       </form>
     </AuthCard>

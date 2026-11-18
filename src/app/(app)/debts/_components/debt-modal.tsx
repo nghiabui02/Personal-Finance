@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
 import { AmountInput } from '@/components/ui/amount-input'
@@ -29,6 +30,7 @@ export function DebtModal({
   wallets: WalletChoice[]
   onClose: () => void
 }) {
+  const t = useTranslations('debts')
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [type, setType] = useState<'lend' | 'borrow'>(editing?.type ?? defaultType)
@@ -38,7 +40,7 @@ export function DebtModal({
     editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? ''
   )
 
-  const walletOptions = toWalletOptions(wallets)
+  const walletOptions = toWalletOptions(wallets, t('none'))
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -46,8 +48,8 @@ export function DebtModal({
     const amount = Number(readField(form, 'amount'))
     const person_name = readField(form, 'person_name').trim()
 
-    if (!person_name) { setError('Name is required.'); return }
-    if (!editing && (!amount || amount <= 0)) { setError('Amount is required.'); return }
+    if (!person_name) { setError(t('nameIsRequired')); return }
+    if (!editing && (!amount || amount <= 0)) { setError(t('amountIsRequired')); return }
 
     submit(async () => {
       if (editing) {
@@ -73,11 +75,11 @@ export function DebtModal({
   }
 
   return (
-    <Modal title={editing ? 'Edit debt' : 'New debt'} size="md" onClose={onClose}>
+    <Modal title={editing ? t('editDebt') : t('newDebt')} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {!editing && (
           <TabGroup
-            tabs={[{ key: 'lend', label: '↑ I lent' }, { key: 'borrow', label: '↓ I borrowed' }]}
+            tabs={[{ key: 'lend', label: t('iLent') }, { key: 'borrow', label: t('iBorrowed') }]}
             value={type}
             onChange={setType}
             activeColors={{ lend: BRAND_HEX, borrow: BORROWED_HEX }}
@@ -85,33 +87,33 @@ export function DebtModal({
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Person name" name="person_name" defaultValue={editing?.person_name ?? ''} required placeholder="e.g. Nguyen Van A" />
-          <Input label="Contact (optional)" name="person_contact" defaultValue={editing?.person_contact ?? ''} placeholder="Phone / email" />
+          <Input label={t('personName')} name="person_name" defaultValue={editing?.person_name ?? ''} required placeholder={t('eGNguyenVanA')} />
+          <Input label={t('contactOptional')} name="person_contact" defaultValue={editing?.person_contact ?? ''} placeholder={t('phoneEmail')} />
         </div>
 
         {!editing && (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <AmountInput label="Amount" name="amount" required />
-              <CustomSelect label="Wallet" name="wallet_id" options={walletOptions} value={walletId} onChange={setWalletId} placeholder="None" />
+              <AmountInput label={t('amount')} name="amount" required />
+              <CustomSelect label={t('wallet')} name="wallet_id" options={walletOptions} value={walletId} onChange={setWalletId} placeholder={t('none')} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
-              <DatePicker label="Due date (optional)" name="due_date" value={dueDate} onChange={setDueDate} />
+              <DatePicker label={t('date')} name="date" value={date} onChange={setDate} required />
+              <DatePicker label={t('dueDateOptional')} name="due_date" value={dueDate} onChange={setDueDate} />
             </div>
           </>
         )}
 
         {editing && (
-          <DatePicker label="Due date (optional)" name="due_date" value={dueDate} onChange={setDueDate} />
+          <DatePicker label={t('dueDateOptional')} name="due_date" value={dueDate} onChange={setDueDate} />
         )}
 
-        <Input label="Note (optional)" name="note" defaultValue={editing?.note ?? ''} placeholder="Purpose..." />
+        <Input label={t('noteOptional')} name="note" defaultValue={editing?.note ?? ''} placeholder={t('purpose')} />
 
         <FormError message={error} />
         <ModalActions
           isPending={isPending}
-          submitLabel="Save"
+          submitLabel={t('save')}
           onCancel={close}
         />
       </form>

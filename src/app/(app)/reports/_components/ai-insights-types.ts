@@ -13,8 +13,10 @@ export interface Analysis {
 }
 
 export type PreviousPeriod = {
+  period: string
+  start: string
   label: string
   totalIncome: number
   totalExpense: number
-  categories: { name: string; amount: number }[]
+  categories: { id: string; name: string; amount: number }[]
 }

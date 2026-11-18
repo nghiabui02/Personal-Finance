@@ -1,8 +1,8 @@
+import { useTranslations } from 'next-intl'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast, toastError } from '@/components/ui/toast'
 import { type Transaction, transactionsApi } from '@/lib/api/transactions'
-import { plural } from '@/lib/utils/plural'
 
 /**
  * Selection mode on the transactions list: which rows are ticked, and the two
@@ -13,6 +13,7 @@ import { plural } from '@/lib/utils/plural'
  *   would otherwise stay selected out of sight and still be acted on.
  */
 export function useTransactionSelection(transactions: Transaction[], scope: string) {
+  const t = useTranslations('transactions')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   // Null is "not selecting". An empty Set is selection mode with nothing
@@ -67,15 +68,15 @@ export function useTransactionSelection(transactions: Transaction[], scope: stri
 
   function categorize(categoryId: string) {
     run(
-      async ids => `${plural((await transactionsApi.categorizeMany(ids, categoryId)).updated, 'transaction')} moved.`,
-      'Could not change the category.',
+      async ids => t('movedCount', { count: (await transactionsApi.categorizeMany(ids, categoryId)).updated }),
+      t('categorizeFailed'),
     )
   }
 
   function deleteSelected() {
     run(
-      async ids => `${plural((await transactionsApi.deleteMany(ids)).deleted, 'transaction')} deleted.`,
-      'Could not delete the selection.',
+      async ids => t('deletedCount', { count: (await transactionsApi.deleteMany(ids)).deleted }),
+      t('deleteSelectionFailed'),
     )
   }
 

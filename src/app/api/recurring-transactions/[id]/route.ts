@@ -3,7 +3,7 @@ import { withAuth, notFound, deleteOwnedRow, updateOwnedRow, type ServerClient }
 import { localYMD, toYMD } from '@/lib/utils/date'
 
 // Advances a YYYY-MM-DD by one occurrence of the given frequency — mirrors
-// the SQL function process_recurring_all_users() so "skip" and the nightly
+// the SQL function process_recurring_all_users() so 'skip' and the nightly
 // cron always land on the same next date.
 function nextOccurrence(current: string, frequency: string): string {
   const [y, m, d] = current.split('-').map(Number)
@@ -35,7 +35,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   if (body.skip) {
     const current = await getSchedule(supabase, user.id, id)
 
-    if (!current) return notFound('Recurring transaction not found.')
+    if (!current) return notFound('recurringTransactionNotFound')
     if (!current.next_run_date) return NextResponse.json(current)
 
     return updateOwnedRow(supabase, 'recurring_transactions', { id, userId: user.id }, {
@@ -52,7 +52,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   if (active === true) {
     const current = await getSchedule(supabase, user.id, id)
 
-    if (!current) return notFound('Recurring transaction not found.')
+    if (!current) return notFound('recurringTransactionNotFound')
 
     if (current.next_run_date) {
       const today = localYMD()

@@ -1,4 +1,5 @@
 'use client'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { useRef, useState } from 'react'
 import { useDismiss } from '@/components/ui/use-dismiss'
@@ -23,12 +24,14 @@ export function ComparePeriodPicker({
   isEmpty: boolean
   onSelect: (offset: number) => void
 }) {
+  const locale = useLocale()
+  const t = useTranslations('reports')
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useDismiss(ref, open, () => setOpen(false))
 
-  const labelFor = (candidate: number) => getPeriodLabel(period, navigatePeriod(period, start, -candidate))
+  const labelFor = (candidate: number) => getPeriodLabel(period, navigatePeriod(period, start, -candidate), locale)
 
   return (
     <div ref={ref} className="relative mb-3 -mt-1">
@@ -37,15 +40,14 @@ export function ComparePeriodPicker({
         disabled={loading}
         className="text-[11px] text-white/45 hover:text-slate-300 transition-colors flex items-center gap-1 disabled:opacity-50"
       >
-        Compare with: {loading ? 'Loading…' : labelFor(offset)}
+        {t('compareWith')}{loading ? t('loading') : labelFor(offset)}
         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
         </svg>
       </button>
       {!loading && isEmpty && (
         <p className="text-[11px] text-amber-500/80 mt-1">
-          No transactions in that period — the analysis will skip the comparison.
-        </p>
+          {t('noTransactionsInThatPeriodTheAnalysisWillSkipTheComparison')}</p>
       )}
       {open && (
         <div className="absolute z-30 mt-1 w-56 bg-slate-700 rounded-xl border border-slate-600 shadow-xl py-1 animate-dropdown-in">
@@ -58,7 +60,7 @@ export function ComparePeriodPicker({
               }`}
             >
               {labelFor(candidate)}
-              {candidate === 1 && <span className="text-slate-300"> · previous</span>}
+              {candidate === 1 && <span className="text-slate-300"> {t('previous')}</span>}
             </button>
           ))}
         </div>

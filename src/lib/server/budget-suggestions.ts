@@ -53,7 +53,7 @@ export async function getBudgetSuggestions(
     // Transfers, loan principal and ledger corrections do not belong in spending budgets.
     supabase
       .from('transactions')
-      .select('amount, transaction_date, category_id, categories(id, name, icon, color, system_key)')
+      .select('amount, transaction_date, category_id, categories(id, name, icon, color, system_key, default_key, name_is_custom)')
       .eq('user_id', userId)
       .eq('type', 'expense')
       .is('transfer_pair_id', null)

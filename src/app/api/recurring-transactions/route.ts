@@ -6,14 +6,14 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const { type, amount, category_id, wallet_id, note, frequency, start_date, end_date, bank_fee } = body
 
   if (!type || !amount || !frequency || !start_date) {
-    return badRequest('Type, amount, frequency and start date are required.')
+    return badRequest('typeAmountFrequencyAndStartDateAreRequired')
   }
-  if (!['income', 'expense'].includes(type)) return badRequest('Invalid type.')
+  if (!['income', 'expense'].includes(type)) return badRequest('invalidType')
   if (!['daily', 'weekly', 'monthly', 'yearly'].includes(frequency)) {
-    return badRequest('Invalid frequency.')
+    return badRequest('invalidFrequency')
   }
   if (bank_fee !== undefined && bank_fee !== null && Number(bank_fee) < 0) {
-    return badRequest('Bank fee must be positive.')
+    return badRequest('bankFeeMustBePositive')
   }
 
   const { data, error } = await supabase

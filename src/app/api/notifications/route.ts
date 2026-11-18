@@ -1,5 +1,8 @@
+import { getLocale, getTranslations } from 'next-intl/server'
+import { getCategoryName } from '@/i18n/category'
+import type { CategoryRef as Category } from '@/lib/types'
 import { NextResponse } from 'next/server'
-import { badRequest, noContent, withAuth } from '@/lib/server/route'
+import { badRequest, noContent, withAuth, supabaseError } from '@/lib/server/route'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { formatSignedVND, formatVND } from '@/lib/utils/currency'
 import { formatMonthDay, localYM, localYMD, shiftLocalDate } from '@/lib/utils/date'
@@ -25,14 +28,16 @@ const SEVERITY_ORDER: Record<NotificationSeverity, number> = {
   alert: 0, warning: 1, info: 2, success: 3,
 }
 
-type CategoryRef = { name: string; icon: string | null } | null
+type CategoryRef = Category | null
 
-function shortDate(ymd: string): string {
+function shortDate(ymd: string, locale: string): string {
   const [y, m, d] = ymd.split('-').map(Number)
-  return formatMonthDay(new Date(y, m - 1, d))
+  return formatMonthDay(new Date(y, m - 1, d), locale)
 }
 
 export const GET = withAuth(async (_request, { supabase, user }) => {
+  const locale = await getLocale()
+  const t = await getTranslations('notifications')
   const today = localYMD()
   const debtHorizon = shiftLocalDate(today, 7)
   const recurringHorizon = shiftLocalDate(today, 3)
@@ -51,7 +56,7 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
       .select('id, type, person_name, remaining_amount, due_date')
       .eq('user_id', user.id).eq('status', 'active'),
     supabase.from('recurring_transactions')
-      .select('id, type, amount, note, frequency, next_run_date, end_date, categories(name, icon)')
+      .select('id, type, amount, note, frequency, next_run_date, end_date, categories(name, icon, default_key, name_is_custom, system_key)')
       .eq('user_id', user.id)
       // A paused rule will not run, so there is nothing upcoming to announce.
       .eq('active', true)
@@ -78,19 +83,19 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     const amount = b.effectiveAmount
     const spent = b.spent
     const pct = amount > 0 ? spent / amount : 0
-    const label = `${cat.icon ?? ''} ${cat.name}`.trim()
+    const label = `${cat.icon ?? ''} ${getCategoryName(cat, locale)}`.trim()
     if (spent > amount) {
       notifications.push({
         id: `budget_over:${b.id}`, type: 'budget_over', severity: 'alert',
-        title: `Over budget: ${label}`,
-        detail: `Spent ${formatVND(spent)} of ${formatVND(amount)}`,
+        title: t('overBudget', { category: label }),
+        detail: t('budgetSpent', { spent: formatVND(spent), amount: formatVND(amount) }),
         href: '/budgets',
       })
     } else if (pct >= 0.8) {
       notifications.push({
         id: `budget_near:${b.id}`, type: 'budget_near', severity: 'warning',
-        title: `Budget nearly full: ${label}`,
-        detail: `${Math.round(pct * 100)}% used — ${formatVND(amount - spent)} left`,
+        title: t('nearBudget', { category: label }),
+        detail: t('budgetUsed', { percent: Math.round(pct * 100), amount: formatVND(amount - spent) }),
         href: '/budgets',
       })
     }
@@ -102,16 +107,16 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     if (remaining <= 0 || !d.due_date || d.due_date > debtHorizon) continue
     const isOverdue = d.due_date < today
     const direction = d.type === 'lend'
-      ? `${d.person_name} owes you`
-      : `You owe ${d.person_name}`
+      ? t('owedBy', { person: d.person_name })
+      : t('owedTo', { person: d.person_name })
     notifications.push({
       // due_date + phase in the id so a dismissed notification re-arms
       // when the deadline changes or the debt turns overdue
       id: `${isOverdue ? 'debt_overdue' : 'debt_due'}:${d.id}:${d.due_date}`,
       type: isOverdue ? 'debt_overdue' : 'debt_due',
       severity: isOverdue ? 'alert' : 'warning',
-      title: isOverdue ? `Overdue debt: ${direction}` : `Debt due soon: ${direction}`,
-      detail: `${formatVND(remaining)} remaining · due ${shortDate(d.due_date)}`,
+      title: isOverdue ? t('overdueDebt', { direction }) : t('debtSoon', { direction }),
+      detail: t('debtRemaining', { amount: formatVND(remaining), date: shortDate(d.due_date, locale) }),
       href: '/debts',
     })
   }
@@ -121,11 +126,11 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     if (!r.next_run_date) continue
     if (r.end_date && r.end_date < r.next_run_date) continue
     const cat = r.categories as unknown as CategoryRef
-    const label = r.note || cat?.name || (r.type === 'income' ? 'Income' : 'Expense')
+    const label = r.note || (cat ? getCategoryName(cat, locale) : t(r.type === 'income' ? 'income' : 'expense'))
     notifications.push({
       id: `recurring:${r.id}:${r.next_run_date}`, type: 'recurring_upcoming', severity: 'info',
-      title: `Upcoming recurring: ${label}`,
-      detail: `${formatSignedVND(Number(r.amount), r.type === 'income')} on ${shortDate(r.next_run_date)}`,
+      title: t('upcomingRecurring', { label }),
+      detail: t('recurringAmount', { amount: formatSignedVND(Number(r.amount), r.type === 'income'), date: shortDate(r.next_run_date, locale) }),
       href: '/recurring',
     })
   }
@@ -138,8 +143,8 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     if (target > 0 && current >= target) {
       notifications.push({
         id: `goal_reached:${g.id}`, type: 'goal_reached', severity: 'success',
-        title: `Goal reached: ${label}`,
-        detail: `${formatVND(current)} saved — mark it as completed 🎉`,
+        title: t('goalReached', { label }),
+        detail: t('goalSaved', { amount: formatVND(current) }),
         href: '/saving-goals',
       })
     } else if (g.deadline && g.deadline <= goalHorizon) {
@@ -149,8 +154,8 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
         id: `goal_deadline:${g.id}:${g.deadline}:${overdue ? 'overdue' : 'soon'}`,
         type: 'goal_deadline',
         severity: overdue ? 'alert' : 'warning',
-        title: overdue ? `Goal past deadline: ${label}` : `Goal deadline soon: ${label}`,
-        detail: `${pct}% funded · ${overdue ? 'was due' : 'due'} ${shortDate(g.deadline)}`,
+        title: overdue ? t('goalOverdue', { label }) : t('goalSoon', { label }),
+        detail: t('goalFunded', { percent: pct, overdue: overdue ? 'yes' : 'no', date: shortDate(g.deadline, locale) }),
         href: '/saving-goals',
       })
     }
@@ -165,8 +170,8 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
     if (pct >= 0.8) {
       notifications.push({
         id: `credit:${w.id}`, type: 'credit_high', severity: 'warning',
-        title: `Credit card nearly maxed: ${w.name}`,
-        detail: `${Math.round(pct * 100)}% of limit used — ${formatVND(used)} of ${formatVND(limit)}`,
+        title: t('creditHigh', { wallet: w.name }),
+        detail: t('creditUsage', { percent: Math.round(pct * 100), used: formatVND(used), limit: formatVND(limit) }),
         href: '/wallets',
       })
     }
@@ -205,11 +210,11 @@ export const PATCH = withAuth(async (request, { supabase, user }) => {
   const ids = body?.ids
 
   if (action !== 'read' && action !== 'dismiss') {
-    return badRequest("action must be 'read' or 'dismiss'.")
+    return badRequest('actionMustBeReadOrDismiss')
   }
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 100
     || !ids.every(id => typeof id === 'string' && id.length <= 200)) {
-    return badRequest('ids must be a non-empty array of strings.')
+    return badRequest('idsMustBeANonEmptyArrayOfStrings')
   }
 
   const now = new Date().toISOString()
@@ -226,7 +231,7 @@ export const PATCH = withAuth(async (request, { supabase, user }) => {
     .upsert(rows, { onConflict: 'user_id,notification_id' })
   if (error) {
     console.error('[api] notification state upsert failed:', error.message)
-    return badRequest(error.message)
+    return supabaseError(error)
   }
 
   return noContent()

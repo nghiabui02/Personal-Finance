@@ -1,9 +1,13 @@
+import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import WalletsClient from './_components/wallets-client'
 import { requireUser } from '@/lib/server/auth'
 import { walletsQuery } from '@/lib/server/queries'
 
-export const metadata: Metadata = { title: 'Wallets' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('navigation')
+  return { title: t('wallets') }
+}
 
 export const dynamic = 'force-dynamic'
 

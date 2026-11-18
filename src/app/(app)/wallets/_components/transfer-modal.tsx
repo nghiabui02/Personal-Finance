@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -20,6 +21,7 @@ interface TransferModalProps {
 }
 
 export function TransferModal({ wallets, defaultFromId, onClose }: TransferModalProps) {
+  const t = useTranslations('wallets')
   const close = useModalClose()
   const [fromId, setFromId] = useState(defaultFromId ?? wallets[0]?.id ?? '')
   const [toId, setToId] = useState(
@@ -37,10 +39,10 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!fromId || !toId) return setError('Select both wallets.')
-    if (fromId === toId) return setError('Source and destination must be different.')
-    if (!Number.isFinite(amount) || amount <= 0) return setError('Enter a valid amount.')
-    if (insufficient) return setError('Insufficient balance in source wallet.')
+    if (!fromId || !toId) return setError(t('selectBothWallets'))
+    if (fromId === toId) return setError(t('sourceAndDestinationMustBeDifferent'))
+    if (!Number.isFinite(amount) || amount <= 0) return setError(t('enterAValidAmount'))
+    if (insufficient) return setError(t('insufficientBalanceInSourceWallet'))
 
     submit(async () => {
       await walletsApi.transfer({ from_wallet_id: fromId, to_wallet_id: toId, amount, note: note.trim() || null, transfer_date: date })
@@ -81,7 +83,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
   }
 
   return (
-    <Modal title="Transfer between wallets" size="md" onClose={onClose}>
+    <Modal title={t('transferBetweenWallets')} size="md" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* From → To on one row; the button between them swaps the direction */}
@@ -89,7 +91,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-end">
             <div className="min-w-0">
               <CustomSelect
-                label="From"
+                label={t('from')}
                 name="from_wallet"
                 options={walletOptions(wallets)}
                 value={fromId}
@@ -102,8 +104,8 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
             <button
               type="button"
               onClick={swap}
-              aria-label="Swap wallets"
-              title="Swap"
+              aria-label={t('swapWallets')}
+              title={t('swap')}
               className="h-[42px] w-9 rounded-lg bg-brand-soft text-brand flex items-center justify-center shrink-0 transition-transform active:scale-90"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} aria-hidden="true">
@@ -112,7 +114,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
             </button>
             <div className="min-w-0">
               <CustomSelect
-                label="To"
+                label={t('to')}
                 name="to_wallet"
                 options={walletOptions(wallets.filter(w => w.id !== fromId))}
                 value={toId}
@@ -131,7 +133,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
         {/* Amount + Date share a row — neither needs the full width */}
         <div className="grid grid-cols-2 gap-3 items-end">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('amount')}</label>
             <div className="relative">
               <input
                 type="text"
@@ -145,21 +147,19 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">₫</span>
             </div>
           </div>
-          <DatePicker label="Date" name="date" value={date} onChange={setDate} required />
+          <DatePicker label={t('date')} name="date" value={date} onChange={setDate} required />
         </div>
 
         <Input
-          label="Note (optional)"
+          label={t('noteOptional')}
           name="note"
           value={note}
           onChange={e => setNote(e.target.value)}
-          placeholder="e.g. Monthly savings"
+          placeholder={t('eGMonthlySavings')}
         />
 
         {insufficient && (
-          <p className="text-sm text-rose-600 dark:text-rose-400">
-            Insufficient balance. Available: {formatVND(Number(fromWallet!.balance))}
-          </p>
+          <p className="text-sm text-rose-600 dark:text-rose-400">{t('sentenceInsufficientBalanceAvailable', { value0: formatVND(Number(fromWallet!.balance)) })}</p>
         )}
 
         <FormError message={error} />
@@ -167,7 +167,7 @@ export function TransferModal({ wallets, defaultFromId, onClose }: TransferModal
         <ModalActions
           isPending={isPending}
           disabled={!amount || fromId === toId || !!insufficient}
-          submitLabel="Transfer"
+          submitLabel={t('transfer')}
           pendingLabel="Transferring…"
           onCancel={close}
         />

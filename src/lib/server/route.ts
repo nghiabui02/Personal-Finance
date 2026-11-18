@@ -1,3 +1,5 @@
+import { authErrorKey } from '@/i18n/auth-error'
+import { getTranslations } from 'next-intl/server'
 import { NextRequest, NextResponse } from 'next/server'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
@@ -10,21 +12,22 @@ type AuthedContext<P> = {
   params: P
 }
 
-export function jsonError(status: number, message: string): NextResponse {
-  return NextResponse.json({ error: message }, { status })
+export async function jsonError(status: number, message: string, values?: Record<string, string | number>): Promise<NextResponse> {
+  const t = await getTranslations('errors')
+  return NextResponse.json({ error: t.has(message) ? t(message, values) : message }, { status })
 }
 
 export const badRequest = (message: string) => jsonError(400, message)
-const unauthorized = () => jsonError(401, 'Unauthorized')
-export const notFound = (message = 'Not found.') => jsonError(404, message)
+const unauthorized = () => jsonError(401, "unauthorized")
+export const notFound = (message = "notFound") => jsonError(404, message)
 export const conflict = (message: string) => jsonError(409, message)
-export const tooManyRequests = (message = 'Too many attempts. Please try again later.') => jsonError(429, message)
+export const tooManyRequests = (message = "tooManyAttemptsPleaseTryAgainLater") => jsonError(429, message)
 
 // For Supabase/PostgREST errors that reach the response: log for debugging,
-// surface the message so the client can display it.
-export function supabaseError(error: { message: string; code?: string }): NextResponse {
+// show a safe localized fallback while retaining diagnostics on the server.
+export function supabaseError(error: { message: string; code?: string }): Promise<NextResponse> {
   console.error('[api] supabase error:', error.code ?? '', error.message)
-  return jsonError(500, error.message)
+  return jsonError(500, 'internalServerError')
 }
 
 /**
@@ -32,8 +35,8 @@ export function supabaseError(error: { message: string; code?: string }): NextRe
  * wallet, more than the debt still owes — with SQLSTATE P0001, and write the
  * sentence the user should read. Anything else is a fault on our side.
  */
-export function rpcError(error: { message: string; code?: string }): NextResponse {
-  return error.code === 'P0001' ? badRequest(error.message) : supabaseError(error)
+export function rpcError(error: { message: string; code?: string }): Promise<NextResponse> | NextResponse {
+  return error.code === 'P0001' ? NextResponse.json({ error: error.message }, { status: 400 }) : supabaseError(error)
 }
 
 export const noContent = () => new NextResponse(null, { status: 204 })
@@ -92,8 +95,8 @@ export function withAuth<P = Record<string, never>>(
       return await handler(request, { supabase, user, params })
     } catch (err) {
       console.error(`[api] ${request.method} ${request.nextUrl.pathname} failed:`, err)
-      if (err instanceof SyntaxError) return badRequest('Invalid JSON body.')
-      return jsonError(500, 'Internal server error')
+      if (err instanceof SyntaxError) return badRequest("invalidJsonBody")
+      return jsonError(500, "internalServerError")
     }
   }
 }
@@ -108,8 +111,13 @@ export function withRoute(
       return await handler(request)
     } catch (err) {
       console.error(`[api] ${request.method} ${request.nextUrl.pathname} failed:`, err)
-      if (err instanceof SyntaxError) return badRequest('Invalid JSON body.')
-      return jsonError(500, 'Internal server error')
+      if (err instanceof SyntaxError) return badRequest("invalidJsonBody")
+      return jsonError(500, "internalServerError")
     }
   }
+}
+
+export function authError(error: { message: string; code?: string }): Promise<NextResponse> {
+  console.error('[api] auth operation failed:', error.code ?? 'unknown')
+  return jsonError(400, authErrorKey(error.code))
 }
