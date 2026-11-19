@@ -73,7 +73,7 @@ export function useStatementReview(
         ...row,
         selected: !row.duplicate && !row.conflict,
         title: '',
-        category_id: suggestCategory(row),
+        user_category_id: suggestCategory(row),
       })))
     })
   }
@@ -82,7 +82,7 @@ export function useStatementReview(
     event.preventDefault()
     if (!rows) return
     return run(async () => {
-      const decisions = rows.filter(row => row.selected).map(row => ({ row: row.row, title: row.title, category_id: row.category_id }))
+      const decisions = rows.filter(row => row.selected).map(row => ({ row: row.row, title: row.title, user_category_id: row.user_category_id }))
       setResult(await bankImportApi.confirm(file, decisions))
       router.refresh()
     })

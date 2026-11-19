@@ -1,0 +1,1288 @@
+{
+  "collections": [
+    {
+      "key": "food_drink",
+      "vi": "Ăn uống",
+      "en": "Food and drink"
+    },
+    {
+      "key": "transport",
+      "vi": "Đi lại và xe cộ",
+      "en": "Transport and vehicles"
+    },
+    {
+      "key": "home",
+      "vi": "Nhà ở và tiện ích",
+      "en": "Home and utilities"
+    },
+    {
+      "key": "shopping",
+      "vi": "Mua sắm và chăm sóc cá nhân",
+      "en": "Shopping and personal care"
+    },
+    {
+      "key": "health",
+      "vi": "Sức khỏe",
+      "en": "Health"
+    },
+    {
+      "key": "education",
+      "vi": "Học tập và công việc",
+      "en": "Education and work"
+    },
+    {
+      "key": "entertainment",
+      "vi": "Giải trí và đăng ký",
+      "en": "Entertainment and subscriptions"
+    },
+    {
+      "key": "travel",
+      "vi": "Du lịch",
+      "en": "Travel"
+    },
+    {
+      "key": "family_pets",
+      "vi": "Gia đình và thú cưng",
+      "en": "Family and pets"
+    },
+    {
+      "key": "giving",
+      "vi": "Quà tặng và đóng góp",
+      "en": "Gifts and giving"
+    },
+    {
+      "key": "fees",
+      "vi": "Phí và nghĩa vụ",
+      "en": "Fees and obligations"
+    },
+    {
+      "key": "income",
+      "vi": "Thu nhập",
+      "en": "Income"
+    }
+  ],
+  "templates": [
+    {
+      "key": "food_drink",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Ăn uống",
+      "en": "Food and drink",
+      "aliases": [
+        "an",
+        "uong",
+        "food",
+        "drink"
+      ],
+      "icon": "🍽️",
+      "color": "#ef4444"
+    },
+    {
+      "key": "groceries",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Đi chợ, siêu thị",
+      "en": "Groceries",
+      "aliases": [
+        "thuc",
+        "pham",
+        "bach",
+        "hoa",
+        "supermarket"
+      ],
+      "icon": "🍽️",
+      "color": "#ef4444"
+    },
+    {
+      "key": "eating_out",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Ăn ngoài",
+      "en": "Eating out",
+      "aliases": [
+        "nha",
+        "hang",
+        "restaurant"
+      ],
+      "icon": "🍽️",
+      "color": "#ef4444"
+    },
+    {
+      "key": "breakfast",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Ăn sáng",
+      "en": "Breakfast",
+      "aliases": [
+        "bua",
+        "sang"
+      ],
+      "icon": "🍽️",
+      "color": "#ef4444"
+    },
+    {
+      "key": "lunch",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Ăn trưa",
+      "en": "Lunch",
+      "aliases": [
+        "bua",
+        "trua"
+      ],
+      "icon": "🍽️",
+      "color": "#ef4444"
+    },
+    {
+      "key": "dinner",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Ăn tối",
+      "en": "Dinner",
+      "aliases": [
+        "bua",
+        "toi"
+      ],
+      "icon": "🍽️",
+      "color": "#ef4444"
+    },
+    {
+      "key": "coffee",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Cà phê",
+      "en": "Coffee",
+      "aliases": [
+        "cafe",
+        "ca",
+        "phe",
+        "tea",
+        "tra"
+      ],
+      "icon": "🍽️",
+      "color": "#ef4444"
+    },
+    {
+      "key": "food_delivery",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Đặt đồ ăn",
+      "en": "Food delivery",
+      "aliases": [
+        "giao",
+        "do",
+        "an",
+        "grabfood",
+        "shopeefood"
+      ],
+      "icon": "🍽️",
+      "color": "#ef4444"
+    },
+    {
+      "key": "transport",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Di chuyển",
+      "en": "Transport",
+      "aliases": [
+        "di",
+        "lai",
+        "travel"
+      ],
+      "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "fuel",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Xăng dầu",
+      "en": "Fuel",
+      "aliases": [
+        "xang",
+        "dau",
+        "petrol",
+        "gasoline"
+      ],
+      "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "parking",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Gửi xe",
+      "en": "Parking",
+      "aliases": [
+        "do",
+        "xe"
+      ],
+      "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "tolls",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Phí cầu đường",
+      "en": "Tolls",
+      "aliases": [
+        "cao",
+        "toc",
+        "cau",
+        "duong"
+      ],
+      "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "public_transport",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Phương tiện công cộng",
+      "en": "Public transport",
+      "aliases": [
+        "xe",
+        "buyt",
+        "bus",
+        "metro",
+        "tau"
+      ],
+      "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "taxi",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Taxi, xe công nghệ",
+      "en": "Taxis and ride hailing",
+      "aliases": [
+        "grab",
+        "be",
+        "gojek",
+        "taxi"
+      ],
+      "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "vehicle_maintenance",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Bảo dưỡng xe",
+      "en": "Vehicle maintenance",
+      "aliases": [
+        "sua",
+        "xe",
+        "rua",
+        "xe",
+        "service"
+      ],
+      "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "vehicle_insurance",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Bảo hiểm xe",
+      "en": "Vehicle insurance",
+      "aliases": [
+        "bao",
+        "hiem",
+        "o",
+        "to",
+        "xe",
+        "may"
+      ],
+      "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "housing",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Nhà ở",
+      "en": "Housing",
+      "aliases": [
+        "nha",
+        "o",
+        "home"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "rent",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Thuê nhà",
+      "en": "Rent",
+      "aliases": [
+        "tien",
+        "thue",
+        "phong",
+        "tro"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "mortgage",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Trả góp nhà",
+      "en": "Mortgage payments",
+      "aliases": [
+        "vay",
+        "mua",
+        "nha",
+        "mortgage"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "electricity",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Tiền điện",
+      "en": "Electricity",
+      "aliases": [
+        "dien",
+        "power"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "water",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Tiền nước",
+      "en": "Water",
+      "aliases": [
+        "nuoc"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "internet",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Internet",
+      "en": "Internet",
+      "aliases": [
+        "wifi",
+        "mang"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "phone",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Điện thoại",
+      "en": "Phone",
+      "aliases": [
+        "cuoc",
+        "di",
+        "dong",
+        "mobile"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "home_repairs",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Sửa chữa nhà",
+      "en": "Home repairs",
+      "aliases": [
+        "bao",
+        "tri",
+        "nha"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "household_supplies",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Đồ dùng gia đình",
+      "en": "Household supplies",
+      "aliases": [
+        "gia",
+        "dung",
+        "cleaning"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "bills",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Hóa đơn",
+      "en": "Bills",
+      "aliases": [
+        "hoa",
+        "don",
+        "utilities"
+      ],
+      "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "shopping",
+      "collection": "shopping",
+      "type": "expense",
+      "vi": "Mua sắm",
+      "en": "Shopping",
+      "aliases": [
+        "mua",
+        "sam",
+        "retail"
+      ],
+      "icon": "🛍️",
+      "color": "#eab308"
+    },
+    {
+      "key": "clothing",
+      "collection": "shopping",
+      "type": "expense",
+      "vi": "Quần áo",
+      "en": "Clothing",
+      "aliases": [
+        "thoi",
+        "trang",
+        "fashion"
+      ],
+      "icon": "🛍️",
+      "color": "#eab308"
+    },
+    {
+      "key": "shoes",
+      "collection": "shopping",
+      "type": "expense",
+      "vi": "Giày dép",
+      "en": "Shoes",
+      "aliases": [
+        "giay",
+        "dep",
+        "footwear"
+      ],
+      "icon": "🛍️",
+      "color": "#eab308"
+    },
+    {
+      "key": "electronics",
+      "collection": "shopping",
+      "type": "expense",
+      "vi": "Đồ điện tử",
+      "en": "Electronics",
+      "aliases": [
+        "may",
+        "tinh",
+        "dien",
+        "thoai",
+        "laptop"
+      ],
+      "icon": "🛍️",
+      "color": "#eab308"
+    },
+    {
+      "key": "furniture",
+      "collection": "shopping",
+      "type": "expense",
+      "vi": "Nội thất",
+      "en": "Furniture",
+      "aliases": [
+        "ban",
+        "ghe",
+        "giuong"
+      ],
+      "icon": "🛍️",
+      "color": "#eab308"
+    },
+    {
+      "key": "cosmetics",
+      "collection": "shopping",
+      "type": "expense",
+      "vi": "Mỹ phẩm",
+      "en": "Cosmetics",
+      "aliases": [
+        "cham",
+        "soc",
+        "da",
+        "skincare"
+      ],
+      "icon": "🛍️",
+      "color": "#eab308"
+    },
+    {
+      "key": "haircuts",
+      "collection": "shopping",
+      "type": "expense",
+      "vi": "Cắt tóc",
+      "en": "Haircuts",
+      "aliases": [
+        "lam",
+        "toc",
+        "salon"
+      ],
+      "icon": "🛍️",
+      "color": "#eab308"
+    },
+    {
+      "key": "laundry",
+      "collection": "shopping",
+      "type": "expense",
+      "vi": "Giặt là",
+      "en": "Laundry",
+      "aliases": [
+        "giat",
+        "ui",
+        "dry",
+        "cleaning"
+      ],
+      "icon": "🛍️",
+      "color": "#eab308"
+    },
+    {
+      "key": "health",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Sức khỏe",
+      "en": "Health",
+      "aliases": [
+        "suc",
+        "khoe",
+        "healthcare"
+      ],
+      "icon": "🏥",
+      "color": "#ec4899"
+    },
+    {
+      "key": "medical_visits",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Khám bệnh",
+      "en": "Medical visits",
+      "aliases": [
+        "bac",
+        "si",
+        "vien",
+        "phi",
+        "doctor"
+      ],
+      "icon": "🏥",
+      "color": "#ec4899"
+    },
+    {
+      "key": "medicine",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Thuốc",
+      "en": "Medicine",
+      "aliases": [
+        "duoc",
+        "pham",
+        "pharmacy"
+      ],
+      "icon": "🏥",
+      "color": "#ec4899"
+    },
+    {
+      "key": "dental",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Nha khoa",
+      "en": "Dental care",
+      "aliases": [
+        "rang",
+        "dental"
+      ],
+      "icon": "🏥",
+      "color": "#ec4899"
+    },
+    {
+      "key": "glasses",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Kính mắt",
+      "en": "Glasses",
+      "aliases": [
+        "kinh",
+        "thuoc",
+        "mat",
+        "optical"
+      ],
+      "icon": "🏥",
+      "color": "#ec4899"
+    },
+    {
+      "key": "health_insurance",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Bảo hiểm sức khỏe",
+      "en": "Health insurance",
+      "aliases": [
+        "bao",
+        "hiem",
+        "y",
+        "te"
+      ],
+      "icon": "🏥",
+      "color": "#ec4899"
+    },
+    {
+      "key": "education",
+      "collection": "education",
+      "type": "expense",
+      "vi": "Học tập",
+      "en": "Education",
+      "aliases": [
+        "hoc",
+        "tap",
+        "learning"
+      ],
+      "icon": "📚",
+      "color": "#3b82f6"
+    },
+    {
+      "key": "tuition",
+      "collection": "education",
+      "type": "expense",
+      "vi": "Học phí",
+      "en": "Tuition",
+      "aliases": [
+        "truong",
+        "school"
+      ],
+      "icon": "📚",
+      "color": "#3b82f6"
+    },
+    {
+      "key": "books",
+      "collection": "education",
+      "type": "expense",
+      "vi": "Sách",
+      "en": "Books",
+      "aliases": [
+        "sach",
+        "ebook"
+      ],
+      "icon": "📚",
+      "color": "#3b82f6"
+    },
+    {
+      "key": "courses",
+      "collection": "education",
+      "type": "expense",
+      "vi": "Khóa học",
+      "en": "Courses",
+      "aliases": [
+        "dao",
+        "tao",
+        "online",
+        "course"
+      ],
+      "icon": "📚",
+      "color": "#3b82f6"
+    },
+    {
+      "key": "stationery",
+      "collection": "education",
+      "type": "expense",
+      "vi": "Văn phòng phẩm",
+      "en": "Stationery",
+      "aliases": [
+        "but",
+        "giay",
+        "office",
+        "supplies"
+      ],
+      "icon": "📚",
+      "color": "#3b82f6"
+    },
+    {
+      "key": "work_tools",
+      "collection": "education",
+      "type": "expense",
+      "vi": "Công cụ làm việc",
+      "en": "Work tools",
+      "aliases": [
+        "phan",
+        "mem",
+        "software",
+        "equipment"
+      ],
+      "icon": "📚",
+      "color": "#3b82f6"
+    },
+    {
+      "key": "professional_memberships",
+      "collection": "education",
+      "type": "expense",
+      "vi": "Hội phí nghề nghiệp",
+      "en": "Professional memberships",
+      "aliases": [
+        "hiep",
+        "hoi",
+        "membership"
+      ],
+      "icon": "📚",
+      "color": "#3b82f6"
+    },
+    {
+      "key": "entertainment",
+      "collection": "entertainment",
+      "type": "expense",
+      "vi": "Giải trí",
+      "en": "Entertainment",
+      "aliases": [
+        "giai",
+        "tri",
+        "leisure"
+      ],
+      "icon": "🎬",
+      "color": "#a855f7"
+    },
+    {
+      "key": "movies",
+      "collection": "entertainment",
+      "type": "expense",
+      "vi": "Xem phim",
+      "en": "Movies",
+      "aliases": [
+        "rap",
+        "cinema"
+      ],
+      "icon": "🎬",
+      "color": "#a855f7"
+    },
+    {
+      "key": "games",
+      "collection": "entertainment",
+      "type": "expense",
+      "vi": "Trò chơi",
+      "en": "Games",
+      "aliases": [
+        "game",
+        "gaming"
+      ],
+      "icon": "🎬",
+      "color": "#a855f7"
+    },
+    {
+      "key": "music",
+      "collection": "entertainment",
+      "type": "expense",
+      "vi": "Âm nhạc",
+      "en": "Music",
+      "aliases": [
+        "nhac",
+        "spotify",
+        "apple",
+        "music"
+      ],
+      "icon": "🎬",
+      "color": "#a855f7"
+    },
+    {
+      "key": "streaming",
+      "collection": "entertainment",
+      "type": "expense",
+      "vi": "Xem trực tuyến",
+      "en": "Streaming",
+      "aliases": [
+        "netflix",
+        "youtube",
+        "subscription"
+      ],
+      "icon": "🎬",
+      "color": "#a855f7"
+    },
+    {
+      "key": "hobbies",
+      "collection": "entertainment",
+      "type": "expense",
+      "vi": "Sở thích",
+      "en": "Hobbies",
+      "aliases": [
+        "thu",
+        "vui"
+      ],
+      "icon": "🎬",
+      "color": "#a855f7"
+    },
+    {
+      "key": "gym",
+      "collection": "entertainment",
+      "type": "expense",
+      "vi": "Thể thao, phòng tập",
+      "en": "Gym and sports",
+      "aliases": [
+        "tap",
+        "gym",
+        "fitness",
+        "yoga"
+      ],
+      "icon": "🎬",
+      "color": "#a855f7"
+    },
+    {
+      "key": "events",
+      "collection": "entertainment",
+      "type": "expense",
+      "vi": "Sự kiện",
+      "en": "Events",
+      "aliases": [
+        "concert",
+        "ve",
+        "bieu",
+        "dien"
+      ],
+      "icon": "🎬",
+      "color": "#a855f7"
+    },
+    {
+      "key": "accommodation",
+      "collection": "travel",
+      "type": "expense",
+      "vi": "Lưu trú",
+      "en": "Accommodation",
+      "aliases": [
+        "khach",
+        "san",
+        "hotel",
+        "homestay"
+      ],
+      "icon": "✈️",
+      "color": "#0ea5e9"
+    },
+    {
+      "key": "flights",
+      "collection": "travel",
+      "type": "expense",
+      "vi": "Vé máy bay",
+      "en": "Flights",
+      "aliases": [
+        "may",
+        "bay",
+        "airline"
+      ],
+      "icon": "✈️",
+      "color": "#0ea5e9"
+    },
+    {
+      "key": "tours",
+      "collection": "travel",
+      "type": "expense",
+      "vi": "Tour du lịch",
+      "en": "Tours",
+      "aliases": [
+        "tham",
+        "quan",
+        "tour"
+      ],
+      "icon": "✈️",
+      "color": "#0ea5e9"
+    },
+    {
+      "key": "travel_insurance",
+      "collection": "travel",
+      "type": "expense",
+      "vi": "Bảo hiểm du lịch",
+      "en": "Travel insurance",
+      "aliases": [
+        "bao",
+        "hiem",
+        "du",
+        "lich"
+      ],
+      "icon": "✈️",
+      "color": "#0ea5e9"
+    },
+    {
+      "key": "visas",
+      "collection": "travel",
+      "type": "expense",
+      "vi": "Thị thực",
+      "en": "Visas",
+      "aliases": [
+        "visa",
+        "ho",
+        "chieu",
+        "passport"
+      ],
+      "icon": "✈️",
+      "color": "#0ea5e9"
+    },
+    {
+      "key": "childcare",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Chăm sóc trẻ",
+      "en": "Childcare",
+      "aliases": [
+        "tre",
+        "em",
+        "babysitter"
+      ],
+      "icon": "🐾",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "school_meals",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Ăn uống ở trường",
+      "en": "School meals",
+      "aliases": [
+        "ban",
+        "tru"
+      ],
+      "icon": "🐾",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "family_support",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Hỗ trợ gia đình",
+      "en": "Family support",
+      "aliases": [
+        "bo",
+        "me",
+        "phu",
+        "cap"
+      ],
+      "icon": "🐾",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "pet_food",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Thức ăn thú cưng",
+      "en": "Pet food",
+      "aliases": [
+        "cho",
+        "meo",
+        "hat"
+      ],
+      "icon": "🐾",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "veterinary",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Thú y",
+      "en": "Veterinary care",
+      "aliases": [
+        "kham",
+        "thu",
+        "cung",
+        "vet"
+      ],
+      "icon": "🐾",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "birthday_gifts",
+      "collection": "giving",
+      "type": "expense",
+      "vi": "Quà sinh nhật",
+      "en": "Birthday gifts",
+      "aliases": [
+        "sinh",
+        "nhat",
+        "birthday"
+      ],
+      "icon": "🎁",
+      "color": "#f43f5e"
+    },
+    {
+      "key": "wedding_gifts",
+      "collection": "giving",
+      "type": "expense",
+      "vi": "Mừng cưới",
+      "en": "Wedding gifts",
+      "aliases": [
+        "dam",
+        "cuoi",
+        "wedding"
+      ],
+      "icon": "🎁",
+      "color": "#f43f5e"
+    },
+    {
+      "key": "celebrations",
+      "collection": "giving",
+      "type": "expense",
+      "vi": "Lễ, Tết",
+      "en": "Celebrations",
+      "aliases": [
+        "tet",
+        "le",
+        "li",
+        "xi",
+        "holiday"
+      ],
+      "icon": "🎁",
+      "color": "#f43f5e"
+    },
+    {
+      "key": "donations",
+      "collection": "giving",
+      "type": "expense",
+      "vi": "Từ thiện",
+      "en": "Donations",
+      "aliases": [
+        "quyen",
+        "gop",
+        "charity"
+      ],
+      "icon": "🎁",
+      "color": "#f43f5e"
+    },
+    {
+      "key": "bank_fees",
+      "collection": "fees",
+      "type": "expense",
+      "vi": "Phí ngân hàng",
+      "en": "Bank fees",
+      "aliases": [
+        "phi",
+        "chuyen",
+        "tien",
+        "banking"
+      ],
+      "icon": "📄",
+      "color": "#64748b"
+    },
+    {
+      "key": "taxes",
+      "collection": "fees",
+      "type": "expense",
+      "vi": "Thuế",
+      "en": "Taxes",
+      "aliases": [
+        "thue",
+        "tax"
+      ],
+      "icon": "📄",
+      "color": "#64748b"
+    },
+    {
+      "key": "administrative_fees",
+      "collection": "fees",
+      "type": "expense",
+      "vi": "Phí hành chính",
+      "en": "Administrative fees",
+      "aliases": [
+        "le",
+        "phi",
+        "giay",
+        "to"
+      ],
+      "icon": "📄",
+      "color": "#64748b"
+    },
+    {
+      "key": "fines",
+      "collection": "fees",
+      "type": "expense",
+      "vi": "Tiền phạt",
+      "en": "Fines",
+      "aliases": [
+        "vi",
+        "pham",
+        "penalty"
+      ],
+      "icon": "📄",
+      "color": "#64748b"
+    },
+    {
+      "key": "other_expense",
+      "collection": "fees",
+      "type": "expense",
+      "vi": "Chi tiêu khác",
+      "en": "Other expenses",
+      "aliases": [
+        "chi",
+        "khac",
+        "miscellaneous"
+      ],
+      "icon": "📄",
+      "color": "#64748b"
+    },
+    {
+      "key": "salary",
+      "collection": "income",
+      "type": "income",
+      "vi": "Lương",
+      "en": "Salary",
+      "aliases": [
+        "luong",
+        "payroll",
+        "wages"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "bonus",
+      "collection": "income",
+      "type": "income",
+      "vi": "Thưởng",
+      "en": "Bonus",
+      "aliases": [
+        "thuong",
+        "incentive"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "freelance",
+      "collection": "income",
+      "type": "income",
+      "vi": "Làm tự do",
+      "en": "Freelance work",
+      "aliases": [
+        "freelance",
+        "ngoai",
+        "gio"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "business_income",
+      "collection": "income",
+      "type": "income",
+      "vi": "Kinh doanh",
+      "en": "Business income",
+      "aliases": [
+        "buon",
+        "ban",
+        "doanh",
+        "thu"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "rental_income",
+      "collection": "income",
+      "type": "income",
+      "vi": "Cho thuê",
+      "en": "Rental income",
+      "aliases": [
+        "tien",
+        "cho",
+        "thue"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "interest",
+      "collection": "income",
+      "type": "income",
+      "vi": "Tiền lãi",
+      "en": "Interest",
+      "aliases": [
+        "lai",
+        "tiet",
+        "kiem",
+        "savings",
+        "interest"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "dividends",
+      "collection": "income",
+      "type": "income",
+      "vi": "Cổ tức",
+      "en": "Dividends",
+      "aliases": [
+        "co",
+        "tuc",
+        "shares"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "investment",
+      "collection": "income",
+      "type": "income",
+      "vi": "Đầu tư",
+      "en": "Investment income",
+      "aliases": [
+        "dau",
+        "tu",
+        "chung",
+        "khoan"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "gifts_received",
+      "collection": "income",
+      "type": "income",
+      "vi": "Quà được tặng",
+      "en": "Gifts received",
+      "aliases": [
+        "qua",
+        "tang",
+        "li",
+        "xi",
+        "received"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "refunds",
+      "collection": "income",
+      "type": "income",
+      "vi": "Hoàn tiền",
+      "en": "Refunds",
+      "aliases": [
+        "hoan",
+        "tien",
+        "return"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "other_income",
+      "collection": "income",
+      "type": "income",
+      "vi": "Thu nhập khác",
+      "en": "Other income",
+      "aliases": [
+        "thu",
+        "khac",
+        "miscellaneous"
+      ],
+      "icon": "💰",
+      "color": "#22c55e"
+    }
+  ]
+}

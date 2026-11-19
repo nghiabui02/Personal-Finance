@@ -74,7 +74,7 @@ export function TransactionForm({ editing, categories, wallets, debts, frequent 
       const base = {
         type: txType,
         amount,
-        category_id: categoryId || undefined,
+        user_category_id: categoryId || undefined,
         wallet_id: walletId || undefined,
         transaction_date: date,
         note: note || (selectedDebt ? `Repayment to ${selectedDebt.person_name}` : undefined),

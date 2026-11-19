@@ -36,7 +36,7 @@ A personal finance app for a single user. Income/expense tracking, wallets, budg
 - Wallets: cash, bank, e-wallet, investment, **credit card** (credit limit, statement day, due day)
 - **Reconcile** against the real bank balance — the gap is filed as an adjustment transaction, so history still adds up and the drift stays visible
 - Custom categories (icon, color)
-- **Category Store**: browse the shared category templates and add the ones you want. An added category is your own copy — its name follows the app language until you rename it, and editing it never affects anyone else
+- **Category Store**: search 85 bilingual templates across 12 collections and add one or several at once. Each adoption creates a personal `user_categories` link. Names follow the app language until explicitly renamed; appearance and names stay private. Remove/restore retains history, while active recurring rules or current-month budgets block removal.
 - Lend, Borrow, Collect Debt and Repay Debt categories only work through a debt — the transaction form sends you to Debts instead of filing them unlinked
 
 **Planning**
@@ -80,7 +80,7 @@ src/
 
 supabase/
 ├── migrations/          # schema (see the caveat under Setup)
-└── seed/                # re-runnable reset for the test account
+└── seed/                # initial or repeatable fixtures for the test account
 ```
 
 ### How data flows
@@ -145,6 +145,16 @@ regardless of where the app runs, so data never shifts by a day when you travel.
 > To stand up a fresh project, dump the schema from the working one
 > (`supabase db dump --schema public`) rather than replaying this folder. New
 > schema changes should land here as a migration.
+
+**Category membership cut-over (prepared 19 November 2026):** this checkout
+requires `20261119090000_user_categories.sql`. It uses `user_category_id` for
+transactions, budgets and recurring rules; it cannot serve the old schema.
+The migration refuses a non-empty ledger. Review the exact reset scope,
+retained Auth/settings, backup/restore and coordinated deployment procedure in
+[the cut-over runbook](supabase/operations/category-store-cutover.md). Nothing
+in that file authorizes a live reset. For an isolated empty database, the
+captured public baseline plus this migration supplies the public schema;
+Supabase Auth/roles, Storage and project settings remain separate prerequisites.
 
 The nightly `pg_cron` job that generates recurring transactions
 (`process-recurring-daily`, 00:05 in the ledger timezone) is also configured on

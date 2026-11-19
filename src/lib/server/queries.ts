@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { CATEGORY_COLUMNS, type Category } from '@/lib/api/categories'
+import type { Category } from '@/lib/api/categories'
+import { CATEGORY_COLUMNS } from '@/lib/category-columns'
 import { WALLET_COLUMNS, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
 
 /**
@@ -21,14 +22,12 @@ import { WALLET_COLUMNS, WALLET_TX_COLUMNS } from '@/lib/api/wallets'
  */
 
 /** The user's own categories: custom, added from the Store, and system ones.
- *  Row-level security limits `user_id` to the caller; the shared Store
- *  templates (user_id null) are read only by the Store itself. */
+ *  RLS limits membership to the caller. Inactive rows remain available for
+ *  history, filters and unchanged existing-record edits. */
 export function categoriesQuery(supabase: SupabaseClient) {
   return supabase
-    .from('categories')
+    .from('user_categories')
     .select(CATEGORY_COLUMNS)
-    .not('user_id', 'is', null)
-    .order('is_default', { ascending: false })
     .order('name')
 }
 

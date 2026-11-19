@@ -8,7 +8,7 @@ import type { TransactionType } from '@/lib/constants'
 export interface ParsedDraft {
   type: TransactionType
   amount: number
-  category_id: string | null
+  user_category_id: string | null
   wallet_id: string | null
   note: string | null
   date: string | null

@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { withAuth, badRequest, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
@@ -10,7 +11,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
     amount: amount !== undefined ? Number(amount) : undefined,
     rollover: rollover !== undefined ? !!rollover : undefined,
     active: active !== undefined ? !!active : undefined,
-  }, '*, categories(id, name, icon, color, default_key, name_is_custom, system_key)')
+  }, `*, ${CATEGORY_RELATION}`)
 })
 
 export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {

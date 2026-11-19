@@ -56,7 +56,7 @@ export function applyTransactionFilters<T extends FilterableQuery<T>>(
 ): T {
   let q = query
   if (filters.type) q = q.eq('type', filters.type)
-  if (filters.categoryId) q = q.eq('category_id', filters.categoryId)
+  if (filters.categoryId) q = q.eq('user_category_id', filters.categoryId)
   if (filters.walletId) q = q.eq('wallet_id', filters.walletId)
   if (filters.min !== undefined) q = q.gte('amount', filters.min)
   if (filters.max !== undefined) q = q.lte('amount', filters.max)

@@ -1,8 +1,8 @@
 import { getTranslations } from 'next-intl/server'
 import { NextResponse } from 'next/server'
-import { badRequest, notFound, rpcError, supabaseError, withAuth } from '@/lib/server/route'
+import { badRequest, rpcError, withAuth } from '@/lib/server/route'
 import { isUuid } from '@/lib/imports/bank-csv'
-import { isDebtCategoryKey, MAX_BULK_TRANSACTIONS } from '@/lib/constants'
+import { MAX_BULK_TRANSACTIONS } from '@/lib/constants'
 
 /**
  * Acting on a selection of transactions at once — recategorising a stretch of
@@ -25,42 +25,21 @@ function readIds(body: unknown, t: Awaited<ReturnType<typeof getTranslations>>):
   return [...new Set(ids as string[])]
 }
 
-export const PATCH = withAuth(async (request, { supabase, user }) => {
+export const PATCH = withAuth(async (request, { supabase }) => {
   const body = await request.json()
 
   let ids: string[]
   try { ids = readIds(body, await getTranslations('errors')) } catch (err) { return badRequest((err as Error).message) }
 
-  const categoryId = (body as { category_id?: unknown }).category_id
+  const categoryId = (body as { user_category_id?: unknown }).user_category_id
   if (!isUuid(categoryId)) return badRequest('chooseACategory')
 
-  // Only the user's own categories: a Store template is not filed against
-  // directly, the user's copy of it is.
-  const { data: category, error: categoryError } = await supabase
-    .from('categories').select('id, type, system_key').eq('id', categoryId).eq('user_id', user.id).maybeSingle()
-  if (categoryError) return supabaseError(categoryError)
-  if (!category) return notFound('thatCategoryNoLongerExists')
-  if (isDebtCategoryKey(category.system_key)) return badRequest('debtCategoryNeedsADebt')
-
-  const { data, error } = await supabase
-    .from('transactions')
-    .update({ category_id: category.id })
-    .eq('user_id', user.id)
-    .in('id', ids)
-    .eq('type', category.type)
-    .is('transfer_pair_id', null)
-    .is('debt_payment_id', null)
-    .select('id')
-
-  if (error) return supabaseError(error)
-
-  // Fewer rows than asked for means the selection held something this category
-  // cannot describe. Reporting it beats leaving a silent partial edit.
-  if ((data?.length ?? 0) !== ids.length) {
-    return badRequest((await getTranslations('errors'))('partialCategoryUpdate', { updated: data?.length ?? 0, total: ids.length }))
-  }
-
-  return NextResponse.json({ updated: data!.length })
+  const { data, error } = await supabase.rpc('recategorize_transactions', {
+    p_ids: ids,
+    p_user_category_id: categoryId,
+  })
+  if (error) return rpcError(error)
+  return NextResponse.json({ updated: data })
 })
 
 export const DELETE = withAuth(async (request, { supabase }) => {

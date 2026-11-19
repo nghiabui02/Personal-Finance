@@ -53,7 +53,7 @@ export function SuggestBudgetsModal({
         // a partial failure should stop rather than race.
         for (const s of chosen) {
           await budgetsApi.create({
-            category_id: s.categoryId,
+            user_category_id: s.categoryId,
             amount: s.amount,
             month: monthRange(month).startDate,
           })

@@ -61,11 +61,11 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
   const [selectedMonth, setSelectedMonth] = useState(
     editing ? editing.month.slice(0, 7) : month
   )
-  const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
+  const [categoryId, setCategoryId] = useState(editing?.user_category_id ?? '')
   const [rollover, setRollover] = useState(editing?.rollover ?? false)
   const [active, setActive] = useState(editing?.active ?? true)
 
-  const editingCategoryId = editing?.category_id
+  const editingCategoryId = editing?.user_category_id
   const excludedIds = existingCategoryIds.filter(id => id !== editingCategoryId)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -78,7 +78,7 @@ export function BudgetModal({ editing, month, expenseCategories, existingCategor
         await budgetsApi.update(editing.id, { amount, rollover, active })
       } else {
         await budgetsApi.create({
-          category_id: categoryId || undefined,
+          user_category_id: categoryId || undefined,
           amount,
           month: `${selectedMonth}-01`,
           rollover,

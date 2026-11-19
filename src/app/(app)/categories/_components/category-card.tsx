@@ -3,6 +3,7 @@ import { useLocale, useTranslations } from 'next-intl'
 
 import { type Category } from '@/lib/api/categories'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
+import { Button } from '@/components/ui/button'
 
 interface CategoryCardProps {
   category: Category
@@ -32,7 +33,7 @@ export function CategoryCard({ category, onEdit, onDelete, isDeleting }: Categor
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{getCategoryName(category, locale)}</p>
-        {category.source_template_id && <p className="text-xs text-gray-400">{t('fromStore')}</p>}
+        {category.category_id && <p className="text-xs text-gray-400">{t('fromStore')}</p>}
       </div>
 
       {category.color && (
@@ -41,7 +42,9 @@ export function CategoryCard({ category, onEdit, onDelete, isDeleting }: Categor
 
       <div className="flex items-center gap-0.5">
         <IconButton label={t('editCategory')} onClick={onEdit}>{EditIcon}</IconButton>
-        <IconButton label={t('deleteCategory')} onClick={onDelete} disabled={isDeleting} tone="danger">{TrashIcon}</IconButton>
+        {!category.system_key && (category.is_active
+          ? <IconButton label={t('removeCategory')} onClick={onDelete} disabled={isDeleting} tone="danger">{TrashIcon}</IconButton>
+          : <Button variant="secondary" onClick={onDelete} disabled={isDeleting}>{t('restore')}</Button>)}
       </div>
     </div>
   )

@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { categoryTotals } from '@/lib/utils/category-totals'
 import { getReportingGroup, summarizeNonOperatingFlows } from '@/lib/server/transaction-reporting'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
@@ -5,6 +6,9 @@ import { NextResponse } from 'next/server'
 import { withAuth } from '@/lib/server/route'
 import { toYMD } from '@/lib/utils/date'
 import { sumByType } from '@/lib/utils/totals'
+import { getCategoryName } from '@/i18n/category'
+import { getLocale } from 'next-intl/server'
+import type { CategoryRef } from '@/lib/types'
 
 function esc(v: string | number | null | undefined): string {
   const s = String(v ?? '')
@@ -40,6 +44,7 @@ function getDateRange(period: string, start: string): { startDate: string; endDa
 }
 
 export const GET = withAuth(async (request, { supabase, user }) => {
+  const locale = await getLocale()
   const { searchParams } = request.nextUrl
   const period = searchParams.get('period') ?? 'month'
   const start  = searchParams.get('start') ?? toYMD(new Date())
@@ -48,7 +53,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const [{ data: txRows }, { data: walletRows }] = await Promise.all([
     supabase
       .from('transactions')
-      .select('id, type, amount, note, transaction_date, payment_method, transfer_pair_id, categories(id, name, icon, system_key, default_key, name_is_custom), wallets(name)')
+      .select(`id, type, amount, note, transaction_date, payment_method, transfer_pair_id, ${CATEGORY_RELATION}, wallets(name)`)
       .eq('user_id', user.id)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate)
@@ -69,7 +74,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     transaction_date: string
     payment_method: string | null
     transfer_pair_id: string | null
-    categories: { id: string; name: string; icon: string | null; system_key: string | null } | null
+    categories: CategoryRef | null
     wallets: { name: string } | null
   }
   const txs = (txRows ?? []) as unknown as TxRow[]
@@ -84,7 +89,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   const savingsRate  = totalIncome > 0 ? ((net / totalIncome) * 100).toFixed(1) : '0'
 
   // Category breakdown
-  const catList = categoryTotals(flowTxs.filter(t => t.type === 'expense'))
+  const catList = categoryTotals(flowTxs.filter(t => t.type === 'expense')).map(category => ({ ...category, name: getCategoryName(category, locale) }))
 
   // Time breakdown — group by day for week/month, by month for quarter/year
   const groupKey = (date: string) =>
@@ -151,7 +156,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
   for (const { id, name, amount, count } of catList) {
     const pct = totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) + '%' : '0%'
     const avg = count > 0 ? Math.round(amount / count) : 0
-    const budget = budgets.find(b => b.category_id === id)
+    const budget = budgets.find(b => b.user_category_id === id)
     const budgetAmt = budget ? Number(budget.effectiveAmount) : null
     const remaining = budgetAmt !== null ? budgetAmt - amount : null
     lines.push(row(
@@ -182,7 +187,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
       t.transaction_date,
       t.type === 'income' ? 'Income' : 'Expense',
       getReportingGroup(t),
-      t.categories?.name ?? 'Uncategorized',
+      t.categories ? getCategoryName(t.categories, locale) : 'Uncategorized',
       `${fmt(Number(t.amount))}đ`,
       t.wallets?.name ?? '-',
       t.payment_method ?? '-',

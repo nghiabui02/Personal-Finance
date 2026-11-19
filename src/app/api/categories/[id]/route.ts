@@ -1,43 +1,24 @@
-import { withAuth, badRequest, notFound, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
+import { NextResponse } from 'next/server'
+import { CATEGORY_COLUMNS } from '@/lib/category-columns'
+import { isUuid } from '@/lib/imports/bank-csv'
+import { withAuth, badRequest, notFound, rpcError } from '@/lib/server/route'
 
+/** Removal is reversible. Physical DELETE is deliberately unsupported. */
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
-  const { id } = params
-
-  const body = await request.json()
-  const { name, icon, color } = body
-
+  if (!isUuid(params.id)) return badRequest('chooseACategory')
+  const { name, icon, color, is_active } = await request.json()
   if (name !== undefined && (typeof name !== 'string' || !name.trim())) return badRequest('nameIsRequired')
+  if (icon !== undefined && typeof icon !== 'string') return badRequest('invalidCategoryAppearance')
+  if (color !== undefined && (typeof color !== 'string' || !/^#[0-9a-f]{6}$/i.test(color))) return badRequest('invalidCategoryAppearance')
+  if (is_active !== undefined && typeof is_active !== 'boolean') return badRequest('invalidCategoryState')
 
-  return updateOwnedRow(supabase, 'categories', { id, userId: user.id }, {
-    ...(name !== undefined ? { name: name.trim(), name_is_custom: true } : {}),
-    ...(icon !== undefined ? { icon: typeof icon === 'string' ? icon.trim() || null : null } : {}),
-    ...(color !== undefined ? { color: color || null } : {}),
-  })
-})
-
-export const DELETE = withAuth<{ id: string }>(async (_request, { supabase, user, params }) => {
-  const { id } = params
-
-  // Two kinds of category are not the user's to delete, and the old code let
-  // both through: the delete matched no row and still answered 204, so the
-  // list showed it gone until the next refresh brought it back.
-  //   - shared starter categories (user_id is null)
-  //   - system categories, which reports read by `system_key` to keep debt and
-  //     adjustment rows out of income and spending
-  const { data: category } = await supabase
-    .from('categories')
-    .select('system_key, user_id')
-    .eq('id', id)
-    .or(`user_id.eq.${user.id},user_id.is.null`)
-    .maybeSingle()
-
-  if (!category) return notFound('categoryNotFound')
-  if (!category.user_id) {
-    return badRequest('thisIsOneOfTheBuiltInStarterCategoriesAndCannotBe')
-  }
-  if (category.system_key) {
-    return badRequest('thisCategoryKeepsYourDebtAndBalanceAdjustmentTotalsCorrectItCannot')
-  }
-
-  return deleteOwnedRow(supabase, 'categories', { id, userId: user.id })
+  const { data, error } = await supabase.from('user_categories').update({
+    ...(name !== undefined ? { name: name.trim() } : {}),
+    ...(icon !== undefined ? { icon: icon.trim() || null } : {}),
+    ...(color !== undefined ? { color } : {}),
+    ...(is_active !== undefined ? { is_active } : {}),
+  }).eq('id', params.id).eq('user_id', user.id).select(CATEGORY_COLUMNS).maybeSingle()
+  if (error) return rpcError(error)
+  if (!data) return notFound('categoryNotFound')
+  return NextResponse.json(data)
 })

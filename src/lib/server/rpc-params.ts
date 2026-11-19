@@ -11,7 +11,7 @@ interface TransactionBody {
   type: string
   amount: unknown
   transaction_date: string
-  category_id?: string | null
+  user_category_id?: string | null
   wallet_id?: string | null
   note?: string | null
   bank_fee?: number | null
@@ -24,7 +24,7 @@ export function transactionRpcParams(body: TransactionBody) {
     p_type: body.type,
     p_amount: Number(body.amount),
     p_transaction_date: body.transaction_date,
-    p_category_id: body.category_id || null,
+    p_user_category_id: body.user_category_id || null,
     p_wallet_id: body.wallet_id || null,
     p_note: body.note ?? null,
     p_bank_fee: body.bank_fee ?? null,
@@ -42,7 +42,6 @@ interface DebtMovementBody {
 export function debtMovementRpcParams(
   debtId: string,
   body: DebtMovementBody,
-  categoryId: string | null,
   today: string,
 ) {
   return {
@@ -50,7 +49,6 @@ export function debtMovementRpcParams(
     p_amount: Number(body.amount),
     p_date: body.date || today,
     p_wallet_id: body.wallet_id || null,
-    p_category_id: categoryId,
     p_note: body.note ?? null,
   }
 }

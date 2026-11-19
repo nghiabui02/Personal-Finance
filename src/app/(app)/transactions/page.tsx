@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
@@ -66,13 +67,13 @@ export default async function TransactionsPage({
       q
         ? supabase
             .from('transactions')
-            .select('*, categories(id, name, icon, color, default_key, name_is_custom, system_key), wallets(id, name)')
+            .select(`*, ${CATEGORY_RELATION}, wallets(id, name)`)
             .eq('user_id', user.id)
             .ilike('note', `%${q}%`)
             .limit(100)
         : supabase
             .from('transactions')
-            .select('*, categories(id, name, icon, color, default_key, name_is_custom, system_key), wallets(id, name)')
+            .select(`*, ${CATEGORY_RELATION}, wallets(id, name)`)
             .eq('user_id', user.id)
             .gte('transaction_date', startDate)
             .lt('transaction_date', endDate),

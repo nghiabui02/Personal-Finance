@@ -16,7 +16,7 @@ export interface HistoryTransaction {
   amount: number
   note: string | null
   transaction_date: string
-  category_id: string | null
+  user_category_id: string | null
   wallet_id: string | null
 }
 
@@ -85,11 +85,11 @@ export function suggestCategoryId(text: string, history: HistoryTransaction[]): 
   const scores = new Map<string, { hits: number; best: number }>()
 
   for (const past of history) {
-    if (!past.category_id || !past.note) continue
+    if (!past.user_category_id || !past.note) continue
     const score = overlap(words, wordsOfNote(past))
     if (score < MIN_WORD_OVERLAP) continue
-    const current = scores.get(past.category_id) ?? { hits: 0, best: 0 }
-    scores.set(past.category_id, {
+    const current = scores.get(past.user_category_id) ?? { hits: 0, best: 0 }
+    scores.set(past.user_category_id, {
       hits: current.hits + 1,
       best: Math.max(current.best, score),
     })

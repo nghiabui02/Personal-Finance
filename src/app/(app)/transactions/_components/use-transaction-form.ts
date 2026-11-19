@@ -35,7 +35,7 @@ export function useTransactionForm({
 }) {
   const t = useTranslations('transactions')
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
-  const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
+  const [categoryId, setCategoryId] = useState(editing?.user_category_id ?? '')
   const [walletId, setWalletId] = useState(
     editing ? (editing.wallet_id ?? '') : (wallets.find(w => w.is_default)?.id ?? '')
   )
@@ -56,6 +56,7 @@ export function useTransactionForm({
 
   /** Whether this form offers the category as a new choice. */
   function isOffered(category: Category): boolean {
+    if (!category.is_active) return false
     if (!isDebtCategoryKey(category.system_key)) return true
     // Lend and Borrow come from creating a debt. Collect and Repay can be
     // picked, but only while creating, because only then a debt is chosen.
@@ -76,17 +77,17 @@ export function useTransactionForm({
   /** Fills the form from a parsed draft. Nothing is saved until the user submits. */
   function applyDraft(d: ParsedDraft) {
     setTxType(d.type)
-    if (d.category_id) setCategoryId(d.category_id)
+    setCategoryId(d.user_category_id && offeredCategoryIds.has(d.user_category_id) ? d.user_category_id : '')
     if (d.wallet_id) setWalletId(d.wallet_id)
     if (d.date) setDate(d.date)
     setNote(d.note ?? '')
     setSelectedDebtId('')
     setAmountValue(d.amount)
     setPreset({
-      key: `draft-${d.amount}-${d.category_id ?? ''}`,
+      key: `draft-${d.amount}-${d.user_category_id ?? ''}`,
       type: d.type,
       amount: d.amount,
-      categoryId: d.category_id,
+      categoryId: d.user_category_id,
       categoryName: '',
       categoryIcon: null,
       walletId: d.wallet_id,
@@ -98,7 +99,7 @@ export function useTransactionForm({
   // A row keeps the category it already has, even a legacy debt category, so
   // saving it unchanged never fails or clears the field.
   const choosableCategories = categories.filter(
-    c => offeredCategoryIds.has(c.id) || c.id === editing?.category_id || c.id === categoryId,
+    c => offeredCategoryIds.has(c.id) || c.id === editing?.user_category_id || c.id === categoryId,
   )
 
   // Detect if selected category is a debt-related one — by system_key, not

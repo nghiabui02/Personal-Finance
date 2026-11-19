@@ -7,15 +7,12 @@ import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
 import React, { useState } from 'react'
 import { Pie as PieBase, PieChart, ResponsiveContainer, Sector } from 'recharts'
 import { CATEGORY_PALETTE } from '@/lib/utils/colors'
+import type { CategoryRef } from '@/lib/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Pie = PieBase as React.ComponentType<any>
 
-type CategorySpend = {
-  id: string
-  name: string
-  icon: string | null
-  color: string | null
+type CategorySpend = CategoryRef & {
   amount: number
 }
 

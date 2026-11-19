@@ -38,7 +38,7 @@ export function RecurringModal({
   const close = useModalClose()
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
-  const [categoryId, setCategoryId] = useState(editing?.category_id ?? '')
+  const [categoryId, setCategoryId] = useState(editing?.user_category_id ?? '')
   const [walletId, setWalletId] = useState(editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
   const [frequency, setFrequency] = useState<RecurringTransaction['frequency']>(editing?.frequency ?? 'monthly')
   const [startDate, setStartDate] = useState(editing?.start_date ?? localYMD())
@@ -49,7 +49,7 @@ export function RecurringModal({
   // The nightly job files a rule's transactions without a debt, so a debt
   // category is not offered. A rule keeps the category it already has.
   const choosableCategories = categories.filter(
-    c => c.id === editing?.category_id || !isDebtCategoryKey(c.system_key),
+    c => c.id === editing?.user_category_id || (c.is_active && !isDebtCategoryKey(c.system_key)),
   )
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -67,7 +67,7 @@ export function RecurringModal({
       if (editing) {
         await recurringApi.update(editing.id, {
           amount, frequency,
-          category_id: categoryId || undefined,
+          user_category_id: categoryId || undefined,
           wallet_id: walletId || undefined,
           note: note || undefined,
           end_date: endDate || undefined,
@@ -76,7 +76,7 @@ export function RecurringModal({
       } else {
         await recurringApi.create({
           type: txType, amount, frequency, start_date: startDate,
-          category_id: categoryId || undefined,
+          user_category_id: categoryId || undefined,
           wallet_id: walletId || undefined,
           note: note || undefined,
           end_date: endDate || undefined,

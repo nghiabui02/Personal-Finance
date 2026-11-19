@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getCategoryName } from '@/i18n/category'
 import { getLocale } from 'next-intl/server'
 import { getTranslations } from 'next-intl/server'
@@ -59,8 +60,8 @@ export default async function DashboardPage({
     Promise.all([
       // History keeps all rows; income and spending use operating rows only.
       onlyOperatingTransactions(supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
-      supabase.from('transactions').select('id, type, amount, note, transaction_date, categories(id, name, icon, color, default_key, name_is_custom, system_key)').eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
-      onlyOperatingTransactions(supabase.from('transactions').select('amount, categories(id, name, icon, color, default_key, name_is_custom, system_key)').eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
+      supabase.from('transactions').select(`id, type, amount, note, transaction_date, ${CATEGORY_RELATION}`).eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
+      onlyOperatingTransactions(supabase.from('transactions').select(`amount, ${CATEGORY_RELATION}`).eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
       supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
       walletsQuery(supabase, user.id),
       supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),

@@ -4,12 +4,13 @@ import { useLocale, useTranslations } from 'next-intl'
 import { formatVND } from '@/lib/utils/currency'
 import { BRAND_HEX, MONEY_OUT, WARNING } from '@/lib/utils/colors'
 import { SectionCard, SectionEmpty } from '@/components/ui/section-card'
+import type { CategoryRef } from '@/lib/types'
 
 type BudgetItem = {
   id: string
   amount: number
   spent: number
-  category: { id: string; name: string; icon: string | null; color: string | null } | null
+  category: CategoryRef | null
 }
 
 export function BudgetProgress({ budgets }: { budgets: BudgetItem[] }) {

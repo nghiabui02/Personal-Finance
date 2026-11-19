@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getReportingGroup } from './transaction-reporting'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { monthRange } from '@/lib/utils/date'
@@ -53,7 +54,7 @@ export async function getBudgetSuggestions(
     // Transfers, loan principal and ledger corrections do not belong in spending budgets.
     supabase
       .from('transactions')
-      .select('amount, transaction_date, category_id, categories(id, name, icon, color, system_key, default_key, name_is_custom)')
+      .select(`amount, transaction_date, user_category_id, ${CATEGORY_RELATION}`)
       .eq('user_id', userId)
       .eq('type', 'expense')
       .is('transfer_pair_id', null)
@@ -61,12 +62,12 @@ export async function getBudgetSuggestions(
       .lt('transaction_date', startDate),
     supabase
       .from('budgets')
-      .select('category_id')
+      .select('user_category_id')
       .eq('user_id', userId)
       .eq('month', startDate),
   ])
 
-  const alreadyBudgeted = new Set((existing ?? []).map(b => b.category_id).filter(Boolean))
+  const alreadyBudgeted = new Set((existing ?? []).map(b => b.user_category_id).filter(Boolean))
 
   // category → month → total
   const totals = new Map<string, { category: CategoryRef; byMonth: Map<string, number> }>()
@@ -74,17 +75,17 @@ export async function getBudgetSuggestions(
   for (const row of (rows ?? []) as unknown as {
     amount: number | string
     transaction_date: string
-    category_id: string | null
+    user_category_id: string | null
     categories: (CategoryRef & { system_key: string | null }) | null
   }[]) {
     const cat = row.categories
-    if (!row.category_id || !cat || getReportingGroup({ categories: cat }) !== 'operating') continue
-    if (alreadyBudgeted.has(row.category_id)) continue
+    if (!row.user_category_id || !cat || cat.is_active === false || getReportingGroup({ categories: cat }) !== 'operating') continue
+    if (alreadyBudgeted.has(row.user_category_id)) continue
 
-    const entry = totals.get(row.category_id) ?? { category: cat, byMonth: new Map() }
+    const entry = totals.get(row.user_category_id) ?? { category: cat, byMonth: new Map() }
     const key = row.transaction_date.slice(0, 7)
     entry.byMonth.set(key, (entry.byMonth.get(key) ?? 0) + Number(row.amount))
-    totals.set(row.category_id, entry)
+    totals.set(row.user_category_id, entry)
   }
 
   return [...totals.entries()]

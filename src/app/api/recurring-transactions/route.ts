@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
-import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
+import { withAuth, badRequest, rpcError } from '@/lib/server/route'
 import { isDebtCategory } from '@/lib/server/system-categories'
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   const body = await request.json()
-  const { type, amount, category_id, wallet_id, note, frequency, start_date, end_date, bank_fee } = body
+  if (Object.hasOwn(body, 'category_id')) return badRequest('categoryContractChanged')
+  const { type, amount, user_category_id, wallet_id, note, frequency, start_date, end_date, bank_fee } = body
 
   if (!type || !amount || !frequency || !start_date) {
     return badRequest('typeAmountFrequencyAndStartDateAreRequired')
@@ -17,7 +18,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     return badRequest('bankFeeMustBePositive')
   }
   // The nightly job files transactions without a debt, which a debt category forbids.
-  if (await isDebtCategory(supabase, category_id || null)) return badRequest('debtCategoryNeedsADebt')
+  if (await isDebtCategory(supabase, user_category_id || null)) return badRequest('debtCategoryNeedsADebt')
 
   const { data, error } = await supabase
     .from('recurring_transactions')
@@ -25,7 +26,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
       user_id: user.id,
       type,
       amount: Number(amount),
-      category_id: category_id || null,
+      user_category_id: user_category_id || null,
       wallet_id: wallet_id || null,
       note: note?.trim() || null,
       frequency,
@@ -37,6 +38,6 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     .select()
     .single()
 
-  if (error) return supabaseError(error)
+  if (error) return rpcError(error)
   return NextResponse.json(data, { status: 201 })
 })

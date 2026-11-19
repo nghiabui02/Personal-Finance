@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { withAuth, badRequest, notFound, rpcError } from '@/lib/server/route'
 import { ensureSystemCategory } from '@/lib/server/system-categories'
 import { localYMD } from '@/lib/utils/date'
+import { isUuid } from '@/lib/imports/bank-csv'
 
 /**
  * Bring a wallet in line with the real balance read off the bank.
@@ -13,33 +14,15 @@ import { localYMD } from '@/lib/utils/date'
  * report keeps balancing.
  */
 
-/**
- * Confirms a caller-supplied category is the user's own and points the right
- * way: crediting a wallet cannot be filed under an expense category.
- */
-async function resolveUserCategory(
-  supabase: Parameters<typeof ensureSystemCategory>[0],
-  userId: string,
-  categoryId: string,
-  direction: 'income' | 'expense',
-): Promise<string | null> {
-  const { data } = await supabase
-    .from('categories')
-    .select('id, type')
-    .eq('id', categoryId)
-    .eq('type', direction)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  return data?.id ?? null
-}
-
 export const POST = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params
-  const { actual_balance, note, date, category_id } = await request.json()
+  const body = await request.json()
+  if (Object.hasOwn(body, 'category_id')) return badRequest('categoryContractChanged')
+  const { actual_balance, note, date, user_category_id } = body
 
   const actual = Number(actual_balance)
   if (!Number.isFinite(actual)) return badRequest('enterTheBalanceShownByYourBank')
+  if (user_category_id && !isUuid(user_category_id)) return badRequest('chooseACategory')
 
   // Read once to work out which way the gap goes, so only the category that is
   // actually needed gets created. The function re-reads the balance under a
@@ -54,17 +37,12 @@ export const POST = withAuth<{ id: string }>(async (request, { supabase, user, p
   if (!wallet) return notFound('walletNotFound')
 
   const expectedUp = actual - Number(wallet.balance) > 0
-  const direction = expectedUp ? 'income' : 'expense'
 
   // A gap is not always a bookkeeping error. A savings pocket that pays daily
   // interest grows on its own, and that growth is real income — filing it as a
   // correction would keep it out of the month's totals, where it belongs.
   // Default stays 'correction'; the caller names a category to say otherwise.
-  const categoryId = category_id
-    ? await resolveUserCategory(supabase, user.id, category_id, direction)
-    : await ensureSystemCategory(supabase, user.id, expectedUp ? 'adjust_up' : 'adjust_down')
-
-  if (!categoryId) return badRequest('thatCategoryDoesNotMatchTheDirectionOfThisChange')
+  const categoryId = user_category_id || await ensureSystemCategory(supabase, expectedUp ? 'adjust_up' : 'adjust_down')
 
   const { data, error } = await supabase.rpc('reconcile_wallet', {
     p_wallet_id: id,

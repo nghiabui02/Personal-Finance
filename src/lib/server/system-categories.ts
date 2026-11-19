@@ -1,119 +1,19 @@
-import { SupabaseClient } from '@supabase/supabase-js'
-import { isDebtCategoryKey, type SystemCategoryKey, type TransactionType } from '@/lib/constants'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { isDebtCategoryKey, type SystemCategoryKey } from '@/lib/constants'
 
-/**
- * Categories the app creates on the user's behalf, so a feature always has
- * somewhere to file its transactions.
- *
- * Each group below is a separate concern — debt bookkeeping, balance
- * corrections — and only shares the lookup mechanism. Add a group by adding a
- * const object and unioning its key type; the mechanism stays untouched.
- */
-
-interface SystemCategoryDef {
-  name: string
-  type: TransactionType
-  icon: string
-  color: string
-}
-
-/** Money moving between the user and another person. */
-const DEBT_CATEGORIES = {
-  lend_out:     { name: 'Lend',         type: 'expense', icon: '💸', color: '#6366f1' },
-  borrow_in:    { name: 'Borrow',       type: 'income',  icon: '🤝', color: '#f97316' },
-  collect_debt: { name: 'Collect Debt', type: 'income',  icon: '💰', color: '#10b981' },
-  repay_debt:   { name: 'Repay Debt',   type: 'expense', icon: '🏦', color: '#ef4444' },
-} as const satisfies Record<string, SystemCategoryDef>
-
-/**
- * Corrections filed when a wallet is reconciled against the real bank balance.
- * Kept apart from real spending so reports can tell "money I spent" from
- * "drift I never recorded".
- */
-const ADJUSTMENT_CATEGORIES = {
-  adjust_up:   { name: 'Balance Adjustment', type: 'income',  icon: '⚖️', color: '#64748b' },
-  adjust_down: { name: 'Balance Adjustment', type: 'expense', icon: '⚖️', color: '#64748b' },
-} as const satisfies Record<string, SystemCategoryDef>
-
-// Typed by the key list rather than by these objects: a key added to
-// SYSTEM_CATEGORY_KEYS without a definition here is a compile error, instead of
-// a category the app can never create.
-const ALL_SYSTEM_CATEGORIES: Record<SystemCategoryKey, SystemCategoryDef> = {
-  ...DEBT_CATEGORIES,
-  ...ADJUSTMENT_CATEGORIES,
-}
-
-/** Postgres unique_violation. Two callers creating the same system category at
- *  the same moment is the only way this route hits it. */
-const UNIQUE_VIOLATION = '23505'
-
-/**
- * Returns the id of the user's category for `key`, creating it on first use.
- *
- * Looked up by `system_key`, not name — the display name is free to change
- * (rename, translate) without breaking the lookup. Only the key is stable.
- */
-async function findSystemCategory(
-  supabase: SupabaseClient,
-  userId: string,
-  key: SystemCategoryKey,
-): Promise<string | null> {
-  const { data } = await supabase
-    .from('categories')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('system_key', key)
-    .maybeSingle()
-
-  return data?.id ?? null
-}
-
+/** System identity and appearance are derived in the database, never from client input. */
 export async function ensureSystemCategory(
   supabase: SupabaseClient,
-  userId: string,
   key: SystemCategoryKey,
 ): Promise<string> {
-  const def = ALL_SYSTEM_CATEGORIES[key]
-
-  const found = await findSystemCategory(supabase, userId, key)
-  if (found) return found
-
-  const { data: created, error } = await supabase
-    .from('categories')
-    .insert({
-      user_id: userId,
-      name: def.name,
-      type: def.type,
-      icon: def.icon,
-      color: def.color,
-      system_key: key,
-    })
-    .select('id')
-    .single()
-
-  if (created) return created.id
-
-  // Someone else created it between the lookup and the insert — the partial
-  // unique index on (user_id, system_key) stops the duplicate, and the row we
-  // wanted is now there. Rare, but a reconcile opened in two tabs hits it.
-  if (error?.code === UNIQUE_VIOLATION) {
-    const raced = await findSystemCategory(supabase, userId, key)
-    if (raced) return raced
-  }
-
-  // Swallowing this used to leave transactions silently uncategorised — the
-  // caller could not tell a missing category from a rejected one.
-  throw new Error(`Could not create the "${def.name}" category: ${error?.message ?? 'unknown error'}`)
+  const { data, error } = await supabase.rpc('ensure_system_category', { p_key: key })
+  if (error) throw new Error(`Could not provision system category ${key}: ${error.message}`)
+  return data as string
 }
 
-/** Whether `categoryId` is one of the user's debt categories, which only a debt
- *  may file transactions under. Routes that write `category_id` without going
- *  through the money functions call this. */
 export async function isDebtCategory(supabase: SupabaseClient, categoryId: string | null): Promise<boolean> {
   if (!categoryId) return false
-
-  const { data, error } = await supabase.from('categories').select('system_key').eq('id', categoryId).maybeSingle()
+  const { data, error } = await supabase.from('user_categories').select('system_key').eq('id', categoryId).maybeSingle()
   if (error) throw error
-
   return isDebtCategoryKey(data?.system_key)
 }

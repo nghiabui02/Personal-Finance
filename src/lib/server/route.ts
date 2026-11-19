@@ -40,6 +40,14 @@ const DEBT_CATEGORY_SQLSTATE = 'DC001'
  */
 export function rpcError(error: { message: string; code?: string }): Promise<NextResponse> | NextResponse {
   if (error.code === DEBT_CATEGORY_SQLSTATE) return badRequest('debtCategoryNeedsADebt')
+  const categoryErrors: Record<string, string> = {
+    UC001: 'invalidUserCategory',
+    UC002: 'inactiveCategory',
+    UC003: 'categoryHasDependencies',
+    UC004: 'systemCategoryImmutable',
+    UC005: 'categoryUnavailable',
+  }
+  if (error.code && categoryErrors[error.code]) return badRequest(categoryErrors[error.code])
   return error.code === 'P0001' ? NextResponse.json({ error: error.message }, { status: 400 }) : supabaseError(error)
 }
 
@@ -67,7 +75,7 @@ export async function updateOwnedRow(
     .select(columns)
     .single()
 
-  if (error) return supabaseError(error)
+  if (error) return rpcError(error)
   return NextResponse.json(data)
 }
 

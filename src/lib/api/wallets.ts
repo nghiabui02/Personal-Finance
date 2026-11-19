@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { apiFetch } from './client'
 import type { CategoryRef } from '@/lib/types'
 import type { TransactionType, WalletType } from '@/lib/constants'
@@ -33,7 +34,7 @@ export type WalletTransaction = {
   note: string | null
   bank_fee: number | null
   transaction_date: string
-  category_id: string | null
+  user_category_id: string | null
   transfer_pair_id: string | null
   categories: CategoryRef | null
 }
@@ -53,7 +54,7 @@ export function toWalletOptions(wallets: Pick<Wallet, 'id' | 'name' | 'color'>[]
 export const WALLET_COLUMNS = 'id, user_id, name, type, balance, color, icon, is_default, credit_limit, statement_day, payment_due_day'
 
 /** Columns a `WalletTransaction` needs. */
-export const WALLET_TX_COLUMNS = 'id, type, amount, note, bank_fee, transaction_date, category_id, transfer_pair_id, categories(id, name, icon, color, default_key, name_is_custom, system_key)'
+export const WALLET_TX_COLUMNS = `id, type, amount, note, bank_fee, transaction_date, user_category_id, transfer_pair_id, ${CATEGORY_RELATION}`
 
 export const WALLET_TX_PAGE_SIZE = 20
 
@@ -103,7 +104,7 @@ export const walletsApi = {
   },
 
   /** Files an adjustment transaction for the gap against the real bank balance. */
-  reconcile(id: string, payload: { actual_balance: number; note?: string; date?: string; category_id?: string }): Promise<ReconcileResult> {
+  reconcile(id: string, payload: { actual_balance: number; note?: string; date?: string; user_category_id?: string }): Promise<ReconcileResult> {
     return apiFetch(`/api/wallets/${id}/reconcile`, {
       method: 'POST',
       body: JSON.stringify(payload),

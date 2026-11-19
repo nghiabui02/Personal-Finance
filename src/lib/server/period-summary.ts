@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getLocale } from 'next-intl/server'
 import { getCategoryName } from '@/i18n/category'
 import { categoryTotals } from '@/lib/utils/category-totals'
@@ -45,7 +46,7 @@ export async function getPeriodSummary(
   const { data: rows } = await onlyOperatingTransactions(
     supabase
       .from('transactions')
-      .select('type, amount, categories(id, name, default_key, name_is_custom, system_key)')
+      .select(`type, amount, ${CATEGORY_RELATION}`)
       .eq('user_id', userId)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate),

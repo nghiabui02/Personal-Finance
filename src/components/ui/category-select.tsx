@@ -25,7 +25,7 @@ export function CategorySelect({
   onChange,
   filterType,
   excludeIds,
-  name = 'category_id',
+  name = 'user_category_id',
   label,
   placeholder,
   searchable = false,
@@ -36,6 +36,7 @@ export function CategorySelect({
   const options = [
     { value: '', label: placeholder ?? t('noCategory') },
     ...sortCategories(categories, locale)
+      .filter(c => c.is_active || c.id === value)
       .filter(c => !filterType || c.type === filterType)
       .filter(c => !excludeIds?.length || !excludeIds.includes(c.id))
       .map(c => ({ value: c.id, label: getCategoryName(c, locale), searchText: categorySearchTerms(c), icon: c.icon, color: c.color })),

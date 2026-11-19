@@ -25,20 +25,18 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
   const close = useModalClose()
   const { error, isPending, submit } = useFormSubmit(onClose)
   const [selectedColor, setSelectedColor] = useState(editing?.color ?? CATEGORY_PALETTE[0])
+  const [nameEdited, setNameEdited] = useState(false)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
     const name = readField(form, 'name').trim()
-    // Sent only when it differs from what the form showed: an adopted category
-    // follows the app language until its name is really changed, and typing
-    // the same text back must not freeze it.
-    const nameChanged = !!editing && name !== getCategoryName(editing, locale)
+    // An explicit rename survives language changes, even when the text matches today's label.
     const icon = readField(form, 'icon').trim()
 
     submit(async () => {
       if (editing) {
-        await categoriesApi.update(editing.id, { ...(nameChanged ? { name } : {}), icon: icon || undefined, color: selectedColor })
+        await categoriesApi.update(editing.id, { ...(nameEdited ? { name } : {}), icon, color: selectedColor })
       } else {
         await categoriesApi.create({ name, icon: icon || undefined, color: selectedColor, type: activeTab })
       }
@@ -49,7 +47,7 @@ export function CategoryModal({ editing, activeTab, onClose }: CategoryModalProp
     <Modal title={editing ? t('editCategory') : t('newCategory')} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <EmojiPickerInput label={t('icon')} name="icon" defaultValue={editing?.icon ?? ''} />
-        <Input label={t('name')} name="name" defaultValue={editing ? getCategoryName(editing, locale) : ''} required
+        <Input label={t('name')} name="name" defaultValue={editing ? getCategoryName(editing, locale) : ''} required onChange={() => setNameEdited(true)}
           placeholder={activeTab === 'expense' ? t('eGFoodDrinks') : t('eGSalary')} />
 
         <div>

@@ -55,7 +55,7 @@ export function SelectionBar({
         ) : categorizable ? (
           <CategorySelect
             label=""
-            categories={categories.filter(category => !category.system_key)}
+            categories={categories.filter(category => category.is_active && !category.system_key)}
             filterType={type}
             value=""
             // A second pick while the first is still saving would send both.

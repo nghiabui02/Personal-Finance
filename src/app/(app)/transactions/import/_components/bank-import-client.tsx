@@ -23,7 +23,7 @@ export function BankImportClient({ wallets, categories, recent }: {
   const source = useCsvSource()
   // Debt and transfer categories are driven by their own records, so they are
   // not offered here — and a suggestion that lands on one is dropped too.
-  const importable = categories.filter(category => !category.system_key)
+  const importable = categories.filter(category => category.is_active && !category.system_key)
   const suggestCategory = (row: ImportPreviewRow) => {
     const id = suggestCategoryId(row.description, recent)
     return importable.some(category => category.id === id && category.type === row.type) ? id : null

@@ -48,7 +48,7 @@ export function summarizeNonOperatingFlows(rows: ReportingTransaction[]): NonOpe
 }
 
 export async function getNonOperatingCategoryIds(supabase: SupabaseClient, userId: string): Promise<string[]> {
-  const { data, error } = await supabase.from('categories').select('id')
+  const { data, error } = await supabase.from('user_categories').select('id')
     .eq('user_id', userId).in('system_key', SYSTEM_CATEGORY_KEYS)
   if (error) throw new Error(`Could not load report categories: ${error.message}`)
   return (data ?? []).map(category => category.id)
@@ -63,6 +63,6 @@ export function onlyOperatingTransactions<T extends OperatingQuery<T>>(query: T,
   const operating = query.is('transfer_pair_id', null)
   // NOT IN alone drops NULL categories too; uncategorized income/spending still counts.
   return excludedIds.length
-    ? operating.or(`category_id.is.null,category_id.not.in.(${excludedIds.join(',')})`)
+    ? operating.or(`user_category_id.is.null,user_category_id.not.in.(${excludedIds.join(',')})`)
     : operating
 }

@@ -1,19 +1,22 @@
 import vi from '../../messages/vi.json' with { type: 'json' }
 import en from '../../messages/en.json' with { type: 'json' }
+import catalog from '@/lib/category-catalog.json'
 
 type CategoryLabel = {
-  name: string
+  name?: string | null
+  template?: { default_key: string } | null
   default_key?: string | null
   system_key?: string | null
-  name_is_custom?: boolean
 }
 
 /** Unkeyed and customized categories always retain the name their owner chose. */
 export function getCategoryName(category: CategoryLabel, locale: string): string {
-  if (category.name_is_custom !== false) return category.name
-  const key = category.default_key ?? category.system_key
+  if (category.name !== null && category.name !== undefined) return category.name
+  const key = category.template?.default_key ?? category.default_key ?? category.system_key
+  const template = catalog.templates.find(item => item.key === key)
+  if (template) return locale === 'en' ? template.en : template.vi
   const labels: Record<string, string> = (locale === 'en' ? en : vi).categories.labels
-  return key && labels[key] ? labels[key] : category.name
+  return key && labels[key] ? labels[key] : ''
 }
 
 export function normalizeSearch(value: string): string {
@@ -21,10 +24,11 @@ export function normalizeSearch(value: string): string {
 }
 
 export function categorySearchTerms(category: CategoryLabel): string {
-  return [category.name, getCategoryName(category, 'vi'), getCategoryName(category, 'en')].join(' ')
+  const key = category.template?.default_key ?? category.default_key
+  const aliases = catalog.templates.find(item => item.key === key)?.aliases ?? []
+  return [category.name, getCategoryName(category, 'vi'), getCategoryName(category, 'en'), ...aliases].join(' ')
 }
 
-export function sortCategories<T extends CategoryLabel & { is_default?: boolean }>(categories: T[], locale: string): T[] {
-  return [...categories].sort((a, b) => Number(b.is_default ?? false) - Number(a.is_default ?? false)
-    || getCategoryName(a, locale).localeCompare(getCategoryName(b, locale), locale))
+export function sortCategories<T extends CategoryLabel>(categories: T[], locale: string): T[] {
+  return [...categories].sort((a, b) => getCategoryName(a, locale).localeCompare(getCategoryName(b, locale), locale))
 }

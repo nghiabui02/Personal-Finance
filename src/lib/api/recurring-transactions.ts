@@ -1,3 +1,4 @@
+import type { CategoryRef } from '@/lib/types'
 import { apiFetch } from './client'
 import type { RecurringFrequency, TransactionType } from '@/lib/constants'
 
@@ -5,7 +6,7 @@ export type RecurringTransaction = {
   id: string
   user_id: string
   wallet_id: string | null
-  category_id: string | null
+  user_category_id: string | null
   type: TransactionType
   amount: number
   note: string | null
@@ -15,7 +16,7 @@ export type RecurringTransaction = {
   next_run_date: string | null
   bank_fee: number | null
   active: boolean
-  categories: { id: string; name: string; icon: string | null; color: string | null; system_key?: string | null } | null
+  categories: CategoryRef | null
   wallets: { id: string; name: string } | null
 }
 
@@ -25,7 +26,7 @@ export const recurringApi = {
     amount: number
     frequency: RecurringTransaction['frequency']
     start_date: string
-    category_id?: string
+    user_category_id?: string
     wallet_id?: string
     note?: string
     end_date?: string
@@ -36,7 +37,7 @@ export const recurringApi = {
 
   update(id: string, payload: Partial<{
     amount: number
-    category_id: string
+    user_category_id: string
     wallet_id: string
     note: string
     frequency: RecurringTransaction['frequency']

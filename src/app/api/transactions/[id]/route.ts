@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { withAuth, noContent, rpcError } from '@/lib/server/route'
+import { withAuth, badRequest, noContent, rpcError } from '@/lib/server/route'
 import { transactionWithRelations } from '@/lib/server/rpc-result'
 import { transactionRpcParams } from '@/lib/server/rpc-params'
 
@@ -7,6 +7,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, params
   const { id } = params
 
   const body = await request.json()
+  if (Object.hasOwn(body, 'category_id')) return badRequest('categoryContractChanged')
 
   // Reversing the old balance, applying the new one and re-syncing a linked
   // debt all happen inside the function: a failure part-way through rolls the

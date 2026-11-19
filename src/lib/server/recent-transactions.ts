@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { localYMD, shiftLocalDate } from '@/lib/utils/date'
 import type { CategoryRef } from '@/lib/types'
@@ -29,7 +30,7 @@ export async function getRecentTransactions(
   // belongs in a suggestion or a duplicate warning.
   const { data, error } = await supabase
     .from('transactions')
-    .select('type, amount, note, transaction_date, category_id, wallet_id, categories(id, name, icon, color, default_key, name_is_custom, system_key)')
+    .select(`type, amount, note, transaction_date, user_category_id, wallet_id, ${CATEGORY_RELATION}`)
     .eq('user_id', userId)
     .is('transfer_pair_id', null)
     .is('debt_payment_id', null)

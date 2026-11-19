@@ -1,5 +1,5 @@
 import { getCategoryName } from '@/i18n/category'
-import type { TransactionType } from '@/lib/constants'
+import { isDebtCategoryKey, type TransactionType } from '@/lib/constants'
 import type { RecentTransaction } from './recent-transactions'
 
 /**
@@ -34,11 +34,12 @@ export function toFrequentTransactions(rows: RecentTransaction[], locale = 'vi')
   const buckets = new Map<string, FrequentTransaction>()
 
   for (const raw of rows) {
-    if (!raw.category_id) continue // an uncategorised repeat teaches nothing
+    if (!raw.user_category_id) continue // an uncategorised repeat teaches nothing
+    if (!raw.categories?.is_active || isDebtCategoryKey(raw.categories.system_key)) continue
     const amount = Number(raw.amount)
     if (!Number.isFinite(amount) || amount <= 0) continue
 
-    const key = [raw.type, raw.category_id, raw.wallet_id ?? '', amount].join('|')
+    const key = [raw.type, raw.user_category_id, raw.wallet_id ?? '', amount].join('|')
     const existing = buckets.get(key)
     if (existing) {
       existing.count += 1
@@ -49,9 +50,9 @@ export function toFrequentTransactions(rows: RecentTransaction[], locale = 'vi')
       key,
       type: raw.type === 'income' ? 'income' : 'expense',
       amount,
-      categoryId: raw.category_id,
-      categoryName: raw.categories ? getCategoryName(raw.categories, locale) : (locale === 'en' ? 'Uncategorized' : 'Chưa phân loại'),
-      categoryIcon: raw.categories?.icon ?? null,
+      categoryId: raw.user_category_id,
+      categoryName: getCategoryName(raw.categories, locale),
+      categoryIcon: raw.categories.icon,
       walletId: raw.wallet_id,
       note: raw.note,
       count: 1,

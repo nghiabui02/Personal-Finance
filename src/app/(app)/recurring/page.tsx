@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
@@ -16,7 +17,7 @@ export default async function RecurringPage() {
   const [{ data: items }, categories, { data: wallets }] = await Promise.all([
     supabase
       .from('recurring_transactions')
-      .select('*, categories(id, name, icon, color, default_key, name_is_custom, system_key), wallets(id, name)')
+      .select(`*, ${CATEGORY_RELATION}, wallets(id, name)`)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     getCategories(supabase),

@@ -132,7 +132,7 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
   const totalBudget = activeBudgets.reduce((s, b) => s + Number(b.effectiveAmount), 0)
   const totalSpent = activeBudgets.reduce((s, b) => s + Number(b.spent), 0)
   const overCount = activeBudgets.filter(b => b.spent > b.effectiveAmount).length
-  const existingCategoryIds = budgets.map(b => b.category_id).filter(Boolean) as string[]
+  const existingCategoryIds = budgets.map(b => b.user_category_id).filter(Boolean) as string[]
   const spentPct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0
 
   const [y, m] = month.split('-').map(Number)

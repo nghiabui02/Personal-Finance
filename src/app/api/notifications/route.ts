@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { getCategoryName } from '@/i18n/category'
 import type { CategoryRef as Category } from '@/lib/types'
@@ -56,7 +57,7 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
       .select('id, type, person_name, remaining_amount, due_date')
       .eq('user_id', user.id).eq('status', 'active'),
     supabase.from('recurring_transactions')
-      .select('id, type, amount, note, frequency, next_run_date, end_date, categories(name, icon, default_key, name_is_custom, system_key)')
+      .select(`id, type, amount, note, frequency, next_run_date, end_date, ${CATEGORY_RELATION}`)
       .eq('user_id', user.id)
       // A paused rule will not run, so there is nothing upcoming to announce.
       .eq('active', true)
@@ -79,7 +80,7 @@ export const GET = withAuth(async (_request, { supabase, user }) => {
   // includes rollover carry, inactive rows already filtered out
   for (const b of budgetRows) {
     const cat = b.categories
-    if (!cat || !b.category_id) continue
+    if (!cat || !b.user_category_id) continue
     const amount = b.effectiveAmount
     const spent = b.spent
     const pct = amount > 0 ? spent / amount : 0

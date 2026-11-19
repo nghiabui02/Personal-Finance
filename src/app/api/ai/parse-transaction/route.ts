@@ -36,7 +36,7 @@ Rules:
   separators, never decimals: "82,000" = 82000, "1.500.000" = 1500000.
 - type is 'expense' unless the text clearly describes money coming in
   (lương, thưởng, nhận, hoàn tiền, bán, GHI CO, salary, bonus, received, refund, sold, +).
-- Pick category_id from the provided list. Match on meaning, not spelling.
+- Pick user_category_id from the provided list. Match on meaning, not spelling.
   Use null when nothing fits — never invent an id.
 - Pick wallet_id from the provided list when the text names or abbreviates one
   (vcb, techcom, tcb, mb, tiền mặt, tm, cash, momo). Use null otherwise.
@@ -47,7 +47,7 @@ Rules:
 - confidence: 0-1. Below 0.5 means you are guessing at the amount or type.
 
 Respond with JSON only:
-{'type':"expense|income",'amount':number,"category_id":string|null,"wallet_id":string|null,'note':string|null,'date':"YYYY-MM-DD"|null,'confidence':number}`
+{'type':"expense|income",'amount':number,"user_category_id":string|null,"wallet_id":string|null,'note':string|null,'date':"YYYY-MM-DD"|null,'confidence':number}`
 
 export const POST = withAuth(async (request, { supabase, user }) => {
   if (isRateLimited(request, { key: `ai-parse:${user.id}`, limit: PARSES_PER_MINUTE, windowMs: ONE_MINUTE_MS })) {
@@ -70,7 +70,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   // Only ids the model may choose from — anything else is rejected below.
   // A debt category needs a debt, which one line of text cannot name.
   const categoryList = categories
-    .filter(c => !isDebtCategoryKey(c.system_key))
+    .filter(c => c.is_active && !isDebtCategoryKey(c.system_key))
     .map(c => ({ id: c.id, name: c.name, aliases: [getCategoryName(c, 'vi'), getCategoryName(c, 'en')], type: c.type }))
   const walletList = (wallets ?? []).map(w => ({ id: w.id, name: w.name, type: w.type }))
 
@@ -97,14 +97,14 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   }
 
   // The model is told to pick from the lists, but never trusted to have done so.
-  const categoryId = categoryList.some(c => c.id === draft.category_id) ? String(draft.category_id) : null
+  const categoryId = categoryList.some(c => c.id === draft.user_category_id) ? String(draft.user_category_id) : null
   const walletId = walletList.some(w => w.id === draft.wallet_id) ? String(draft.wallet_id) : null
   const date = typeof draft.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(draft.date) ? draft.date : null
 
   return NextResponse.json({
     type: draft.type === 'income' ? 'income' : 'expense',
     amount: Math.round(amount),
-    category_id: categoryId,
+    user_category_id: categoryId,
     wallet_id: walletId,
     note: typeof draft.note === 'string' && draft.note.trim() ? draft.note.trim().slice(0, 120) : null,
     date,

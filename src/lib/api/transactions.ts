@@ -1,3 +1,4 @@
+import type { CategoryRef } from '@/lib/types'
 import { apiFetch } from './client'
 import { isDebtCategoryKey, type TransactionType } from '@/lib/constants'
 
@@ -5,7 +6,7 @@ export type Transaction = {
   id: string
   user_id: string
   wallet_id: string | null
-  category_id: string | null
+  user_category_id: string | null
   type: TransactionType
   amount: number
   note: string | null
@@ -15,7 +16,7 @@ export type Transaction = {
   bank_fee: number | null
   debt_payment_id: string | null
   transfer_pair_id: string | null
-  categories: { id: string; name: string; icon: string | null; color: string | null; system_key?: string | null } | null
+  categories: CategoryRef | null
   wallets: { id: string; name: string } | null
 }
 
@@ -33,10 +34,15 @@ export function isStandalone(tx: Transaction): boolean {
   return !tx.transfer_pair_id && !tx.debt_payment_id && !isDebtCategoryKey(tx.categories?.system_key)
 }
 
+/** Undo creates a new reference, which a removed category cannot accept. */
+export function canUndoDeletion(tx: Transaction): boolean {
+  return isStandalone(tx) && tx.categories?.is_active !== false
+}
+
 type TransactionPayload = {
   type: TransactionType
   amount: number
-  category_id?: string
+  user_category_id?: string
   wallet_id?: string
   transaction_date: string
   note?: string
@@ -64,12 +70,12 @@ export const transactionsApi = {
     return apiFetch(`/api/transactions/${id}`, { method: 'DELETE' })
   },
 
-  /** Files a whole selection under one category. Rejects when any row could
-   *  not take it; the rows that could are changed all the same. */
-  categorizeMany(ids: string[], category_id: string): Promise<{ updated: number }> {
+  /** Files a whole selection under one category. Rejects the whole batch when any
+   *  row cannot take the category. */
+  categorizeMany(ids: string[], user_category_id: string): Promise<{ updated: number }> {
     return apiFetch('/api/transactions/bulk', {
       method: 'PATCH',
-      body: JSON.stringify({ ids, category_id }),
+      body: JSON.stringify({ ids, user_category_id }),
     })
   },
 

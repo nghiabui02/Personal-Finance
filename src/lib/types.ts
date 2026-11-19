@@ -2,13 +2,13 @@ import type { DebtType } from '@/lib/constants'
 // Shared view-model shapes used across pages, API routes and client components.
 // Full row types for API payloads live in src/lib/api/*.
 
-// The `categories(id, name, icon, color, default_key, name_is_custom, system_key)` join selected throughout the app.
+// Membership metadata returned by CATEGORY_RELATION, including historical reads.
 export type CategoryRef = {
   id: string
-  name: string
-  default_key?: string | null
+  name: string | null
+  template?: { default_key: string } | null
   system_key?: string | null
-  name_is_custom?: boolean
+  is_active?: boolean
   icon: string | null
   color: string | null
 }

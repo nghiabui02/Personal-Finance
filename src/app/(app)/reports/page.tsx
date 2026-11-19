@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getCategoryName } from '@/i18n/category'
 import { getLocale } from 'next-intl/server'
 import { getTranslations } from 'next-intl/server'
@@ -120,7 +121,7 @@ export default async function ReportsPage({
     budgetRows,
   ] = await Promise.all([
     supabase.from('transactions')
-      .select('type, amount, note, transaction_date, transfer_pair_id, categories(id, name, icon, color, system_key, default_key, name_is_custom)')
+      .select(`type, amount, note, transaction_date, transfer_pair_id, ${CATEGORY_RELATION}`)
       .eq('user_id', user.id)
       .gte('transaction_date', startDate)
       .lt('transaction_date', endDate),
@@ -175,7 +176,7 @@ export default async function ReportsPage({
   const aiBudgets = budgetRows.filter(b => b.active).map(b => ({
     name: b.categories ? getCategoryName(b.categories, locale) : (locale === 'en' ? 'Other' : 'Khác'),
     budgeted: b.effectiveAmount,
-    spent: b.category_id ? (catMap.get(b.category_id)?.amount ?? 0) : 0,
+    spent: b.user_category_id ? (catMap.get(b.user_category_id)?.amount ?? 0) : 0,
   }))
 
   // Net worth change over (roughly) one period length, from the snapshot history

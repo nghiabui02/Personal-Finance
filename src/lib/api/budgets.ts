@@ -1,8 +1,9 @@
+import type { CategoryRef } from '@/lib/types'
 import { apiFetch } from './client'
 
 export type Budget = {
   id: string
-  category_id: string | null
+  user_category_id: string | null
   amount: number
   month: string
   rollover: boolean
@@ -10,11 +11,11 @@ export type Budget = {
   spent: number
   rolloverCarry: number
   effectiveAmount: number
-  categories: { id: string; name: string; icon: string | null; color: string | null } | null
+  categories: CategoryRef | null
 }
 
 export const budgetsApi = {
-  create(payload: { category_id?: string; amount: number; month: string; rollover?: boolean; active?: boolean }): Promise<Budget> {
+  create(payload: { user_category_id?: string; amount: number; month: string; rollover?: boolean; active?: boolean }): Promise<Budget> {
     return apiFetch('/api/budgets', { method: 'POST', body: JSON.stringify(payload) })
   },
 

@@ -1,5 +1,5 @@
 /** Category identity survives renames and translations, including duplicate names. */
-export function categoryTotals<T extends { id: string; name: string }>(
+export function categoryTotals<T extends { id: string; name: string | null }>(
   rows: { amount: number | string; categories: T | null }[],
 ): (T & { amount: number; count: number })[] {
   const totals = new Map<string | null, T & { amount: number; count: number }>()

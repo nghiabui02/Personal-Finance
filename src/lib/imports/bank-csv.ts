@@ -32,7 +32,7 @@ export type StatementRow = {
 export type ImportDecision = {
   row: number
   title: string
-  category_id: string | null
+  user_category_id: string | null
 }
 
 export class CsvError extends Error {
@@ -178,10 +178,10 @@ export function validateDecisions(value: unknown, rows: StatementRow[]): ImportD
     if (typeof decision.title !== 'string' || !decision.title.trim() || decision.title.trim().length > MAX_TITLE_LENGTH) {
       csvError(decision.row, 'titleLength', { limit: MAX_TITLE_LENGTH })
     }
-    const category = decision.category_id
+    const category = decision.user_category_id
     if (category !== null && !isUuid(category)) {
       csvError(decision.row, 'invalidCategory')
     }
-    return { row: decision.row, title: decision.title.trim(), category_id: category }
+    return { row: decision.row, title: decision.title.trim(), user_category_id: category }
   })
 }

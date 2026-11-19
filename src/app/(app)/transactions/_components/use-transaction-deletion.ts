@@ -3,7 +3,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast, toastError } from '@/components/ui/toast'
 import { isDebtCategoryKey } from '@/lib/constants'
-import { isStandalone, type Transaction, transactionsApi } from '@/lib/api/transactions'
+import { canUndoDeletion, type Transaction, transactionsApi } from '@/lib/api/transactions'
 
 /**
  * Deleting one transaction from the list.
@@ -38,7 +38,7 @@ export function useTransactionDeletion(transactions: Transaction[]) {
           // Stored `amount` is the total; the server adds the fee back on top
           // of the base it is given, so the fee has to come off first.
           amount: Number(tx.amount) - Number(tx.bank_fee ?? 0),
-          category_id: tx.category_id ?? undefined,
+          user_category_id: tx.user_category_id ?? undefined,
           wallet_id: tx.wallet_id ?? undefined,
           transaction_date: tx.transaction_date,
           note: tx.note ?? undefined,
@@ -58,7 +58,7 @@ export function useTransactionDeletion(transactions: Transaction[]) {
         router.refresh()
         toast.success(
           t('transactionDeleted'),
-          isStandalone(tx) ? { label: t('undo'), onClick: () => restore(tx) } : undefined,
+          canUndoDeletion(tx) ? { label: t('undo'), onClick: () => restore(tx) } : undefined,
         )
       } catch (err) {
         toastError(err, 'Could not delete the transaction.')
@@ -73,7 +73,7 @@ export function useTransactionDeletion(transactions: Transaction[]) {
     // No modal stands between two taps on the same row any more, and the
     // second delete would only report the row as not found.
     if (!tx || isPending) return
-    if (isStandalone(tx)) deleteTransaction(tx)
+    if (canUndoDeletion(tx)) deleteTransaction(tx)
     else setConfirmId(id)
   }
 

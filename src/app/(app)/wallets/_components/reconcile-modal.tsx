@@ -1,12 +1,11 @@
 'use client'
-import { sortCategories, categorySearchTerms } from '@/i18n/category'
 import { getCategoryName } from '@/i18n/category'
 import { useLocale, useTranslations } from 'next-intl'
 
 import { AmountInput } from '@/components/ui/amount-input'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
-import { CustomSelect } from '@/components/ui/custom-select'
+import { CategorySelect } from '@/components/ui/category-select'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { type Category } from '@/lib/api/categories'
 import { toast } from '@/components/ui/toast'
@@ -19,6 +18,7 @@ import { ModalActions } from '@/components/ui/modal-actions'
 import { useFormSubmit } from '@/lib/hooks/use-form-submit'
 import { readField } from '@/lib/utils/form'
 import { SignedAmount } from '@/components/ui/signed-amount'
+import { isDebtCategoryKey } from '@/lib/constants'
 
 /**
  * Type in the balance the bank actually shows; the gap is filed as one
@@ -49,12 +49,9 @@ export function ReconcileModal({
   // The gap becomes an income or an expense row, so only categories pointing
   // that way can hold it.
   const direction = delta !== null && delta > 0 ? 'income' : 'expense'
-  const reasonOptions = [
-    { value: '', label: t('balanceCorrection') },
-    ...sortCategories(categories, locale)
-      .filter(c => c.type === direction)
-      .map(c => ({ value: c.id, label: `${c.icon ?? ''} ${getCategoryName(c, locale)}`.trim(), searchText: categorySearchTerms(c) })),
-  ]
+  const availableCategories = categories.filter(category => category.is_active
+    && category.type === direction && !isDebtCategoryKey(category.system_key))
+  const selectedCategory = availableCategories.find(category => category.id === categoryId)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -69,7 +66,7 @@ export function ReconcileModal({
         actual_balance: value,
         note,
         date,
-        category_id: categoryId || undefined,
+        user_category_id: selectedCategory?.id,
       })
       toast.success(
         result.delta === 0
@@ -107,18 +104,19 @@ export function ReconcileModal({
                 {t('matchesWhatSRecordedNothingToAdjust')}</p>
             ) : (
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                {t.rich(categoryId ? 'reconcileAsCategory' : 'reconcileAsCorrection', { amount: () => <SignedAmount amount={delta} positive={delta > 0} />, category: reasonOptions.find(option => option.value === categoryId)?.label ?? '', direction })}
+                {t.rich(selectedCategory ? 'reconcileAsCategory' : 'reconcileAsCorrection', { amount: () => <SignedAmount amount={delta} positive={delta > 0} />, category: selectedCategory ? getCategoryName(selectedCategory, locale) : '', direction })}
               </p>
             )}
           </div>
         )}
 
-        {delta !== null && delta !== 0 && reasonOptions.length > 1 && (
-          <CustomSelect
+        {delta !== null && delta !== 0 && availableCategories.length > 0 && (
+          <CategorySelect
             label={t('reason')}
             name="reason"
-            options={reasonOptions}
-            value={categoryId}
+            categories={availableCategories}
+            placeholder={t('balanceCorrection')}
+            value={selectedCategory?.id ?? ''}
             onChange={setCategoryId}
             searchable
           />

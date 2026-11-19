@@ -1,3 +1,4 @@
+import { CATEGORY_RELATION } from '@/lib/category-columns'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
@@ -58,13 +59,14 @@ export async function transactionWithRelations(
 ): Promise<unknown> {
   const row = firstTransaction(result)
   if (!row) return result
-  if (row.categories === null || (isEnvelope(row.categories) && 'name_is_custom' in row.categories)) return row
+  if (row.categories === null || (isEnvelope(row.categories) && 'template' in row.categories)) return row
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('transactions')
-    .select('*, categories(id, name, icon, color, default_key, name_is_custom, system_key), wallets(id, name)')
+    .select(`*, ${CATEGORY_RELATION}, wallets(id, name)`)
     .eq('id', String(row.id))
     .single()
 
+  if (error) throw error
   return data ?? row
 }

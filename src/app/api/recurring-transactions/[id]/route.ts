@@ -22,7 +22,7 @@ function nextOccurrence(current: string, frequency: string): string {
 async function getSchedule(supabase: ServerClient, userId: string, id: string) {
   const { data } = await supabase
     .from('recurring_transactions')
-    .select('next_run_date, frequency, category_id')
+    .select('next_run_date, frequency, user_category_id')
     .eq('id', id).eq('user_id', userId).single()
   return data
 }
@@ -31,6 +31,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   const { id } = params
 
   const body = await request.json()
+  if (Object.hasOwn(body, 'category_id')) return badRequest('categoryContractChanged')
 
   // Skip mode: advance next_run_date by one occurrence, no transaction created.
   if (body.skip) {
@@ -44,9 +45,9 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
     })
   }
 
-  const { amount, category_id, wallet_id, note, frequency, end_date, bank_fee, active } = body
+  const { amount, user_category_id, wallet_id, note, frequency, end_date, bank_fee, active } = body
 
-  const needsCurrentRule = category_id !== undefined || active === true
+  const needsCurrentRule = user_category_id !== undefined || active === true
   const current = needsCurrentRule ? await getSchedule(supabase, user.id, id) : null
   if (needsCurrentRule && !current) return notFound('recurringTransactionNotFound')
 
@@ -54,8 +55,8 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
   // stays paused and keeps that category; it cannot start running, or move into
   // one, because the nightly job files its transactions without a debt.
   if (current) {
-    const nextCategoryId = category_id !== undefined ? (category_id || null) : current.category_id
-    const categoryChanged = nextCategoryId !== current.category_id
+    const nextCategoryId = user_category_id !== undefined ? (user_category_id || null) : current.user_category_id
+    const categoryChanged = nextCategoryId !== current.user_category_id
     if ((categoryChanged || active === true) && await isDebtCategory(supabase, nextCategoryId)) {
       return badRequest('debtCategoryNeedsADebt')
     }
@@ -74,7 +75,7 @@ export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, 
 
   return updateOwnedRow(supabase, 'recurring_transactions', { id, userId: user.id }, {
     amount: amount ? Number(amount) : undefined,
-    category_id: category_id !== undefined ? (category_id || null) : undefined,
+    user_category_id: user_category_id !== undefined ? (user_category_id || null) : undefined,
     wallet_id: wallet_id !== undefined ? (wallet_id || null) : undefined,
     note: note !== undefined ? (note?.trim() || null) : undefined,
     frequency: frequency || undefined,

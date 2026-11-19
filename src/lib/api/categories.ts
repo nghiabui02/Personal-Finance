@@ -1,49 +1,45 @@
 import { apiFetch } from './client'
 import type { SystemCategoryKey, TransactionType } from '@/lib/constants'
+import type { CategoryRef } from '@/lib/types'
 
-export type Category = {
-  id: string
-  user_id: string | null
-  name: string
-  default_key: string | null
-  name_is_custom: boolean
-  icon: string | null
-  color: string | null
+/** A user's category identity, including removed categories retained for history. */
+export type Category = CategoryRef & {
+  user_id: string
+  category_id: string | null
   type: TransactionType
-  is_default: boolean
-  parent_id: string | null
   system_key: SystemCategoryKey | null
-  /** The Store template this category was added from; null for custom and system categories. */
-  source_template_id: string | null
+  is_active: boolean
 }
 
-/** Columns a `Category` needs — keep in sync with the type above. */
-export const CATEGORY_COLUMNS = 'id, user_id, name, icon, color, type, is_default, parent_id, system_key, default_key, name_is_custom, source_template_id'
+export type CategoryTemplate = {
+  id: string
+  default_key: string
+  collection: string
+  type: TransactionType
+  icon: string | null
+  color: string | null
+  is_available: boolean
+}
 
 export const categoriesApi = {
   create(payload: { name: string; icon?: string; color?: string; type: TransactionType }): Promise<Category> {
-    return apiFetch('/api/categories', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
+    return apiFetch('/api/categories', { method: 'POST', body: JSON.stringify(payload) })
   },
 
-  update(id: string, payload: { name?: string; icon?: string; color?: string }): Promise<Category> {
-    return apiFetch(`/api/categories/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
-    })
+  update(id: string, payload: { name?: string; icon?: string; color?: string; is_active?: boolean }): Promise<Category> {
+    return apiFetch(`/api/categories/${id}`, { method: 'PATCH', body: JSON.stringify(payload) })
   },
 
-  delete(id: string): Promise<null> {
-    return apiFetch(`/api/categories/${id}`, { method: 'DELETE' })
+  remove(id: string): Promise<Category> {
+    return categoriesApi.update(id, { is_active: false })
   },
 
-  /** Adds a Store template to the user's categories. Adding one twice returns the same category. */
-  adopt(templateId: string): Promise<Category> {
-    return apiFetch('/api/categories/adopt', {
-      method: 'POST',
-      body: JSON.stringify({ template_id: templateId }),
-    })
+  restore(id: string): Promise<Category> {
+    return categoriesApi.update(id, { is_active: true })
+  },
+
+  /** One RPC adopts or reactivates the entire selection atomically. */
+  adopt(templateIds: string[]): Promise<Category[]> {
+    return apiFetch('/api/categories/adopt', { method: 'POST', body: JSON.stringify({ template_ids: templateIds }) })
   },
 }

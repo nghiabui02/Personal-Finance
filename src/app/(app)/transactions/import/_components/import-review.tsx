@@ -6,7 +6,7 @@ import type { ImportPreviewRow } from '@/lib/api/bank-import'
 import { MAX_TITLE_LENGTH } from '@/lib/imports/bank-csv'
 import { SignedAmount } from '@/components/ui/signed-amount'
 
-export type ReviewedRow = ImportPreviewRow & { selected: boolean; title: string; category_id: string | null }
+export type ReviewedRow = ImportPreviewRow & { selected: boolean; title: string; user_category_id: string | null }
 
 function ReviewRow({ row, categories, onChange, disabled }: {
   row: ReviewedRow; categories: Category[]; disabled: boolean; onChange: (change: Partial<ReviewedRow>) => void
@@ -28,7 +28,7 @@ function ReviewRow({ row, categories, onChange, disabled }: {
           : row.selected && (
             <fieldset disabled={disabled} className="grid sm:grid-cols-2 gap-3">
               <Input label={t('title')} id={`import-title-${row.row}`} value={row.title} maxLength={MAX_TITLE_LENGTH} required clearable={false} onChange={event => onChange({ title: event.target.value })} />
-              <CategorySelect label={t('categoryForRecord', { row: row.row })} categories={categories} filterType={row.type} value={row.category_id ?? ''} onChange={value => onChange({ category_id: value || null })} searchable />
+              <CategorySelect label={t('categoryForRecord', { row: row.row })} categories={categories} filterType={row.type} value={row.user_category_id ?? ''} onChange={value => onChange({ user_category_id: value || null })} searchable />
             </fieldset>
           )}
     </article>
