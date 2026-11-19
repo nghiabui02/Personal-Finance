@@ -25,6 +25,7 @@ export default function CategoriesClient({ categories, initialTab, dependencies 
 }) {
   const locale = useLocale()
   const t = useTranslations('categories')
+  const common = useTranslations('common')
   const router = useRouter()
   const [tab, setTab] = useState(initialTab)
   const [modalOpen, setModalOpen] = useState(false)
@@ -95,7 +96,7 @@ export default function CategoriesClient({ categories, initialTab, dependencies 
           {blockers.map(row => <li key={row.id}><Link href={row.href} className="text-sm text-brand underline">{row.label}</Link></li>)}
         </ul>}
         <div className="mt-5 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setRemoving(null)} disabled={isPending}>{t('cancel')}</Button>
+          <Button variant="secondary" onClick={() => setRemoving(null)} disabled={isPending}>{common('cancel')}</Button>
           <Button onClick={() => changeState(removing, false)} disabled={isPending || blockers.length > 0}>{t('removeCategory')}</Button>
         </div>
       </Modal>}

@@ -1,10 +1,11 @@
 # Category Store membership cut-over
 
-Status: implementation prepared on 19 November 2026. No live reset, migration,
-application deployment, backup restore, or live financial fixture insertion has been
-performed by this implementation task. The owner selected a clean financial
-ledger and confirmed that current-month active budgets and active recurring
-rules block category removal.
+Status: live reset, membership migration and test-account seeding completed on
+19 November 2026 through Supabase MCP, following explicit owner authorization.
+The matching application release is `68f8866`; its Vercel production deployment
+succeeded. Both existing Auth accounts, identities, profile/locale metadata and
+Storage were retained. Current-month active budgets and active recurring rules
+block category removal.
 
 ## Matching release and schema
 
@@ -146,3 +147,34 @@ A direct evaluation with five removed categories and one debt category ahead of
 five eligible categories returned all five eligible suggestions. Debt API routes
 now delegate system-category provisioning to their money RPCs, and category
 projections are centralized in `src/lib/category-columns.ts`.
+
+## Live execution record — 19 November 2026
+
+All live database operations used Supabase MCP. Client financial writes were
+temporarily disabled through grants, and the previously active cron job 1 was
+paused. The final logical snapshot was restored on isolated PostgreSQL 17:
+fingerprints for all 13 public tables and both Auth users/identities matched.
+The reset, target schema and current `seed/test-data.sql` then passed rehearsal
+against that restored dataset. Both avatar files were also backed up locally.
+
+The actual reset, migration and test seed committed together with retained-data,
+ownership and seeded-count assertions. The resulting catalog has 85 templates.
+`test@gmail.com` has 166 transactions, 4 wallets, 21 user categories, 16 budgets,
+4 recurring rules, 3 debts and 3 savings goals. The other retained account has
+no financial data or optional category memberships. RLS reads confirmed account
+isolation. Auth user/identity and Storage metadata fingerprints stayed unchanged.
+
+MCP recorded `20261119035437_category_store_maintenance`,
+`20261119040109_user_categories`, and `20261119040229_category_store_reopen`.
+The schema source remains `20261119090000_user_categories.sql`; do not replay it
+against this already migrated project. The maintenance/reopen entries record the
+temporary permission changes. Target grants were verified and restored before
+reopening; cron job 1 alone was resumed, preserving its original schedule.
+
+The protected backup is outside Git at
+`/Users/nghiabui/.codex/backups/personal-finance/category-store-20261119-mq72i537/`.
+It contains public data/schema, Auth users/identities, migration history, Storage
+metadata/avatar bytes and the exact applied SQL. It is a scoped logical backup,
+not a complete hosted-project/configuration or Auth-service snapshot. A full
+Auth service was not started during rehearsal, and real password sign-in was
+not repeated. No Auth credentials or project configuration were changed.
