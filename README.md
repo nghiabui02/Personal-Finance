@@ -36,7 +36,7 @@ A personal finance app for a single user. Income/expense tracking, wallets, budg
 - Wallets: cash, bank, e-wallet, investment, **credit card** (credit limit, statement day, due day)
 - **Reconcile** against the real bank balance — the gap is filed as an adjustment transaction, so history still adds up and the drift stays visible
 - Custom categories (icon, color)
-- **Category Store**: search 85 bilingual templates across 12 collections and add one or several at once. Each adoption creates a personal `user_categories` link. Names follow the app language until explicitly renamed; appearance and names stay private. Remove/restore retains history, while active recurring rules or current-month budgets block removal.
+- **Category Store**: search 107 bilingual templates across 12 collections and add one or several at once. Each adoption creates a personal `user_categories` link. Names follow the app language until explicitly renamed; appearance and names stay private. Remove/restore retains history, while active recurring rules or current-month budgets block removal.
 - Lend, Borrow, Collect Debt and Repay Debt categories only work through a debt — the transaction form sends you to Debts instead of filing them unlinked
 
 **Planning**

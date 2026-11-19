@@ -12,8 +12,11 @@ block category removal.
 The application uses `user_categories.id` throughout, exposed as
 `user_category_id` in transaction, budget, recurring, import and bulk requests.
 Store templates live in `categories`; only adoption creates optional links.
-The manifest is `src/lib/category-catalog.json` (85 templates, 12 collections).
-The seed section of `20261119090000_user_categories.sql` must match it.
+The manifest is `src/lib/category-catalog.json` (107 templates, 12 collections).
+The original membership migration seeds the first 85 templates. Later catalog
+expansion uses additive migrations; do not edit the applied membership migration.
+Deploy the matching manifest before making new templates available: the current
+application resolves category labels and aliases from its bundled manifest.
 
 Removed categories retain identity, appearance, explicit names and history.
 Active dependencies block removal; restore does not resume paused records.

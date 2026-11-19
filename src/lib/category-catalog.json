@@ -179,6 +179,21 @@
       "color": "#ef4444"
     },
     {
+      "key": "snacks",
+      "collection": "food_drink",
+      "type": "expense",
+      "vi": "Ăn vặt",
+      "en": "Snacks",
+      "aliases": [
+        "an vat",
+        "snack",
+        "bim bim",
+        "banh keo"
+      ],
+      "icon": "🍿",
+      "color": "#ef4444"
+    },
+    {
       "key": "transport",
       "collection": "transport",
       "type": "expense",
@@ -297,6 +312,49 @@
         "may"
       ],
       "icon": "🚗",
+      "color": "#f97316"
+    },
+    {
+      "key": "vehicle_inspection",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Đăng kiểm",
+      "en": "Vehicle inspection",
+      "aliases": [
+        "dang kiem",
+        "kiem dinh xe",
+        "inspection"
+      ],
+      "icon": "🔧",
+      "color": "#f97316"
+    },
+    {
+      "key": "vehicle_registration",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Phí đăng ký xe",
+      "en": "Vehicle registration fees",
+      "aliases": [
+        "dang ky xe",
+        "bien so",
+        "truoc ba",
+        "registration"
+      ],
+      "icon": "📋",
+      "color": "#f97316"
+    },
+    {
+      "key": "vehicle_rental",
+      "collection": "transport",
+      "type": "expense",
+      "vi": "Thuê xe",
+      "en": "Vehicle rental",
+      "aliases": [
+        "thue xe",
+        "car rental",
+        "motorbike rental"
+      ],
+      "icon": "🚙",
       "color": "#f97316"
     },
     {
@@ -436,6 +494,50 @@
         "utilities"
       ],
       "icon": "🏠",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "building_management",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Phí quản lý chung cư",
+      "en": "Building management fees",
+      "aliases": [
+        "phi dich vu",
+        "chung cu",
+        "apartment fees"
+      ],
+      "icon": "🏢",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "cooking_gas",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Gas nấu ăn",
+      "en": "Cooking gas",
+      "aliases": [
+        "gas nau an",
+        "binh gas",
+        "khi dot",
+        "lpg"
+      ],
+      "icon": "🔥",
+      "color": "#06b6d4"
+    },
+    {
+      "key": "house_cleaning",
+      "collection": "home",
+      "type": "expense",
+      "vi": "Dịch vụ dọn nhà",
+      "en": "House cleaning",
+      "aliases": [
+        "don nha",
+        "giup viec",
+        "ve sinh nha",
+        "cleaner"
+      ],
+      "icon": "🧹",
       "color": "#06b6d4"
     },
     {
@@ -640,6 +742,52 @@
       ],
       "icon": "🏥",
       "color": "#ec4899"
+    },
+    {
+      "key": "vaccinations",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Tiêm chủng",
+      "en": "Vaccinations",
+      "aliases": [
+        "tiem phong",
+        "vac xin",
+        "vaccine",
+        "immunization"
+      ],
+      "icon": "💉",
+      "color": "#14b8a6"
+    },
+    {
+      "key": "physiotherapy",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Vật lý trị liệu",
+      "en": "Physiotherapy",
+      "aliases": [
+        "vat ly tri lieu",
+        "phuc hoi chuc nang",
+        "physical therapy",
+        "rehabilitation"
+      ],
+      "icon": "🩼",
+      "color": "#14b8a6"
+    },
+    {
+      "key": "mental_health",
+      "collection": "health",
+      "type": "expense",
+      "vi": "Tư vấn tâm lý",
+      "en": "Mental health counseling",
+      "aliases": [
+        "tam ly",
+        "tham van",
+        "tri lieu tam ly",
+        "counseling",
+        "therapy"
+      ],
+      "icon": "🧠",
+      "color": "#14b8a6"
     },
     {
       "key": "education",
@@ -926,6 +1074,37 @@
       "color": "#0ea5e9"
     },
     {
+      "key": "attraction_tickets",
+      "collection": "travel",
+      "type": "expense",
+      "vi": "Vé tham quan",
+      "en": "Attraction tickets",
+      "aliases": [
+        "ve tham quan",
+        "bao tang",
+        "cong vien",
+        "sightseeing",
+        "museum"
+      ],
+      "icon": "🎟️",
+      "color": "#0ea5e9"
+    },
+    {
+      "key": "checked_baggage",
+      "collection": "travel",
+      "type": "expense",
+      "vi": "Hành lý ký gửi",
+      "en": "Checked baggage",
+      "aliases": [
+        "hanh ly ky gui",
+        "mua them hanh ly",
+        "baggage",
+        "luggage"
+      ],
+      "icon": "🧳",
+      "color": "#0ea5e9"
+    },
+    {
       "key": "childcare",
       "collection": "family_pets",
       "type": "expense",
@@ -994,6 +1173,82 @@
         "vet"
       ],
       "icon": "🐾",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "diapers_formula",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Tã và sữa",
+      "en": "Diapers and formula",
+      "aliases": [
+        "ta sua",
+        "bim sua",
+        "diaper",
+        "baby formula"
+      ],
+      "icon": "🍼",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "children_supplies",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Đồ dùng trẻ em",
+      "en": "Children's supplies",
+      "aliases": [
+        "do choi",
+        "do dung tre em",
+        "baby supplies",
+        "kids"
+      ],
+      "icon": "🧸",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "extracurricular",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Học ngoại khóa",
+      "en": "Extracurricular activities",
+      "aliases": [
+        "ngoai khoa",
+        "hoc them",
+        "lop nang khieu",
+        "after school"
+      ],
+      "icon": "🎨",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "pet_grooming",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Vệ sinh và chăm sóc thú cưng",
+      "en": "Pet grooming",
+      "aliases": [
+        "tam cho",
+        "tam meo",
+        "cat tia long",
+        "pet spa",
+        "grooming"
+      ],
+      "icon": "🛁",
+      "color": "#f59e0b"
+    },
+    {
+      "key": "pet_accessories",
+      "collection": "family_pets",
+      "type": "expense",
+      "vi": "Phụ kiện thú cưng",
+      "en": "Pet accessories",
+      "aliases": [
+        "phu kien thu cung",
+        "vong co",
+        "chuong",
+        "pet toys"
+      ],
+      "icon": "🐕",
       "color": "#f59e0b"
     },
     {
@@ -1123,6 +1378,36 @@
         "miscellaneous"
       ],
       "icon": "📄",
+      "color": "#64748b"
+    },
+    {
+      "key": "life_insurance",
+      "collection": "fees",
+      "type": "expense",
+      "vi": "Bảo hiểm nhân thọ",
+      "en": "Life insurance",
+      "aliases": [
+        "bao hiem nhan tho",
+        "phi bao hiem nhan tho",
+        "life insurance premium"
+      ],
+      "icon": "🛡️",
+      "color": "#64748b"
+    },
+    {
+      "key": "loan_interest",
+      "collection": "fees",
+      "type": "expense",
+      "vi": "Lãi vay",
+      "en": "Loan interest",
+      "aliases": [
+        "lai vay",
+        "tien lai vay",
+        "lai the tin dung",
+        "loan interest",
+        "credit card interest"
+      ],
+      "icon": "🏦",
       "color": "#64748b"
     },
     {
@@ -1282,6 +1567,50 @@
         "miscellaneous"
       ],
       "icon": "💰",
+      "color": "#22c55e"
+    },
+    {
+      "key": "commissions",
+      "collection": "income",
+      "type": "income",
+      "vi": "Hoa hồng",
+      "en": "Commissions",
+      "aliases": [
+        "hoa hong",
+        "moi gioi",
+        "sales commission",
+        "referral commission"
+      ],
+      "icon": "🤝",
+      "color": "#22c55e"
+    },
+    {
+      "key": "allowances",
+      "collection": "income",
+      "type": "income",
+      "vi": "Phụ cấp",
+      "en": "Allowances",
+      "aliases": [
+        "phu cap",
+        "tro cap cong viec",
+        "work allowance"
+      ],
+      "icon": "💼",
+      "color": "#22c55e"
+    },
+    {
+      "key": "overtime_pay",
+      "collection": "income",
+      "type": "income",
+      "vi": "Tiền làm thêm giờ",
+      "en": "Overtime pay",
+      "aliases": [
+        "tang ca",
+        "lam them gio",
+        "overtime",
+        "ot pay"
+      ],
+      "icon": "⏰",
       "color": "#22c55e"
     }
   ]
