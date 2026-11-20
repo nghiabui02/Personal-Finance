@@ -2,7 +2,7 @@
 import { useTranslations } from 'next-intl'
 
 import { User } from '@supabase/supabase-js'
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { NotificationBell } from './notification-bell'
 import { Avatar } from '@/components/ui/avatar'
 

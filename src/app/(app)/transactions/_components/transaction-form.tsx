@@ -1,5 +1,5 @@
 'use client'
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { useTranslations } from 'next-intl'
 
 import { BankFeeField } from '@/components/ui/bank-fee-field'

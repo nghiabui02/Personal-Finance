@@ -11,7 +11,8 @@ import { TabGroup } from '@/components/ui/tab-group'
 import { type Category } from '@/lib/api/categories'
 import { toWalletOptions, type Wallet } from '@/lib/api/wallets'
 import type { TransactionFilters } from '@/lib/server/transaction-filters'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { useNavigation } from '@/components/ui/navigation-loading'
 import { useState } from 'react'
 
 /** Filters live in the URL, so a narrowed list is shareable and survives reload. */
@@ -45,7 +46,7 @@ export function FilterModal({
   const locale = useLocale()
   const t = useTranslations('transactions')
   const close = useModalClose()
-  const router = useRouter()
+  const router = useNavigation()
   const searchParams = useSearchParams()
 
   const [type, setType] = useState<'all' | 'income' | 'expense'>(filters.type ?? 'all')

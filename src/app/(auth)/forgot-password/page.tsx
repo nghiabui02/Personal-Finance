@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
               placeholder="you@example.com"
             />
             <FormError message={error} />
-            <Button type="submit" disabled={isPending} fullWidth>
+            <Button loading={isPending} type="submit" disabled={isPending} fullWidth>
               {isPending ? t('sending') : t('sendResetLink')}
             </Button>
           </form>

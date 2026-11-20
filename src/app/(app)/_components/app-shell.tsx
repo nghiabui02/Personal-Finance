@@ -3,8 +3,9 @@ import { useTranslations } from 'next-intl'
 
 import { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
+import { LoadingContent, useNavigation, useNavigationPathname } from '@/components/ui/navigation-loading'
 import { User } from '@supabase/supabase-js'
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import Header from './header'
 import Sidebar from './sidebar'
 import { QuickAddButton } from './quick-add-button'
@@ -106,7 +107,9 @@ export default function AppShell({
   user: User
 }) {
   const nav = useTranslations('navigation')
-  const pathname = usePathname()
+  const pathname = useNavigationPathname()
+  const currentPathname = usePathname()
+  const { isPending } = useNavigation()
 
   const title = PAGE_TITLES[pathname] ?? Object.entries(PAGE_TITLES).find(([k]) => pathname.startsWith(k + '/'))?.at(1) ?? 'Finance'
   const isAccountSubPage = ACCOUNT_SUB_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
@@ -126,7 +129,7 @@ export default function AppShell({
       </div>
 
       <main className="pt-4 px-4 pb-bottom-nav md:pb-6 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pt-6 md:px-6 md:ml-60 md:min-w-0">
-        {children}
+        <LoadingContent className="contents" pending={isPending && pathname !== currentPathname}>{children}</LoadingContent>
       </main>
 
       <MobileBottomNav pathname={pathname} />

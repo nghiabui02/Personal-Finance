@@ -1,13 +1,14 @@
 'use client'
 import { useLocale, useTranslations } from 'next-intl'
 
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { toastError } from '@/components/ui/toast'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import type { AppNotification, NotificationSeverity } from '@/app/api/notifications/route'
 import { useDismiss } from '@/components/ui/use-dismiss'
+import { ContentSkeleton } from '@/components/ui/skeleton'
 
 const SEVERITY_DOT: Record<NotificationSeverity, string> = {
   alert: 'bg-rose-500',
@@ -101,7 +102,7 @@ export function NotificationBell() {
 
           <div className="max-h-[min(24rem,60vh)] overflow-y-auto">
             {loading ? (
-              <p className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">{t('loading')}</p>
+              <div className="p-4"><ContentSkeleton /></div>
             ) : count === 0 ? (
               <div className="px-4 py-10 text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="mx-auto text-gray-300 dark:text-gray-600 mb-2">

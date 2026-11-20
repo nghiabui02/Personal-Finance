@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { requireUser } from '@/lib/server/auth'
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { Avatar } from '@/components/ui/avatar'
 
 const CHEVRON = (

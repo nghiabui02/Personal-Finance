@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useOptimistic, useRef, useState, useTransition } from 'react'
 
 interface Tab<T extends string> {
   key: T
@@ -28,16 +28,26 @@ export function TabGroup<T extends string>({
   activeTextColors,
   size = 'md',
 }: TabGroupProps<T>) {
+  const [selectedValue, setSelectedValue] = useOptimistic(value)
+  const [isPending, startTransition] = useTransition()
   const containerRef = useRef<HTMLDivElement>(null)
   const [pill, setPill] = useState({ left: 0, width: 0 })
+
+  function selectTab(key: T) {
+    // Move the pill before navigation finishes; committed props remain authoritative.
+    startTransition(() => {
+      setSelectedValue(key)
+      onChange(key)
+    })
+  }
 
   const updatePill = useCallback(() => {
     const container = containerRef.current
     if (!container) return
-    const btn = container.querySelector<HTMLElement>(`[data-key="${value}"]`)
+    const btn = container.querySelector<HTMLElement>(`[data-key="${selectedValue}"]`)
     if (!btn) return
     setPill({ left: btn.offsetLeft, width: btn.offsetWidth })
-  }, [value])
+  }, [selectedValue])
 
   useLayoutEffect(updatePill, [updatePill])
 
@@ -46,12 +56,13 @@ export function TabGroup<T extends string>({
     return () => window.removeEventListener('resize', updatePill)
   }, [updatePill])
 
-  const pillColor = activeColors?.[value]
+  const pillColor = activeColors?.[selectedValue]
   const isLg = size === 'lg'
 
   return (
     <div
       ref={containerRef}
+      aria-busy={isPending}
       className={`relative flex bg-gray-100 dark:bg-gray-800 p-1 ${isLg ? 'rounded-xl' : 'rounded-lg'} ${className}`}
     >
       {/* Sliding pill — position + color both transition smoothly */}
@@ -67,14 +78,15 @@ export function TabGroup<T extends string>({
       />
 
       {tabs.map(tab => {
-        const isActive = value === tab.key
+        const isActive = selectedValue === tab.key
         const textColor = isActive ? activeTextColors?.[tab.key] : undefined
         return (
           <button
             key={tab.key}
             data-key={tab.key}
             type="button"
-            onClick={() => onChange(tab.key)}
+            onClick={() => selectTab(tab.key)}
+            aria-pressed={isActive}
             style={textColor ? { color: textColor } : undefined}
             className={`relative z-10 flex-1 px-3 ${isLg ? 'py-2.5' : 'py-1.5'} text-sm font-medium ${isLg ? 'rounded-lg' : 'rounded-md'} transition-colors duration-150 whitespace-nowrap ${
               isActive
@@ -83,6 +95,9 @@ export function TabGroup<T extends string>({
             }`}
           >
             {tab.label}
+            {isActive && isPending && (
+              <span aria-hidden="true" className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-current motion-safe:animate-pulse" />
+            )}
           </button>
         )
       })}

@@ -1,6 +1,7 @@
 'use client'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { useNavigation } from '@/components/ui/navigation-loading'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ export default function StoreClient({ templates, memberships }: { templates: Cat
   const locale = useLocale()
   const t = useTranslations('categories')
   const router = useRouter()
+  const navigation = useNavigation()
   const [tab, setTab] = useState<'income' | 'expense'>('expense')
   const [search, setSearch] = useState('')
   const [collection, setCollection] = useState('')
@@ -52,7 +54,7 @@ export default function StoreClient({ templates, memberships }: { templates: Cat
         headline={<>{t.rich('storeHeadline', { count: ofTab.filter(template => activeIds.has(template.id)).length, total: ofTab.length, strong: chunks => <Em>{chunks}</Em> })}</>}
         controls={<TabGroup tabs={[{ key: 'expense', label: t('expense') }, { key: 'income', label: t('income') }]}
           value={tab} onChange={value => { setTab(value); setCollection('') }} className="w-fit" />}
-        action={<Button variant="secondary" onClick={() => router.push('/categories')}>{t('backToCategories')}</Button>} />
+        action={<Button variant="secondary" onClick={() => navigation.push('/categories')}>{t('backToCategories')}</Button>} />
 
       <div className="grid gap-3 sm:grid-cols-2 mb-4">
         <Input label={t('searchStore')} value={search} onChange={event => setSearch(event.target.value)} />
@@ -61,7 +63,7 @@ export default function StoreClient({ templates, memberships }: { templates: Cat
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4" role="status" aria-live="polite">
         <p className="text-sm text-gray-500">{isPending ? t('addingCount', { count: pendingIds.length }) : t('selectedCount', { count: selectedIds.length })}</p>
-        <Button onClick={() => add(selectedIds)} disabled={isPending || !selectedIds.length}>{t('addSelected')}</Button>
+        <Button loading={isPending} onClick={() => add(selectedIds)} disabled={isPending || !selectedIds.length}>{t('addSelected')}</Button>
       </div>
       {matches.length === 0 && <p className="py-12 text-center text-sm text-gray-400">{t('noStoreMatches')}</p>}
       <div className="space-y-6">
@@ -82,7 +84,7 @@ export default function StoreClient({ templates, memberships }: { templates: Cat
                       <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-lg" style={{ backgroundColor: template.color ? `${template.color}22` : '#f3f4f6' }}>{template.icon ?? '🏷️'}</div>
                       <p className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100">{name}</p>
                       {isAdded ? <span className="text-xs text-emerald-600 dark:text-emerald-400">{t('added')}</span>
-                        : <Button variant="secondary" onClick={() => add([template.id])} disabled={isPending}>
+                        : <Button loading={isPending && pendingIds.includes(template.id)} variant="secondary" onClick={() => add([template.id])} disabled={isPending}>
                           {isPending && pendingIds.includes(template.id) ? t('adding') : removedIds.has(template.id) ? t('addAgain') : t('add')}
                         </Button>}
                     </div>

@@ -1,3 +1,4 @@
+import { LoadingContent } from '@/components/ui/navigation-loading'
 import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getCategoryName } from '@/i18n/category'
 import { getLocale } from 'next-intl/server'
@@ -150,21 +151,23 @@ export default async function DashboardPage({
         budgetHeadroom={budgetHeadroom}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-stretch">
-        <div className="lg:col-span-2 flex flex-col">
-          <SpendingChart data={expenseByCategory} totalExpense={totalExpense} />
+      <LoadingContent>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-stretch">
+          <div className="lg:col-span-2 flex flex-col">
+            <SpendingChart data={expenseByCategory} totalExpense={totalExpense} />
+          </div>
+          <div className="lg:col-span-3 flex flex-col">
+            <RecentTransactions transactions={(recentRows ?? []) as unknown as Parameters<typeof RecentTransactions>[0]['transactions']} />
+          </div>
         </div>
-        <div className="lg:col-span-3 flex flex-col">
-          <RecentTransactions transactions={(recentRows ?? []) as unknown as Parameters<typeof RecentTransactions>[0]['transactions']} />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <BudgetProgress budgets={budgets} />
+          <DebtSummary debts={(debtRows ?? []) as { type: 'lend' | 'borrow'; remaining_amount: number; status: string }[]} />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <BudgetProgress budgets={budgets} />
-        <DebtSummary debts={(debtRows ?? []) as { type: 'lend' | 'borrow'; remaining_amount: number; status: string }[]} />
-      </div>
-
-      <NetWorthChart snapshots={(snapshotRows ?? []) as { recorded_date: string; net_worth: number }[]} />
+        <NetWorthChart snapshots={(snapshotRows ?? []) as { recorded_date: string; net_worth: number }[]} />
+      </LoadingContent>
 
     </div>
   )

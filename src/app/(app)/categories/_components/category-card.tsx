@@ -44,7 +44,7 @@ export function CategoryCard({ category, onEdit, onDelete, isDeleting }: Categor
         <IconButton label={t('editCategory')} onClick={onEdit}>{EditIcon}</IconButton>
         {!category.system_key && (category.is_active
           ? <IconButton label={t('removeCategory')} onClick={onDelete} disabled={isDeleting} tone="danger">{TrashIcon}</IconButton>
-          : <Button variant="secondary" onClick={onDelete} disabled={isDeleting}>{t('restore')}</Button>)}
+          : <Button loading={isDeleting} variant="secondary" onClick={onDelete} disabled={isDeleting}>{t('restore')}</Button>)}
       </div>
     </div>
   )

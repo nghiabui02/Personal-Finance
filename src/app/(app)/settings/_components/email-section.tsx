@@ -26,7 +26,7 @@ export function EmailSection({ currentEmail }: { currentEmail: string }) {
       <p className="text-xs text-gray-400 -mt-3 mb-4">{t.rich('sentenceCurrent', { value0: () => <span className="text-gray-600 dark:text-gray-300">{currentEmail}</span> })}</p>
       <Input label={t('newEmail')} name="new-email" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@example.com" clearable={false} />
       <StatusLine status={status} />
-      <Button onClick={updateEmail} disabled={saving || !newEmail.trim()} className="mt-4">
+      <Button loading={saving} onClick={updateEmail} disabled={saving || !newEmail.trim()} className="mt-4">
         {saving ? t('sending') : t('updateEmail')}
       </Button>
       <p className="mt-2 text-xs text-gray-400">{t('aConfirmationLinkWillBeSentToTheNewEmail')}</p>

@@ -27,7 +27,7 @@ export function ModalActions({
   return (
     <div className="flex gap-2 pt-1">
       <Button type="button" variant="secondary" fullWidth onClick={onCancel}>{t('cancel')}</Button>
-      <Button type="submit" variant={submitVariant} disabled={isPending || disabled} fullWidth>
+      <Button loading={isPending} type="submit" variant={submitVariant} disabled={isPending || disabled} fullWidth>
         {isPending ? pendingLabel ?? t('saving') : submitLabel}
       </Button>
     </div>

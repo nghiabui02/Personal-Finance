@@ -1,7 +1,7 @@
 'use client'
 import { useLocale, useTranslations } from 'next-intl'
 
-import { useRouter } from 'next/navigation'
+import { LoadingContent, useNavigation, usePendingSearchParam } from '@/components/ui/navigation-loading'
 import { type Transaction } from '@/lib/api/transactions'
 import { formatMonthYear, formatWeekdayMonthDay, localYMD } from '@/lib/utils/date'
 
@@ -30,8 +30,9 @@ export function TransactionCalendar({
   const locale = useLocale()
   const weekdays = Array.from({ length: 7 }, (_, index) => new Date(2026, 0, 5 + index).toLocaleDateString(locale, { weekday: 'short' }))
   const t = useTranslations('transactions')
-  const router = useRouter()
-  const [year, month] = period.split('-').map(Number)
+  const router = useNavigation()
+  const selectedPeriod = usePendingSearchParam('month', period)
+  const [year, month] = selectedPeriod.split('-').map(Number)
   const today = localYMD()
 
   // Build daily net map
@@ -84,81 +85,83 @@ export function TransactionCalendar({
         </button>
       </div>
 
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 mb-1">
-        {weekdays.map(d => (
-          <div key={d} className="text-center text-[11px] font-medium text-gray-400 dark:text-gray-500 py-1">
-            {d}
-          </div>
-        ))}
-      </div>
-
-      {/* Day cells */}
-      <div className="grid grid-cols-7 gap-0.5">
-        {cells.map((day, i) => {
-          if (!day) return <div key={i} />
-
-          const dateStr = `${period}-${String(day).padStart(2, '0')}`
-          const net = dailyNet.get(dateStr)
-          const isSelected = selectedDate === dateStr
-          const isToday = dateStr === today
-          const hasData = net !== undefined
-
-          return (
-            <button
-              key={i}
-              onClick={() => onSelectDate(isSelected ? null : dateStr)}
-              className={`
-                flex flex-col items-center justify-start pt-1.5 pb-1 px-0.5 rounded-lg min-h-11 sm:min-h-11.5
-                transition-all duration-150 ease-out active:scale-95
-                ${isSelected
-                  ? 'bg-brand-fill scale-[1.08] shadow-md shadow-brand/30'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-[1.04]'}
-              `}
-            >
-              {/* Day number */}
-              <span className={`
-                text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full
-                ${isSelected
-                  ? 'text-white'
-                  : isToday
-                    ? 'bg-brand-fill text-white'
-                    : 'text-gray-700 dark:text-gray-300'}
-              `}>
-                {day}
-              </span>
-
-              {/* Net amount */}
-              {hasData && (
-                <span className={`
-                  text-[9px] font-semibold leading-none mt-1 tabular-nums
-                  ${isSelected
-                    ? 'text-white/90'
-                    : net! > 0
-                      ? 'text-emerald-500 dark:text-emerald-400'
-                      : 'text-rose-500 dark:text-rose-400'}
-                `}>
-                  {formatNet(net!, locale)}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Selected date hint */}
-      {selectedDate && (
-        <div className="mt-3 pt-3 border-t border-hairline flex items-center justify-between">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {formatWeekdayMonthDay(new Date(selectedDate + 'T00:00:00'), locale)}
-          </span>
-          <button
-            onClick={() => onSelectDate(null)}
-            className="text-xs text-brand hover:underline"
-          >
-            {t('showAll')}</button>
+      <LoadingContent className="contents">
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 mb-1">
+          {weekdays.map(d => (
+            <div key={d} className="text-center text-[11px] font-medium text-gray-400 dark:text-gray-500 py-1">
+              {d}
+            </div>
+          ))}
         </div>
-      )}
+
+        {/* Day cells */}
+        <div className="grid grid-cols-7 gap-0.5">
+          {cells.map((day, i) => {
+            if (!day) return <div key={i} />
+
+            const dateStr = `${period}-${String(day).padStart(2, '0')}`
+            const net = dailyNet.get(dateStr)
+            const isSelected = selectedDate === dateStr
+            const isToday = dateStr === today
+            const hasData = net !== undefined
+
+            return (
+              <button
+                key={i}
+                onClick={() => onSelectDate(isSelected ? null : dateStr)}
+                className={`
+                  flex flex-col items-center justify-start pt-1.5 pb-1 px-0.5 rounded-lg min-h-11 sm:min-h-11.5
+                  transition-all duration-150 ease-out active:scale-95
+                  ${isSelected
+                    ? 'bg-brand-fill scale-[1.08] shadow-md shadow-brand/30'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-[1.04]'}
+                `}
+              >
+                {/* Day number */}
+                <span className={`
+                  text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full
+                  ${isSelected
+                    ? 'text-white'
+                    : isToday
+                      ? 'bg-brand-fill text-white'
+                      : 'text-gray-700 dark:text-gray-300'}
+                `}>
+                  {day}
+                </span>
+
+                {/* Net amount */}
+                {hasData && (
+                  <span className={`
+                    text-[9px] font-semibold leading-none mt-1 tabular-nums
+                    ${isSelected
+                      ? 'text-white/90'
+                      : net! > 0
+                        ? 'text-emerald-500 dark:text-emerald-400'
+                        : 'text-rose-500 dark:text-rose-400'}
+                  `}>
+                    {formatNet(net!, locale)}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Selected date hint */}
+        {selectedDate && (
+          <div className="mt-3 pt-3 border-t border-hairline flex items-center justify-between">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {formatWeekdayMonthDay(new Date(selectedDate + 'T00:00:00'), locale)}
+            </span>
+            <button
+              onClick={() => onSelectDate(null)}
+              className="text-xs text-brand hover:underline"
+            >
+              {t('showAll')}</button>
+          </div>
+        )}
+      </LoadingContent>
     </div>
   )
 }

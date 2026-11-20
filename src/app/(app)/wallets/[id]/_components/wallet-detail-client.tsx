@@ -2,7 +2,7 @@
 import { getCategoryName } from '@/i18n/category'
 import { useLocale, useTranslations } from 'next-intl'
 
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { BRAND_HEX } from '@/lib/utils/colors'
 import { useEffect, useRef, useState } from 'react'
 import { ReconcileModal } from '../../_components/reconcile-modal'

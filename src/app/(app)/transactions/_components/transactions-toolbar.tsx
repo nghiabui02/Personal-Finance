@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { useEffect, useRef } from 'react'
 import { ViewSelector, type ViewMode } from './period-navigator'
 import type { NoteSearch } from './use-note-search'

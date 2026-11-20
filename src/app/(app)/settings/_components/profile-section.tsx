@@ -114,7 +114,7 @@ export function ProfileSection({
       </div>
 
       <StatusLine status={status} />
-      <Button onClick={saveProfile} disabled={saving} className="mt-4">
+      <Button loading={saving} onClick={saveProfile} disabled={saving} className="mt-4">
         {saving ? t('saving') : t('saveChanges')}
       </Button>
     </Section>

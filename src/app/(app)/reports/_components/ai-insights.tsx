@@ -8,6 +8,8 @@ import { AnalysisResult } from './analysis-result'
 import { ComparePeriodPicker } from './compare-period-picker'
 import { useComparePeriod } from './use-compare-period'
 import { useSpendingAnalysis } from './use-spending-analysis'
+import { LoadingContent } from '@/components/ui/navigation-loading'
+import { Button } from '@/components/ui/button'
 
 // Everything the single caller (Reports) always has is REQUIRED on purpose:
 // these were optional once and a missing `start` silently disabled the whole
@@ -64,49 +66,38 @@ export function AIInsights({ userId, periodLabel, period, start, totalIncome, to
         onSelect={compare.select}
       />
 
-      {/* Idle — prompt to analyze */}
-      {state === 'idle' && (
-        <div className="flex flex-col items-center gap-3 py-4 text-center">
-          <p className="text-sm text-slate-400">{t('sentenceGetAnAiSpendingAnalysisFor', { value0: periodLabel })}</p>
-          <button
-            disabled={!compare.ready} onClick={() => analyze()}
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-slate-700 text-slate-200 text-sm font-medium px-4 py-2 rounded-xl transition-colors active:scale-[0.97]"
-          >
-            <span>✨</span> {t('analyzeNow')}</button>
-        </div>
-      )}
-
-      {/* Loading skeleton */}
-      {state === 'loading' && (
-        <div className="space-y-3">
-          <div className="h-2.5 bg-white/10 rounded-full animate-pulse w-full" />
-          <div className="h-2.5 bg-white/10 rounded-full animate-pulse w-4/5" />
-          <div className="mt-4 space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-10 bg-white/5 rounded-xl animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
-            ))}
+      <LoadingContent pending={compare.loading}>
+        {/* Idle — prompt to analyze */}
+        {(state === 'idle' || state === 'loading') && (
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <p className="text-sm text-slate-400">{t('sentenceGetAnAiSpendingAnalysisFor', { value0: periodLabel })}</p>
+            <Button loading={state === 'loading'} variant="ghost"
+              disabled={!compare.ready} onClick={() => analyze()}
+              className="flex items-center gap-1.5 bg-white/10 hover:bg-slate-700 text-slate-200 text-sm font-medium px-4 py-2 rounded-xl transition-colors active:scale-[0.97]"
+            >
+              <span>✨</span> {t('analyzeNow')}</Button>
           </div>
-        </div>
-      )}
+        )}
 
-      {state === 'done' && analysis && <AnalysisResult analysis={analysis} />}
+        {state === 'done' && analysis && <AnalysisResult analysis={analysis} />}
 
-      {/* Rate limit */}
-      {state === 'rate_limit' && (
-        <div className="text-center py-3">
-          <p className="text-sm text-slate-400 mb-1">{t('apiIsBusyTryAgainShortly')}</p>
-          <p className="text-2xl font-bold tabular-nums text-slate-300">{t('sentenceS', { value0: retryIn })}</p>
-        </div>
-      )}
+        {/* Rate limit */}
+        {state === 'rate_limit' && (
+          <div className="text-center py-3">
+            <p className="text-sm text-slate-400 mb-1">{t('apiIsBusyTryAgainShortly')}</p>
+            <p className="text-2xl font-bold tabular-nums text-slate-300">{t('sentenceS', { value0: retryIn })}</p>
+          </div>
+        )}
 
-      {/* Error */}
-      {state === 'error' && (
-        <div className="text-center py-3">
-          <p className="text-sm text-white/45 mb-2">{t('couldNotLoadTheAnalysis')}</p>
-          <button disabled={!compare.ready} onClick={() => analyze()} className="text-xs text-slate-400 hover:text-slate-200 transition-colors underline">
-            {t('retry')}</button>
-        </div>
-      )}
+        {/* Error */}
+        {state === 'error' && (
+          <div className="text-center py-3">
+            <p className="text-sm text-white/45 mb-2">{t('couldNotLoadTheAnalysis')}</p>
+            <button disabled={!compare.ready} onClick={() => analyze()} className="text-xs text-slate-400 hover:text-slate-200 transition-colors underline">
+              {t('retry')}</button>
+          </div>
+        )}
+      </LoadingContent>
     </div>
   )
 }

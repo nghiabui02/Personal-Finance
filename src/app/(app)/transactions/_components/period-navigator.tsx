@@ -1,7 +1,7 @@
 'use client'
 import { useLocale, useTranslations } from 'next-intl'
 
-import { useRouter } from 'next/navigation'
+import { useNavigation, usePendingSearchParam } from '@/components/ui/navigation-loading'
 import { PeriodNav } from '@/components/ui/period-nav'
 import { TabGroup } from '@/components/ui/tab-group'
 import {
@@ -47,15 +47,18 @@ interface PeriodNavigatorProps {
 
 export function PeriodNavigator({ view, period }: PeriodNavigatorProps) {
   const locale = useLocale()
-  const router = useRouter()
+  const router = useNavigation()
+
+  const periodKey = view === 'month' ? 'month' : view === 'week' ? 'week' : 'date'
+  const selectedPeriod = usePendingSearchParam(periodKey, period)
 
   function go(dir: -1 | 1) {
-    router.replace(buildUrl(view, shiftPeriod(view, period, dir)), { scroll: false })
+    router.replace(buildUrl(view, shiftPeriod(view, selectedPeriod, dir)), { scroll: false })
   }
 
   return (
     <PeriodNav
-      label={getPeriodLabel(view, period, locale)}
+      label={getPeriodLabel(view, selectedPeriod, locale)}
       onPrev={() => go(-1)}
       onNext={() => go(1)}
       labelClassName="min-w-32 tabular-nums"
@@ -69,7 +72,7 @@ interface ViewSelectorProps {
 
 export function ViewSelector({ view }: ViewSelectorProps) {
   const t = useTranslations('transactions')
-  const router = useRouter()
+  const router = useNavigation()
 
   function switchView(v: ViewMode) {
     const today = localYMD()

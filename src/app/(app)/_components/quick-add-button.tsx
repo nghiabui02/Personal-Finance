@@ -1,5 +1,5 @@
 import { useTranslations } from 'next-intl'
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 
 /**
  * The centre slot of the mobile bottom bar. It navigates rather than opening a

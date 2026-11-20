@@ -1,8 +1,8 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import Link from '@/components/ui/navigation-link'
+import { useNavigationPathname } from '@/components/ui/navigation-loading'
 import { User } from '@supabase/supabase-js'
 import { Avatar } from '@/components/ui/avatar'
 
@@ -57,7 +57,7 @@ function NavItem({ item, active }: { item: NavGroupItem; active: boolean }) {
 export default function Sidebar({ user }: { user: User }) {
   const t = useTranslations('common')
   const nav = useTranslations('navigation')
-  const pathname = usePathname()
+  const pathname = useNavigationPathname()
 
   const meta = user.user_metadata ?? {}
   const avatarUrl = meta.avatar_url as string | undefined

@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { ImportPreviewRow, ImportResult } from '@/lib/api/bank-import'
@@ -51,7 +51,7 @@ export function BankImportClient({ wallets, categories, recent }: {
             {rows ? <form onSubmit={review.confirm} className="space-y-4">
               <ImportReview rows={rows} categories={importable} disabled={busy} onChange={review.updateRow} />
               <ReviewActions rows={rows} busy={busy} onBack={review.back} />
-            </form> : <Button disabled={busy || !source.csv || !!source.parseError} onClick={review.preview}>{busy ? t('checking') : t('reviewTransactions')}</Button>}
+            </form> : <Button loading={busy} disabled={busy || !source.csv || !!source.parseError} onClick={review.preview}>{busy ? t('checking') : t('reviewTransactions')}</Button>}
           </>
         )}
       {error && <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
@@ -82,7 +82,7 @@ function ReviewActions({ rows, busy, onBack }: { rows: ReviewedRow[]; busy: bool
       <p className="text-xs text-gray-500">{t('theBatchMustRespectTheWalletSAvailableBalanceIfAnyRow')}</p>
       <div className="flex gap-3">
         <Button type="button" variant="secondary" disabled={busy} onClick={onBack}>{t('back')}</Button>
-        <Button type="submit" disabled={busy || !canSave}>{busy ? t('importing') : t('confirmImport')}</Button>
+        <Button type="submit" loading={busy} disabled={busy || !canSave}>{busy ? t('importing') : t('confirmImport')}</Button>
       </div>
     </div>
   )

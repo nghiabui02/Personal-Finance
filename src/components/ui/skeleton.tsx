@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl'
+
 export function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`skeleton rounded-lg ${className}`} />
 }
@@ -16,3 +18,21 @@ export function SkeletonRow() {
   )
 }
 
+/** Shared placeholder for route navigation and refreshed content regions. */
+export function ContentSkeleton() {
+  const t = useTranslations('common')
+  return (
+    <div role="status" aria-label={t('loading')} aria-busy="true" className="space-y-4" data-content-loading>
+      <span className="sr-only">{t('loading')}</span>
+      <div aria-hidden="true" className="space-y-4">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-4 w-2/3" />
+        <div className="rounded-2xl border border-hairline bg-white dark:bg-gray-900 divide-y divide-hairline">
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+        </div>
+      </div>
+    </div>
+  )
+}

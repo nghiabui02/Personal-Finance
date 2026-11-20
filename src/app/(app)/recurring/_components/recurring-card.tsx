@@ -9,7 +9,7 @@ import { localYMD } from '@/lib/utils/date'
 import { isDebtCategoryKey } from '@/lib/constants'
 import { type RecurringTransaction, recurringApi } from '@/lib/api/recurring-transactions'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useTransition } from 'react'
 import { SignedAmount } from '@/components/ui/signed-amount'
 
 /** One rule on the list: what it is, when it next runs, and what can be done with it. */
@@ -24,8 +24,8 @@ export function RecurringCard({
   const common = useTranslations('common')
   const t = useTranslations('recurring')
   const router = useRouter()
-  const [skipping, setSkipping] = useState(false)
-  const [togglingActive, setTogglingActive] = useState(false)
+  const [skipping, startSkipping] = useTransition()
+  const [togglingActive, startToggling] = useTransition()
   const cat = item.categories
   const today = localYMD()
   const isOverdue = item.next_run_date && item.next_run_date <= today
@@ -33,18 +33,18 @@ export function RecurringCard({
   // Paused by the debt-category rule: it cannot run again until it files elsewhere.
   const needsNewCategory = !item.active && isDebtCategoryKey(cat?.system_key)
 
-  async function handleSkip() {
-    setSkipping(true)
-    try { await recurringApi.skip(item.id); router.refresh() }
-    catch (err) { toastError(err, t('couldNotSkipTheNextOccurrence')) }
-    finally { setSkipping(false) }
+  function handleSkip() {
+    startSkipping(async () => {
+      try { await recurringApi.skip(item.id); router.refresh() }
+      catch (err) { toastError(err, t('couldNotSkipTheNextOccurrence')) }
+    })
   }
 
-  async function handleToggleActive() {
-    setTogglingActive(true)
-    try { await recurringApi.setActive(item.id, !item.active); router.refresh() }
-    catch (err) { toastError(err, t('toggleFailed')) }
-    finally { setTogglingActive(false) }
+  function handleToggleActive() {
+    startToggling(async () => {
+      try { await recurringApi.setActive(item.id, !item.active); router.refresh() }
+      catch (err) { toastError(err, t('toggleFailed')) }
+    })
   }
 
   function formatDate(d: string) {
@@ -99,8 +99,8 @@ export function RecurringCard({
           <SignedAmount amount={item.amount} positive={item.type === 'income'} className="text-sm" />
           <div className="flex gap-0.5">
             {!isExpired && (
-              <IconButton label={item.active ? t('pause') : t('resume')} onClick={handleToggleActive}
-                disabled={togglingActive || needsNewCategory} tone="brand">
+              <IconButton loading={togglingActive} label={item.active ? t('pause') : t('resume')} onClick={handleToggleActive}
+                disabled={togglingActive || skipping || needsNewCategory} tone="brand">
                 {item.active ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
@@ -113,7 +113,7 @@ export function RecurringCard({
               </IconButton>
             )}
             {!isExpired && item.active && item.next_run_date && (
-              <IconButton label={t('skipNextOccurrence')} onClick={handleSkip} disabled={skipping} tone="brand">
+              <IconButton loading={skipping} label={t('skipNextOccurrence')} onClick={handleSkip} disabled={skipping || togglingActive} tone="brand">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.25v13.5l9-6.75-9-6.75Zm10.5 0v13.5" />
                 </svg>

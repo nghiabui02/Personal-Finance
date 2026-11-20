@@ -2,7 +2,8 @@
 import { getCategoryName, sortCategories } from '@/i18n/category'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { LoadingContent, useNavigation } from '@/components/ui/navigation-loading'
+import Link from '@/components/ui/navigation-link'
 import { useState, useTransition } from 'react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ScreenHeader } from '@/components/ui/screen-header'
@@ -27,6 +28,7 @@ export default function CategoriesClient({ categories, initialTab, dependencies 
   const t = useTranslations('categories')
   const common = useTranslations('common')
   const router = useRouter()
+  const navigation = useNavigation()
   const [tab, setTab] = useState(initialTab)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -60,34 +62,36 @@ export default function CategoriesClient({ categories, initialTab, dependencies 
       <ScreenHeader eyebrow={t('account')}
         headline={<>{t.rich('activeCount', { count: active.length, strong: chunks => <Em>{chunks}</Em> })}</>}
         controls={<TabGroup tabs={[{ key: 'expense', label: t('expense') }, { key: 'income', label: t('income') }]} value={tab}
-          onChange={value => { setTab(value); router.replace(`/categories?type=${value}`, { scroll: false }) }} className="w-fit" />}
+          onChange={value => { setTab(value); navigation.replace(`/categories?type=${value}`, { scroll: false }) }} className="w-fit" />}
         action={<div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={() => router.push('/categories/store')}>{t('browseStore')}</Button>
+          <Button variant="secondary" onClick={() => navigation.push('/categories/store')}>{t('browseStore')}</Button>
           <AddButton onClick={() => openModal()}>{t('newCategory')}</AddButton>
         </div>} />
-      {!active.length && <EmptyState message={t('emptyType', { type: tab })}
-        action={{ label: t('browseStore'), onClick: () => router.push('/categories/store') }}
-        secondaryAction={{ label: t('createYourFirstOne'), onClick: () => openModal() }} />}
-      <div className="space-y-6">
-        {[
-          { title: t('custom'), list: active.filter(category => !category.category_id && !category.system_key) },
-          { title: t('fromStore'), list: active.filter(category => category.category_id) },
-          { title: t('internal'), list: active.filter(category => category.system_key) },
-        ].map(({ title, list }) => list.length > 0 && <section key={title}>
-          <h2 className="eyebrow text-gray-400 mb-3">{title}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {list.map(category => <CategoryCard key={category.id} category={category} onEdit={() => openModal(category)}
-              onDelete={() => setRemoving(category)} isDeleting={isPending} />)}
-          </div>
-        </section>)}
-        {removed.length > 0 && <details>
-          <summary className="cursor-pointer text-sm text-gray-500 mb-3">{t('removedCount', { count: removed.length })}</summary>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {removed.map(category => <CategoryCard key={category.id} category={category} onEdit={() => openModal(category)}
-              onDelete={() => changeState(category, true)} isDeleting={isPending} />)}
-          </div>
-        </details>}
-      </div>
+      <LoadingContent>
+        {!active.length && <EmptyState message={t('emptyType', { type: tab })}
+          action={{ label: t('browseStore'), onClick: () => navigation.push('/categories/store') }}
+          secondaryAction={{ label: t('createYourFirstOne'), onClick: () => openModal() }} />}
+        <div className="space-y-6">
+          {[
+            { title: t('custom'), list: active.filter(category => !category.category_id && !category.system_key) },
+            { title: t('fromStore'), list: active.filter(category => category.category_id) },
+            { title: t('internal'), list: active.filter(category => category.system_key) },
+          ].map(({ title, list }) => list.length > 0 && <section key={title}>
+            <h2 className="eyebrow text-gray-400 mb-3">{title}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {list.map(category => <CategoryCard key={category.id} category={category} onEdit={() => openModal(category)}
+                onDelete={() => setRemoving(category)} isDeleting={isPending} />)}
+            </div>
+          </section>)}
+          {removed.length > 0 && <details>
+            <summary className="cursor-pointer text-sm text-gray-500 mb-3">{t('removedCount', { count: removed.length })}</summary>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {removed.map(category => <CategoryCard key={category.id} category={category} onEdit={() => openModal(category)}
+                onDelete={() => changeState(category, true)} isDeleting={isPending} />)}
+            </div>
+          </details>}
+        </div>
+      </LoadingContent>
       {modalOpen && <CategoryModal key={editingCategory?.id ?? 'new'} editing={editingCategory} activeTab={tab}
         onClose={() => { setModalOpen(false); setEditingCategory(null) }} />}
       {removing && <Modal title={t('removeNamedCategory', { name: getCategoryName(removing, locale) })} onClose={() => setRemoving(null)}>
@@ -97,7 +101,7 @@ export default function CategoriesClient({ categories, initialTab, dependencies 
         </ul>}
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="secondary" onClick={() => setRemoving(null)} disabled={isPending}>{common('cancel')}</Button>
-          <Button onClick={() => changeState(removing, false)} disabled={isPending || blockers.length > 0}>{t('removeCategory')}</Button>
+          <Button loading={isPending} onClick={() => changeState(removing, false)} disabled={isPending || blockers.length > 0}>{t('removeCategory')}</Button>
         </div>
       </Modal>}
     </>

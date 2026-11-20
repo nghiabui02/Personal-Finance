@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigation } from '@/components/ui/navigation-loading'
 
 /**
  * The note search box on the transactions list.
@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
  * open, and the text typed but not yet submitted.
  */
 export function useNoteSearch(searchQuery: string) {
-  const router = useRouter()
+  const router = useNavigation()
   const [isOpen, setIsOpen] = useState(!!searchQuery)
   const [value, setValue] = useState(searchQuery)
 

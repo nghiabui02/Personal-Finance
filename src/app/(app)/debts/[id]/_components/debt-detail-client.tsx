@@ -1,7 +1,7 @@
 'use client'
 import { useLocale, useTranslations } from 'next-intl'
 
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { formatSignedVND, formatVND } from '@/lib/utils/currency'

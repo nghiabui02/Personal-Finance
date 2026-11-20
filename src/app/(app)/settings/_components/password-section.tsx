@@ -33,7 +33,7 @@ export function PasswordSection() {
         <Input label={t('confirmNewPassword')} name="confirm-password" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t('reEnterNewPassword')} clearable={false} />
       </div>
       <StatusLine status={status} />
-      <Button onClick={updatePassword} disabled={saving || !currentPassword || !newPassword || !confirmPassword} className="mt-4">
+      <Button loading={saving} onClick={updatePassword} disabled={saving || !currentPassword || !newPassword || !confirmPassword} className="mt-4">
         {saving ? t('updating') : t('updatePassword')}
       </Button>
     </Section>

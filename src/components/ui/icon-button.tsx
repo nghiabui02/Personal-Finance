@@ -5,6 +5,8 @@
  * screen readers announce nothing. It doubles as the hover tooltip.
  */
 
+import { ButtonSpinner } from './button'
+
 type IconButtonTone = 'neutral' | 'danger' | 'positive' | 'brand'
 
 const TONE_CLASSES: Record<IconButtonTone, string> = {
@@ -19,20 +21,22 @@ interface IconButtonProps {
   onClick: () => void
   tone?: IconButtonTone
   disabled?: boolean
+  loading?: boolean
   children: React.ReactNode
 }
 
-export function IconButton({ label, onClick, tone = 'neutral', disabled, children }: IconButtonProps) {
+export function IconButton({ label, onClick, tone = 'neutral', disabled, loading = false, children }: IconButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || loading}
+      aria-busy={loading}
       aria-label={label}
       title={label}
       className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${TONE_CLASSES[tone]}`}
     >
-      {children}
+      {loading ? <ButtonSpinner /> : children}
     </button>
   )
 }

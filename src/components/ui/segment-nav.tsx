@@ -1,8 +1,8 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import Link from '@/components/ui/navigation-link'
+import { useNavigationPathname } from '@/components/ui/navigation-loading'
 
 /**
  * Sibling-screen switcher. Mobile used to reach these through a "More" tab,
@@ -17,7 +17,7 @@ export interface Segment {
 
 export function SegmentNav({ items }: { items: Segment[] }) {
   const t = useTranslations('navigation')
-  const pathname = usePathname()
+  const pathname = useNavigationPathname()
 
   return (
     <nav className="-mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto no-scrollbar">

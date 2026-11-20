@@ -36,7 +36,7 @@ export default function RegisterPage() {
         <Input label={t('email')} name="email" type="email" autoComplete="email" required placeholder="you@example.com" />
         <Input label={t('password')} name="password" type="password" autoComplete="new-password" required placeholder={t('atLeast6Characters')} />
         <FormError message={error} />
-        <Button type="submit" disabled={isPending} fullWidth>
+        <Button loading={isPending} type="submit" disabled={isPending} fullWidth>
           {isPending ? t('creatingAccount') : t('createAccount')}
         </Button>
       </form>

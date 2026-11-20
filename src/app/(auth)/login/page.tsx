@@ -62,7 +62,7 @@ function LoginForm() {
         </div>
       </div>
       <FormError message={error} />
-      <Button type="submit" disabled={isPending} fullWidth>
+      <Button loading={isPending} type="submit" disabled={isPending} fullWidth>
         {isPending ? t('signingIn') : t('signIn')}
       </Button>
     </form>

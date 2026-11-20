@@ -42,7 +42,7 @@ export function ConfirmModal({
         <div className="flex gap-2 w-full pt-1">
           <Button type="button" variant="secondary" fullWidth onClick={close} disabled={isPending}>
             {t('cancel')}</Button>
-          <Button
+          <Button loading={isPending}
             type="button"
             fullWidth
             onClick={onConfirm}

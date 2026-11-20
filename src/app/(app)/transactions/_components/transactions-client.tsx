@@ -1,4 +1,5 @@
 'use client'
+import { LoadingContent } from '@/components/ui/navigation-loading'
 import { useTranslations } from 'next-intl'
 
 import { useState } from 'react'
@@ -119,7 +120,7 @@ export default function TransactionsClient({
           /* Search results — flat list, no calendar */
           <div className="lg:flex lg:flex-col lg:h-full">
             <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col lg:overflow-hidden">
-              <TransactionList key={`search-${filter}`} transactions={transactions} {...listProps} />
+              <LoadingContent className="contents"><TransactionList key={`search-${filter}`} transactions={transactions} {...listProps} /></LoadingContent>
             </div>
           </div>
         ) : view === 'month' ? (
@@ -136,7 +137,7 @@ export default function TransactionsClient({
               key={selectedDate ?? '__all__'}
               className="animate-fade-slide-in flex flex-col lg:overflow-hidden"
             >
-              <TransactionList key={filter} transactions={displayedTransactions} {...listProps} />
+              <LoadingContent className="contents"><TransactionList key={filter} transactions={displayedTransactions} {...listProps} /></LoadingContent>
             </div>
           </div>
         ) : (
@@ -145,7 +146,7 @@ export default function TransactionsClient({
               <PeriodNavigator view={view} period={period} />
             </div>
             <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col lg:overflow-hidden">
-              <TransactionList key={filter} transactions={transactions} {...listProps} />
+              <LoadingContent className="contents"><TransactionList key={filter} transactions={transactions} {...listProps} /></LoadingContent>
             </div>
           </div>
         )}

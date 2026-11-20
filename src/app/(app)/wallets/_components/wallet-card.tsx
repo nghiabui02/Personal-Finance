@@ -1,5 +1,5 @@
 import { useTranslations } from 'next-intl'
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { MONEY_IN, MONEY_OUT } from '@/lib/utils/colors'
 import { formatVND } from '@/lib/utils/currency'
 import { type Wallet, WALLET_TYPE_ICONS } from '@/lib/api/wallets'

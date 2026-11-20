@@ -1,4 +1,9 @@
-import Link from 'next/link'
+'use client'
+
+import { useContext } from 'react'
+import Link from '@/components/ui/navigation-link'
+import { NavigationContext } from './navigation-loading'
+import { Skeleton } from './skeleton'
 
 /**
  * The lede of a screen: one sentence that answers the question the screen
@@ -35,6 +40,8 @@ interface VerdictProps {
 }
 
 export function Verdict({ eyebrow, headline, support, action, className = '' }: VerdictProps) {
+  const navigation = useContext(NavigationContext)
+  const loading = navigation?.isPending ?? false
   return (
     <section className={`pt-1 pb-1 ${className}`}>
       {eyebrow && (
@@ -42,12 +49,12 @@ export function Verdict({ eyebrow, headline, support, action, className = '' }: 
           {eyebrow}
         </p>
       )}
-      <h1 className="text-xl sm:text-2xl leading-snug font-medium tracking-tight text-gray-500 dark:text-gray-400 max-w-2xl text-balance">
+      {loading ? <Skeleton className="h-8 w-2/3" /> : <h1 className="text-xl sm:text-2xl leading-snug font-medium tracking-tight text-gray-500 dark:text-gray-400 max-w-2xl text-balance">
         {headline}
-      </h1>
+      </h1>}
       {(support || action) && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-400 dark:text-gray-500">
-          {support}
+          {loading ? <Skeleton className="h-4 w-52" /> : support}
           {action && (
             <Link
               href={action.href}

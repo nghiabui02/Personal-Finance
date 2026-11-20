@@ -2,9 +2,14 @@ import { forwardRef } from 'react'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
 
+export function ButtonSpinner() {
+  return <span aria-hidden="true" className="inline-block h-4 w-4 shrink-0 rounded-full border-2 border-current border-r-transparent motion-safe:animate-spin" />
+}
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
   fullWidth?: boolean
+  loading?: boolean
 }
 
 const variants: Record<Variant, string> = {
@@ -21,7 +26,7 @@ const variants: Record<Variant, string> = {
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', fullWidth = false, className = '', children, ...props }, ref) => {
+  ({ variant = 'primary', fullWidth = false, loading = false, disabled, className = '', children, ...props }, ref) => {
     return (
       <button
         ref={ref}
@@ -34,7 +39,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ${className}
         `}
         {...props}
+        disabled={disabled || loading}
+        aria-busy={loading}
       >
+        {loading && <ButtonSpinner />}
         {children}
       </button>
     )

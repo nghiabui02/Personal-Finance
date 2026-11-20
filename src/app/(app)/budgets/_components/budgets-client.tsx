@@ -15,7 +15,7 @@ import { TabGroup } from '@/components/ui/tab-group'
 import { formatVND } from '@/lib/utils/currency'
 import { type Budget, budgetsApi } from '@/lib/api/budgets'
 import { type Category } from '@/lib/api/categories'
-import { useRouter } from 'next/navigation'
+import { LoadingContent, useNavigation, usePendingSearchParam } from '@/components/ui/navigation-loading'
 import { useState } from 'react'
 import { BudgetModal } from './budget-modal'
 import { SuggestBudgetsModal } from './suggest-budgets-modal'
@@ -116,7 +116,7 @@ function BudgetCard({
 export default function BudgetsClient({ budgets, suggestions, expenseCategories, month }: BudgetsClientProps) {
   const locale = useLocale()
   const t = useTranslations('budgets')
-  const router = useRouter()
+  const router = useNavigation()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
   const { confirmId, isPending, ask, cancel, confirm } = useDeleteConfirmation(
@@ -135,7 +135,8 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
   const existingCategoryIds = budgets.map(b => b.user_category_id).filter(Boolean) as string[]
   const spentPct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0
 
-  const [y, m] = month.split('-').map(Number)
+  const selectedMonth = usePendingSearchParam('month', month)
+  const [y, m] = selectedMonth.split('-').map(Number)
   const monthLabel = formatMonthYear(new Date(y, m - 1, 1), locale)
 
   function navigate(dir: -1 | 1) {
@@ -186,43 +187,46 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
         }
       />
 
-      {inactiveBudgets.length > 0 && (
-        <TabGroup
-          tabs={[
-            { key: 'active', label: t('activeCount', { count: activeBudgets.length }) },
-            { key: 'inactive', label: t('inactiveCount', { count: inactiveBudgets.length }) },
-          ]}
-          value={tab}
-          onChange={setTab}
-          className="w-fit mb-5"
-        />
-      )}
+      <LoadingContent>
+        {inactiveBudgets.length > 0 && (
+          <TabGroup
+            tabs={[
+              { key: 'active', label: t('activeCount', { count: activeBudgets.length }) },
+              { key: 'inactive', label: t('inactiveCount', { count: inactiveBudgets.length }) },
+            ]}
+            value={tab}
+            onChange={setTab}
+            className="w-fit mb-5"
+          />
+        )}
 
-      {visibleBudgets.length === 0 ? (
-        <EmptyState
-          message={tab === 'active' ? t('noBudgetsForThisMonth') : t('noInactiveBudgets')}
-          action={
-            tab !== 'active' ? undefined
-            : suggestions.length > 0
-              // With history to draw on, picking numbers is the hard part — lead
-              // with the suggestion rather than an empty form.
-              ? { label: t('suggestBudgetsFromTheLast3Months'), onClick: () => setSuggestOpen(true) }
-              : { label: t('createYourFirstBudget'), onClick: () => { setEditingBudget(null); setModalOpen(true) } }
-          }
-        />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {visibleBudgets.map((b, idx) => (
-            <div key={b.id} className="animate-fade-up" style={{ animationDelay: `${idx * 60}ms` }}>
-              <BudgetCard
-                budget={b}
-                onEdit={() => { setEditingBudget(b); setModalOpen(true) }}
-                onDelete={() => ask(b.id)}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+        {visibleBudgets.length === 0 ? (
+          <EmptyState
+            message={tab === 'active' ? t('noBudgetsForThisMonth') : t('noInactiveBudgets')}
+            action={
+              tab !== 'active' ? undefined
+              : suggestions.length > 0
+                // With history to draw on, picking numbers is the hard part — lead
+                // with the suggestion rather than an empty form.
+                ? { label: t('suggestBudgetsFromTheLast3Months'), onClick: () => setSuggestOpen(true) }
+                : { label: t('createYourFirstBudget'), onClick: () => { setEditingBudget(null); setModalOpen(true) } }
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {visibleBudgets.map((b, idx) => (
+              <div key={b.id} className="animate-fade-up" style={{ animationDelay: `${idx * 60}ms` }}>
+                <BudgetCard
+                  budget={b}
+                  onEdit={() => { setEditingBudget(b); setModalOpen(true) }}
+                  onDelete={() => ask(b.id)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+      </LoadingContent>
 
       {modalOpen && (
         <BudgetModal

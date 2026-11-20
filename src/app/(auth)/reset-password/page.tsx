@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
           placeholder="••••••••"
         />
         <FormError message={error} />
-        <Button type="submit" disabled={isPending} fullWidth>
+        <Button loading={isPending} type="submit" disabled={isPending} fullWidth>
           {isPending ? t('saving') : t('setNewPassword')}
         </Button>
       </form>

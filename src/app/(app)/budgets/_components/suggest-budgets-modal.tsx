@@ -115,7 +115,7 @@ export function SuggestBudgetsModal({
 
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={close} className="flex-1">{t('cancel')}</Button>
-          <Button type="button" onClick={handleCreate} disabled={isPending || chosen.length === 0} className="flex-1">
+          <Button loading={isPending} type="button" onClick={handleCreate} disabled={isPending || chosen.length === 0} className="flex-1">
             {isPending ? t('creating') : t('createCount', { count: chosen.length })}
           </Button>
         </div>

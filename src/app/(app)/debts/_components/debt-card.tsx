@@ -1,7 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { type Debt } from '@/lib/api/debts'
 import { formatVND } from '@/lib/utils/currency'
