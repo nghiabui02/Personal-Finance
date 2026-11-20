@@ -817,6 +817,8 @@
     "importCsv": "Nhập CSV ngân hàng"
   },
   "errors": {
+    "activeGoalNotFound": "Không tìm thấy mục tiêu tiết kiệm đang hoạt động.",
+    "positiveContributionRequired": "Số tiền đóng góp phải lớn hơn 0.",
     "tooManyRequestsWaitAMinuteOrFillTheFormInBy": "Quá nhiều yêu cầu. Đợi một phút hoặc điền biểu mẫu thủ công.",
     "groqIsNotConfigured": "Dịch vụ AI chưa sẵn sàng. Vui lòng thử lại sau.",
     "typeWhatYouSpentOrPasteABankMessage": "Nhập khoản chi hoặc dán tin nhắn ngân hàng.",

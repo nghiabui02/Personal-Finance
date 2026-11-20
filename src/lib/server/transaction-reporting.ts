@@ -1,3 +1,6 @@
+import { categoryTotals } from '@/lib/utils/category-totals'
+import { sumByType } from '@/lib/utils/totals'
+import type { CategoryRef } from '@/lib/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SYSTEM_CATEGORY_KEYS, type SystemCategoryKey } from '@/lib/constants'
 
@@ -65,4 +68,38 @@ export function onlyOperatingTransactions<T extends OperatingQuery<T>>(query: T,
   return excludedIds.length
     ? operating.or(`user_category_id.is.null,user_category_id.not.in.(${excludedIds.join(',')})`)
     : operating
+}
+
+export type ReportTotal = {
+  transaction_date: string
+  type: 'income' | 'expense'
+  amount: number
+  count: number
+  user_category_id: string | null
+  categories: CategoryRef | null
+}
+
+export async function getReportTotals(
+  supabase: SupabaseClient, start: string, end: string, monthly: boolean, categoryIds?: string[],
+): Promise<ReportTotal[]> {
+  const { data, error } = await supabase.rpc('report_totals', {
+    p_start: start, p_end: end, p_monthly: monthly, p_category_ids: categoryIds ?? null,
+  })
+  if (error) throw new Error(`Could not load report totals: ${error.message}`)
+  return data
+}
+
+export async function getMonthlyExpenses(supabase: SupabaseClient, start: string, end: string, categoryIds?: string[]) {
+  const totals = await getReportTotals(supabase, start, end, true, categoryIds)
+  return totals.filter(row => row.type === 'expense' && getReportingGroup(row) === 'operating')
+}
+
+export function summarizeOperatingTotals(totals: ReportTotal[]) {
+  const rows = totals.filter(row => getReportingGroup(row) === 'operating')
+  return {
+    rows,
+    totalIncome: sumByType(rows, 'income'),
+    totalExpense: sumByType(rows, 'expense'),
+    categories: categoryTotals(rows.filter(row => row.type === 'expense')),
+  }
 }

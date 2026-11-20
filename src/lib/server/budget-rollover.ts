@@ -1,5 +1,6 @@
+import { readAllById } from './read-all-by-id'
 import { CATEGORY_RELATION } from '@/lib/category-columns'
-import { getNonOperatingCategoryIds, onlyOperatingTransactions } from './transaction-reporting'
+import { getMonthlyExpenses } from './transaction-reporting'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { monthRange } from '@/lib/utils/date'
 import type { CategoryRef } from '@/lib/types'
@@ -36,24 +37,20 @@ export async function getBudgetsForMonth(
   // Inactive rows for the target month are still returned (client shows them
   // in a separate tab so they can be reactivated) — just excluded from totals
   // and rollover math below.
-  const { data: current } = await supabase
+  const current = await readAllById('monthly budgets', () => supabase
     .from('budgets')
-    .select(`id, user_category_id, amount, month, rollover, active, ${CATEGORY_RELATION}`)
+    .select(`id, created_at, user_category_id, amount, month, rollover, active, ${CATEGORY_RELATION}`, { count: 'exact' })
     .eq('user_id', userId)
     .eq('month', startDate)
-    .order('created_at')
+  )
+  current.sort((a, b) => a.created_at.localeCompare(b.created_at))
 
-  if (!current?.length) return []
+  if (!current.length) return []
 
-  const excludedCategoryIds = await getNonOperatingCategoryIds(supabase, userId)
-  const { data: currentExpenses } = await onlyOperatingTransactions(supabase
-    .from('transactions')
-    .select('user_category_id, amount')
-    .eq('user_id', userId).eq('type', 'expense')
-    .gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds)
+  const currentExpenses = await getMonthlyExpenses(supabase, startDate, endDate)
 
   const spentThisMonth = new Map<string, number>()
-  for (const tx of currentExpenses ?? []) {
+  for (const tx of currentExpenses) {
     if (!tx.user_category_id) continue
     spentThisMonth.set(tx.user_category_id, (spentThisMonth.get(tx.user_category_id) ?? 0) + Number(tx.amount))
   }
@@ -64,26 +61,21 @@ export async function getBudgetsForMonth(
 
   const carryByCategoryId = new Map<string, number>()
   if (rolloverCategoryIds.length) {
-    const { data: history } = await supabase
+    const history = await readAllById('rollover budgets', () => supabase
       .from('budgets')
-      .select('user_category_id, month, amount, rollover')
+      .select('id, user_category_id, month, amount, rollover', { count: 'exact' })
       .eq('user_id', userId)
       .eq('active', true)
       .in('user_category_id', rolloverCategoryIds)
       .lt('month', startDate)
-      .order('month', { ascending: true })
+    )
+    history.sort((a, b) => a.month.localeCompare(b.month))
 
-    const earliestMonth = history?.[0]?.month
+    const earliestMonth = history[0]?.month
     const historyExpensesByCatMonth = new Map<string, number>()
     if (earliestMonth) {
-      const { data: histExpenses } = await onlyOperatingTransactions(supabase
-        .from('transactions')
-        .select('user_category_id, amount, transaction_date')
-        .eq('user_id', userId).eq('type', 'expense')
-        .in('user_category_id', rolloverCategoryIds)
-        .gte('transaction_date', earliestMonth)
-        .lt('transaction_date', startDate), excludedCategoryIds)
-      for (const tx of histExpenses ?? []) {
+      const histExpenses = await getMonthlyExpenses(supabase, earliestMonth, startDate, rolloverCategoryIds)
+      for (const tx of histExpenses) {
         if (!tx.user_category_id) continue
         const key = `${tx.user_category_id}::${tx.transaction_date.slice(0, 7)}`
         historyExpensesByCatMonth.set(key, (historyExpensesByCatMonth.get(key) ?? 0) + Number(tx.amount))
@@ -91,7 +83,7 @@ export async function getBudgetsForMonth(
     }
 
     const historyByCategory = new Map<string, typeof history>()
-    for (const row of history ?? []) {
+    for (const row of history) {
       if (!row.user_category_id) continue
       const list = historyByCategory.get(row.user_category_id) ?? []
       list.push(row)
@@ -99,9 +91,7 @@ export async function getBudgetsForMonth(
     }
 
     for (const categoryId of rolloverCategoryIds) {
-      const rows = (historyByCategory.get(categoryId) ?? [])
-        .slice()
-        .sort((a, b) => a.month.localeCompare(b.month))
+      const rows = historyByCategory.get(categoryId) ?? []
 
       let leftover = 0
       let prevMonthKey: string | null = null

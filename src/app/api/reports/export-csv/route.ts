@@ -1,18 +1,25 @@
+import { readAllById } from '@/lib/server/read-all-by-id'
+import { getDateRange } from '@/lib/server/period-summary'
 import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { categoryTotals } from '@/lib/utils/category-totals'
 import { getReportingGroup, summarizeNonOperatingFlows } from '@/lib/server/transaction-reporting'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { NextResponse } from 'next/server'
-import { withAuth } from '@/lib/server/route'
+import { badRequest, withAuth } from '@/lib/server/route'
 import { toYMD } from '@/lib/utils/date'
 import { sumByType } from '@/lib/utils/totals'
 import { getCategoryName } from '@/i18n/category'
 import { getLocale } from 'next-intl/server'
 import type { CategoryRef } from '@/lib/types'
 
+// Spreadsheet programs may evaluate formula-prefixed text even inside a quoted CSV cell.
+function textCell(value: string): string {
+  return /^[\t\r\n]|^\s*[=+@\-＝＋＠－]/u.test(value) ? `'${value}` : value
+}
+
 function esc(v: string | number | null | undefined): string {
   const s = String(v ?? '')
-  return s.includes(',') || s.includes('"') || s.includes('\n')
+  return /[",\r\n]/.test(s)
     ? `"${s.replace(/"/g, '""')}"`
     : s
 }
@@ -25,45 +32,24 @@ function fmt(n: number): string {
   return n.toLocaleString('vi-VN')
 }
 
-function getDateRange(period: string, start: string): { startDate: string; endDate: string } {
-  if (period === 'week') {
-    const end = new Date(start + 'T00:00:00')
-    end.setDate(end.getDate() + 7)
-    return { startDate: start, endDate: toYMD(end) }
-  }
-  if (period === 'month') {
-    const [y, m] = start.split('-').map(Number)
-    return { startDate: start, endDate: toYMD(new Date(y, m, 1)) }
-  }
-  if (period === 'quarter') {
-    const [y, m] = start.split('-').map(Number)
-    return { startDate: start, endDate: toYMD(new Date(y, m - 1 + 3, 1)) }
-  }
-  const y = parseInt(start)
-  return { startDate: `${y}-01-01`, endDate: `${y + 1}-01-01` }
-}
-
 export const GET = withAuth(async (request, { supabase, user }) => {
   const locale = await getLocale()
   const { searchParams } = request.nextUrl
   const period = searchParams.get('period') ?? 'month'
   const start  = searchParams.get('start') ?? toYMD(new Date())
+  if (period !== 'week' && period !== 'month' && period !== 'quarter' && period !== 'year') return badRequest('invalidPeriod')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return badRequest('invalidStartDate')
   const { startDate, endDate } = getDateRange(period, start)
 
-  const [{ data: txRows }, { data: walletRows }] = await Promise.all([
-    supabase
+  const [txRows, walletRows] = await Promise.all([
+    readAllById('CSV transactions', () => supabase
       .from('transactions')
-      .select(`id, type, amount, note, transaction_date, payment_method, transfer_pair_id, ${CATEGORY_RELATION}, wallets(name)`)
+      .select(`id, type, amount, note, transaction_date, created_at, payment_method, transfer_pair_id, ${CATEGORY_RELATION}, wallets(name)`)
       .eq('user_id', user.id)
       .gte('transaction_date', startDate)
-      .lt('transaction_date', endDate)
-      .order('transaction_date', { ascending: true })
-      .order('created_at', { ascending: true }),
-
-    supabase
-      .from('wallets')
-      .select('name, balance, type')
-      .eq('user_id', user.id),
+      .lt('transaction_date', endDate)),
+    readAllById('CSV wallets', () => supabase.from('wallets')
+      .select('id, name, balance, type', { count: 'exact' }).eq('user_id', user.id)),
   ])
 
   type TxRow = {
@@ -77,7 +63,8 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     categories: CategoryRef | null
     wallets: { name: string } | null
   }
-  const txs = (txRows ?? []) as unknown as TxRow[]
+  const txs = txRows.sort((a, b) => a.transaction_date.localeCompare(b.transaction_date)
+    || a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)) as unknown as TxRow[]
 
   // Export totals follow the same operating classification as the report screen.
   const flowTxs = txs.filter(tx => getReportingGroup(tx) === 'operating')
@@ -145,7 +132,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     lines.push('=== WALLET BALANCES ===')
     lines.push(row('Wallet', 'Type', 'Balance'))
     for (const w of walletRows as { name: string; balance: number; type: string }[]) {
-      lines.push(row(w.name, w.type, `${fmt(Number(w.balance))}đ`))
+      lines.push(row(textCell(w.name), w.type, `${fmt(Number(w.balance))}đ`))
     }
     lines.push('')
   }
@@ -160,7 +147,7 @@ export const GET = withAuth(async (request, { supabase, user }) => {
     const budgetAmt = budget ? Number(budget.effectiveAmount) : null
     const remaining = budgetAmt !== null ? budgetAmt - amount : null
     lines.push(row(
-      name,
+      textCell(name),
       `${fmt(amount)}đ`,
       pct,
       count,
@@ -187,11 +174,11 @@ export const GET = withAuth(async (request, { supabase, user }) => {
       t.transaction_date,
       t.type === 'income' ? 'Income' : 'Expense',
       getReportingGroup(t),
-      t.categories ? getCategoryName(t.categories, locale) : 'Uncategorized',
+      textCell(t.categories ? getCategoryName(t.categories, locale) : 'Uncategorized'),
       `${fmt(Number(t.amount))}đ`,
-      t.wallets?.name ?? '-',
-      t.payment_method ?? '-',
-      t.note ?? '',
+      t.wallets ? textCell(t.wallets.name) : '-',
+      t.payment_method ? textCell(t.payment_method) : '-',
+      textCell(t.note ?? ''),
     ))
   }
 

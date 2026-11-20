@@ -27,6 +27,10 @@ export const savingGoalsApi = {
     return apiFetch(`/api/saving-goals/${id}`, { method: 'PATCH', body: JSON.stringify(payload) })
   },
 
+  contribute(id: string, amount: number): Promise<SavingGoal> {
+    return apiFetch(`/api/saving-goals/${id}`, { method: 'POST', body: JSON.stringify({ amount }) })
+  },
+
   delete(id: string): Promise<null> {
     return apiFetch(`/api/saving-goals/${id}`, { method: 'DELETE' })
   },

@@ -817,6 +817,8 @@
     "importCsv": "Import bank CSV"
   },
   "errors": {
+    "activeGoalNotFound": "Active saving goal not found.",
+    "positiveContributionRequired": "Enter a contribution greater than zero.",
     "tooManyRequestsWaitAMinuteOrFillTheFormInBy": "Too many requests. Wait a minute, or fill the form in by hand.",
     "groqIsNotConfigured": "Groq is not configured.",
     "typeWhatYouSpentOrPasteABankMessage": "Type what you spent, or paste a bank message.",

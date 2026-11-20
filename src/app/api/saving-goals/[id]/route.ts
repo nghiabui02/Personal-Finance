@@ -1,4 +1,16 @@
-import { withAuth, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
+import { NextResponse } from 'next/server'
+import { withAuth, badRequest, notFound, rpcError, deleteOwnedRow, updateOwnedRow } from '@/lib/server/route'
+
+export const POST = withAuth<{ id: string }>(async (request, { supabase, params }) => {
+  const body = await request.json()
+  const amount = body?.amount
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) return badRequest('positiveContributionRequired')
+  const { data, error } = await supabase.rpc('contribute_to_saving_goal', {
+    p_goal_id: params.id, p_amount: amount,
+  })
+  if (error) return rpcError(error)
+  return data ? NextResponse.json(data) : notFound('activeGoalNotFound')
+})
 
 export const PATCH = withAuth<{ id: string }>(async (request, { supabase, user, params }) => {
   const { id } = params

@@ -1,7 +1,7 @@
 import { getLocale } from 'next-intl/server'
 import { normalizeLocale } from '@/i18n/locale'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getNonOperatingCategoryIds, onlyOperatingTransactions } from '@/lib/server/transaction-reporting'
+import { getMonthlyExpenses } from '@/lib/server/transaction-reporting'
 import { NextResponse } from 'next/server'
 import { withAuth, jsonError, tooManyRequests } from '@/lib/server/route'
 import { isRateLimited, ONE_MINUTE_MS } from '@/lib/server/rate-limit'
@@ -22,17 +22,9 @@ const ANALYSES_PER_MINUTE = 20
  *  user picked, so it does not jump around as they browse comparisons. */
 async function getPreviousWeekExpense(
   supabase: SupabaseClient,
-  userId: string,
   weekStart: string,
-  excludedCategoryIds: string[],
 ): Promise<number> {
-  const { data } = await onlyOperatingTransactions(supabase
-    .from('transactions')
-    .select('amount')
-    .eq('user_id', userId).eq('type', 'expense')
-    .gte('transaction_date', shiftLocalDate(weekStart, -7))
-    .lt('transaction_date', weekStart), excludedCategoryIds)
-  return sumAmounts(data ?? [])
+  return sumAmounts(await getMonthlyExpenses(supabase, shiftLocalDate(weekStart, -7), weekStart))
 }
 
 export const POST = withAuth(async (request, { supabase, user }) => {
@@ -47,11 +39,9 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   const { periodLabel, period, start, totalIncome, totalExpense, categories, budgets, previous, topTransactions, timeline, netWorthInfo, force } = await request.json()
   const periodType: PeriodType = period ?? 'month'
 
-  const excludedCategoryIds = await getNonOperatingCategoryIds(supabase, user.id)
-
   // Balance-sheet snapshot fetched server-side — the client only knows the
   // period's in/out flows, but sound advice needs the current position too
-  const [{ data: walletRows }, { data: debtRows }, { data: goalRows }, { data: recentExpenseRows }] = await Promise.all([
+  const [{ data: walletRows }, { data: debtRows }, { data: goalRows }, recentExpenseRows] = await Promise.all([
     supabase.from('wallets')
       .select('name, type, balance, credit_limit')
       .eq('user_id', user.id),
@@ -64,11 +54,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     // Last 90 days of real spending — the emergency-fund run rate must come
     // from a stable trailing average, NOT from extrapolating the viewed period
     // (one heavy shopping week × 4.33 would fake a run rate and wreck the score).
-    onlyOperatingTransactions(supabase.from('transactions')
-      .select('amount')
-      .eq('user_id', user.id).eq('type', 'expense')
-      .gte('transaction_date', shiftLocalDate(localYMD(), -90))
-      .lt('transaction_date', localYMD()), excludedCategoryIds),
+    getMonthlyExpenses(supabase, shiftLocalDate(localYMD(), -90), localYMD()),
   ])
 
   const sheet = summarizeBalanceSheet(walletRows, debtRows)
@@ -80,7 +66,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   // the cache, not silently return an analysis written for a different one.
   const prevForKey = previous as { period?: string; start?: string; totalIncome?: number; totalExpense?: number } | undefined
   const compareKeyPart = prevForKey ? `${prevForKey.period ?? periodType}::${prevForKey.start ?? ''}::${prevForKey.totalIncome ?? 0}::${prevForKey.totalExpense ?? 0}` : 'none'
-  const cacheKey = `v11::${locale}::${periodType}::${start}::${totalIncome}::${totalExpense}::${netWorth}::${compareKeyPart}`
+  const cacheKey = `v12::${locale}::${periodType}::${start}::${totalIncome}::${totalExpense}::${netWorth}::${compareKeyPart}`
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_insights_cache')
@@ -92,7 +78,7 @@ export const POST = withAuth(async (request, { supabase, user }) => {
   }
 
   const prevWeekExpense = periodType === 'week'
-    ? await getPreviousWeekExpense(supabase, user.id, typeof start === 'string' ? start : localYMD(), excludedCategoryIds)
+    ? await getPreviousWeekExpense(supabase, typeof start === 'string' ? start : localYMD())
     : 0
 
   const { system, user: userMsg } = buildAnalysisPrompt({

@@ -1,5 +1,5 @@
-import { CATEGORY_RELATION } from '@/lib/category-columns'
-import { getReportingGroup } from './transaction-reporting'
+import { readAllById } from './read-all-by-id'
+import { getMonthlyExpenses } from './transaction-reporting'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { monthRange } from '@/lib/utils/date'
 import type { CategoryRef } from '@/lib/types'
@@ -50,36 +50,20 @@ export async function getBudgetSuggestions(
   const lookbackStart = monthRange(shiftMonth(month, -LOOKBACK_MONTHS)).startDate
   const { startDate } = monthRange(month)
 
-  const [{ data: rows }, { data: existing }] = await Promise.all([
-    // Transfers, loan principal and ledger corrections do not belong in spending budgets.
-    supabase
-      .from('transactions')
-      .select(`amount, transaction_date, user_category_id, ${CATEGORY_RELATION}`)
-      .eq('user_id', userId)
-      .eq('type', 'expense')
-      .is('transfer_pair_id', null)
-      .gte('transaction_date', lookbackStart)
-      .lt('transaction_date', startDate),
-    supabase
-      .from('budgets')
-      .select('user_category_id')
-      .eq('user_id', userId)
-      .eq('month', startDate),
+  const [rows, existing] = await Promise.all([
+    getMonthlyExpenses(supabase, lookbackStart, startDate),
+    readAllById('existing budgets', () => supabase.from('budgets')
+      .select('id, user_category_id', { count: 'exact' }).eq('user_id', userId).eq('month', startDate)),
   ])
 
-  const alreadyBudgeted = new Set((existing ?? []).map(b => b.user_category_id).filter(Boolean))
+  const alreadyBudgeted = new Set(existing.map(b => b.user_category_id).filter(Boolean))
 
   // category → month → total
   const totals = new Map<string, { category: CategoryRef; byMonth: Map<string, number> }>()
 
-  for (const row of (rows ?? []) as unknown as {
-    amount: number | string
-    transaction_date: string
-    user_category_id: string | null
-    categories: (CategoryRef & { system_key: string | null }) | null
-  }[]) {
+  for (const row of rows) {
     const cat = row.categories
-    if (!row.user_category_id || !cat || cat.is_active === false || getReportingGroup({ categories: cat }) !== 'operating') continue
+    if (!row.user_category_id || !cat || cat.is_active === false) continue
     if (alreadyBudgeted.has(row.user_category_id)) continue
 
     const entry = totals.get(row.user_category_id) ?? { category: cat, byMonth: new Map() }

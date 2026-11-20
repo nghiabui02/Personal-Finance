@@ -5,11 +5,10 @@ import { getLocale } from 'next-intl/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
-import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
+import { getNetWorthSnapshot } from '@/lib/server/net-worth'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { getSpendingPace } from '@/lib/server/spending-pace'
-import { onlyOperatingTransactions, getNonOperatingCategoryIds } from '@/lib/server/transaction-reporting'
-import type { CategoryRef } from '@/lib/types'
+import { getReportTotals, summarizeOperatingTotals } from '@/lib/server/transaction-reporting'
 import { formatVND } from '@/lib/utils/currency'
 import { localYM, localYMD, monthRange, shiftLocalDate } from '@/lib/utils/date'
 
@@ -23,8 +22,6 @@ import { DebtSummary } from './_components/debt-summary'
 import { NetWorthChart } from './_components/net-worth-chart'
 import { RecentTransactions } from './_components/recent-transactions'
 import { SpendingChart } from './_components/spending-chart'
-import { walletsQuery } from '@/lib/server/queries'
-import { sumAmounts } from '@/lib/utils/totals'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,56 +41,32 @@ export default async function DashboardPage({
 
   const { supabase, user } = await requireUser()
 
-  // Loan principal and corrections do not affect earned income or spending.
-  const excludedCategoryIds = await getNonOperatingCategoryIds(supabase, user.id)
-
   const [
-    [
-      { data: incomeRows },
-      { data: recentRows },
-      { data: expenseCatRows },
-      { data: debtRows },
-      { data: walletRows },
-      { data: snapshotRows },
-    ],
+    totals,
+    { data: recentRows },
+    balanceSheet,
+    { data: snapshotRows },
     budgetsWithRollover,
   ] = await Promise.all([
-    Promise.all([
-      // History keeps all rows; income and spending use operating rows only.
-      onlyOperatingTransactions(supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
-      supabase.from('transactions').select(`id, type, amount, note, transaction_date, ${CATEGORY_RELATION}`).eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
-      onlyOperatingTransactions(supabase.from('transactions').select(`amount, ${CATEGORY_RELATION}`).eq('user_id', user.id).eq('type', 'expense').gte('transaction_date', startDate).lt('transaction_date', endDate), excludedCategoryIds),
-      supabase.from('debts').select('id, type, remaining_amount, status, due_date, person_name').eq('user_id', user.id),
-      walletsQuery(supabase, user.id),
-      supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
-    ]),
+    getReportTotals(supabase, startDate, endDate, true),
+    supabase.from('transactions').select(`id, type, amount, note, transaction_date, ${CATEGORY_RELATION}`).eq('user_id', user.id).order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(6),
+    getNetWorthSnapshot(supabase, user.id),
+    supabase.from('net_worth_snapshots').select('recorded_date, net_worth').eq('user_id', user.id).gte('recorded_date', ninetyDaysAgo).order('recorded_date', { ascending: true }),
     getBudgetsForMonth(supabase, user.id, month).then(rows => rows.filter(b => b.active)),
   ])
 
   const { netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed } =
-    computeNetWorth(walletRows ?? [], debtRows ?? [])
-  await recordNetWorthSnapshot(supabase, user.id, netWorth)
+    balanceSheet
 
-  const totalIncome = sumAmounts(incomeRows ?? [])
-
-  let totalExpense = 0
-  const catMap = new Map<string, CategoryRef & { amount: number }>()
-  for (const row of expenseCatRows ?? []) {
-    const rowAmount = Number(row.amount)
-    totalExpense += rowAmount
-    const cat = row.categories as unknown as CategoryRef | null
-    if (!cat) continue
-    const prev = catMap.get(cat.id)
-    catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + rowAmount })
-  }
-  const expenseByCategory = [...catMap.values()].sort((a, b) => b.amount - a.amount)
+  const { totalIncome, totalExpense, categories } = summarizeOperatingTotals(totals)
+  const expenseByCategory = categories.filter(category => category.id)
 
   const budgets = budgetsWithRollover.map(b => ({
     id: b.id, amount: b.effectiveAmount, spent: b.spent, category: b.categories,
   }))
 
   // The opening sentence needs a comparison, so it waits on the month's own total
-  const pace = await getSpendingPace(supabase, user.id, month, totalExpense)
+  const pace = await getSpendingPace(supabase, month, totalExpense)
   const budgetHeadroom = budgets.length > 0
     ? budgets.reduce((s, b) => s + (b.amount - b.spent), 0)
     : null
@@ -117,7 +90,7 @@ export default async function DashboardPage({
       })
     }
   }
-  for (const d of debtRows ?? []) {
+  for (const d of balanceSheet.debts) {
     if (d.status !== 'active' || Number(d.remaining_amount) <= 0 || !d.due_date) continue
     if (d.due_date <= sevenDaysLater) {
       const isOverdue = d.due_date < todayStr
@@ -163,7 +136,7 @@ export default async function DashboardPage({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <BudgetProgress budgets={budgets} />
-          <DebtSummary debts={(debtRows ?? []) as { type: 'lend' | 'borrow'; remaining_amount: number; status: string }[]} />
+          <DebtSummary debts={balanceSheet.debts as { type: 'lend' | 'borrow'; remaining_amount: number; status: string }[]} />
         </div>
 
         <NetWorthChart snapshots={(snapshotRows ?? []) as { recorded_date: string; net_worth: number }[]} />

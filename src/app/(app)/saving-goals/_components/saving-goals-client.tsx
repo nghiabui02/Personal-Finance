@@ -96,14 +96,7 @@ function ContributeModal({ goal, onClose }: { goal: SavingGoal; onClose: () => v
     const amount = Number(readField(e.currentTarget, 'amount'))
     if (!amount || amount <= 0) { setError(t('pleaseEnterAValidAmount')); return }
 
-    submit(async () => {
-      const newAmount = Math.min(goal.current_amount + amount, goal.target_amount)
-      const isComplete = newAmount >= goal.target_amount
-      await savingGoalsApi.update(goal.id, {
-        current_amount: newAmount,
-        ...(isComplete ? { status: 'completed' } : {}),
-      })
-    })
+    submit(async () => { await savingGoalsApi.contribute(goal.id, amount) })
   }
 
   return (

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { withAuth, badRequest, supabaseError } from '@/lib/server/route'
+import { withAuth, badRequest, rpcError } from '@/lib/server/route'
 
-export const POST = withAuth(async (request, { supabase, user }) => {
+export const POST = withAuth(async (request, { supabase }) => {
   const body = await request.json()
   const { name, type, balance, icon, color, is_default, credit_limit, statement_day, payment_due_day } = body
 
@@ -10,30 +10,21 @@ export const POST = withAuth(async (request, { supabase, user }) => {
     return badRequest('invalidWalletType')
   }
 
-  if (is_default) {
-    await supabase.from('wallets').update({ is_default: false }).eq('user_id', user.id)
-  }
-
   const isCredit = type === 'credit'
   const creditLimit = isCredit ? Number(credit_limit) || 0 : null
 
-  const { data, error } = await supabase
-    .from('wallets')
-    .insert({
-      user_id: user.id,
-      name: name.trim(),
-      type,
-      balance: isCredit ? creditLimit : (Number(balance) || 0),
-      icon: icon?.trim() || null,
-      color: color || null,
-      is_default: is_default ?? false,
-      credit_limit: creditLimit,
-      statement_day: isCredit ? (Number(statement_day) || null) : null,
-      payment_due_day: isCredit ? (Number(payment_due_day) || null) : null,
-    })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('create_wallet', {
+    p_name: name.trim(),
+    p_type: type,
+    p_balance: isCredit ? creditLimit : (Number(balance) || 0),
+    p_icon: icon?.trim() || null,
+    p_color: color || null,
+    p_is_default: is_default ?? false,
+    p_credit_limit: creditLimit,
+    p_statement_day: isCredit ? (Number(statement_day) || null) : null,
+    p_payment_due_day: isCredit ? (Number(payment_due_day) || null) : null,
+  })
 
-  if (error) return supabaseError(error)
+  if (error) return rpcError(error)
   return NextResponse.json(data, { status: 201 })
 })

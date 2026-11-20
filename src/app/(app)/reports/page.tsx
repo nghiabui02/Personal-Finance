@@ -1,18 +1,19 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { CATEGORY_RELATION } from '@/lib/category-columns'
 import { getCategoryName } from '@/i18n/category'
 import { getLocale } from 'next-intl/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/server/auth'
-import { computeNetWorth, recordNetWorthSnapshot } from '@/lib/server/net-worth'
+import { getNetWorthSnapshot } from '@/lib/server/net-worth'
 import { getBudgetsForMonth } from '@/lib/server/budget-rollover'
 import { getDateRange, getPeriodSummary } from '@/lib/server/period-summary'
-import { getReportingGroup, summarizeNonOperatingFlows } from '@/lib/server/transaction-reporting'
+import { getReportTotals, summarizeOperatingTotals, summarizeNonOperatingFlows, getNonOperatingCategoryIds, onlyOperatingTransactions, type ReportTotal } from '@/lib/server/transaction-reporting'
 import { getMondayOfLocalWeek, localYMD, shiftLocalDate } from '@/lib/utils/date'
 import type { PeriodType } from '@/lib/utils/period'
 import type { CategoryRef, NetWorthSnapshot } from '@/lib/types'
 import ReportsClient from './_components/reports-client'
-import type { ChartPoint, CategoryData } from './_components/types'
+import type { ChartPoint } from './_components/types'
 import { sumByType } from '@/lib/utils/totals'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -43,16 +44,17 @@ function getPrevStart(period: PeriodType, start: string): string {
   return `${y - 1}-01-01`
 }
 
-type RawTx = {
-  type: 'income' | 'expense'
-  amount: number
-  transaction_date: string
-  note: string | null
-  transfer_pair_id: string | null
-  categories: (CategoryRef & { system_key: string | null }) | null
+async function getTopExpenses(supabase: SupabaseClient, userId: string, start: string, end: string) {
+  const excluded = await getNonOperatingCategoryIds(supabase, userId)
+  const { data, error } = await onlyOperatingTransactions(supabase.from('transactions')
+    .select(`amount, note, transaction_date, ${CATEGORY_RELATION}`)
+    .eq('user_id', userId).eq('type', 'expense').gte('transaction_date', start).lt('transaction_date', end), excluded)
+    .order('amount', { ascending: false }).order('id').limit(5)
+  if (error) throw new Error(`Could not load largest expenses: ${error.message}`)
+  return data
 }
 
-function buildChartData(txs: RawTx[], period: PeriodType, startDate: string, locale: string): ChartPoint[] {
+function buildChartData(txs: ReportTotal[], period: PeriodType, startDate: string, locale: string): ChartPoint[] {
   if (period === 'week') {
     return Array.from({ length: 7 }, (_, i) => {
       const ymd = shiftLocalDate(startDate, i)
@@ -113,20 +115,16 @@ export default async function ReportsPage({
   const { supabase, user } = await requireUser()
 
   const [
-    { data: rows },
-    { data: walletRows },
-    { data: debtRows },
+    totals,
+    topExpenses,
+    balanceSheet,
     { data: snapshotRows },
     prevSummary,
     budgetRows,
   ] = await Promise.all([
-    supabase.from('transactions')
-      .select(`type, amount, note, transaction_date, transfer_pair_id, ${CATEGORY_RELATION}`)
-      .eq('user_id', user.id)
-      .gte('transaction_date', startDate)
-      .lt('transaction_date', endDate),
-    supabase.from('wallets').select('type, balance, credit_limit').eq('user_id', user.id),
-    supabase.from('debts').select('type, remaining_amount, status').eq('user_id', user.id),
+    getReportTotals(supabase, startDate, endDate, period === 'quarter' || period === 'year'),
+    getTopExpenses(supabase, user.id, startDate, endDate),
+    getNetWorthSnapshot(supabase, user.id),
     supabase
       .from('net_worth_snapshots')
       .select('recorded_date, net_worth')
@@ -134,7 +132,7 @@ export default async function ReportsPage({
       .gte('recorded_date', ninetyDaysAgo)
       .order('recorded_date', { ascending: true }),
     // Previous period — lets the AI compare trends with real data
-    getPeriodSummary(supabase, user.id, period, prevStart),
+    getPeriodSummary(supabase, period, prevStart),
     // Budgets only make sense for the month view (they are monthly)
     period === 'month'
       ? getBudgetsForMonth(supabase, user.id, start.slice(0, 7))
@@ -142,41 +140,20 @@ export default async function ReportsPage({
   ])
 
   const { netWorth, totalWalletBalance, totalLent, totalCreditDebt, totalBorrowed } =
-    computeNetWorth(walletRows ?? [], debtRows ?? [])
-  await recordNetWorthSnapshot(supabase, user.id, netWorth)
+    balanceSheet
 
-  const allTransactions = (rows ?? []) as unknown as RawTx[]
-  const reportRows = allTransactions.filter(row => getReportingGroup(row) === 'operating')
-  const nonOperatingFlows = summarizeNonOperatingFlows(allTransactions)
-  let totalIncome = 0
-  let totalExpense = 0
-  const catMap = new Map<string, CategoryData>()
+  const { rows: reportRows, totalIncome, totalExpense, categories } = summarizeOperatingTotals(totals)
+  const nonOperatingFlows = summarizeNonOperatingFlows(totals)
 
-  for (const row of reportRows) {
-    const amt = Number(row.amount)
-    if (row.type === 'income') { totalIncome += amt; continue }
-    totalExpense += amt
-    const cat = row.categories as unknown as CategoryRef | null
-    if (!cat) continue
-    const prev = catMap.get(cat.id)
-    catMap.set(cat.id, { ...cat, amount: (prev?.amount ?? 0) + amt })
-  }
-
-  const topTransactions = reportRows
-    .filter(r => r.type === 'expense')
-    .sort((a, b) => Number(b.amount) - Number(a.amount))
-    .slice(0, 5)
-    .map(r => ({
-      note: (r as unknown as RawTx).note ?? null,
-      category: (r.categories as unknown as CategoryRef | null) ? getCategoryName(r.categories as unknown as CategoryRef, locale) : null,
-      amount: Number(r.amount),
-      date: r.transaction_date,
-    }))
+  const topTransactions = topExpenses.map(row => {
+    const category = row.categories as unknown as CategoryRef | null
+    return { note: row.note, category: category ? getCategoryName(category, locale) : null, amount: Number(row.amount), date: row.transaction_date }
+  })
 
   const aiBudgets = budgetRows.filter(b => b.active).map(b => ({
     name: b.categories ? getCategoryName(b.categories, locale) : (locale === 'en' ? 'Other' : 'Khác'),
     budgeted: b.effectiveAmount,
-    spent: b.user_category_id ? (catMap.get(b.user_category_id)?.amount ?? 0) : 0,
+    spent: b.spent,
   }))
 
   // Net worth change over (roughly) one period length, from the snapshot history
@@ -198,7 +175,7 @@ export default async function ReportsPage({
       start={start}
       prevStart={prevStart}
       chartData={buildChartData(reportRows, period, startDate, locale)}
-      byCategory={[...catMap.values()].sort((a, b) => b.amount - a.amount).slice(0, 8)}
+      byCategory={categories.filter(category => category.id).slice(0, 8)}
       nonOperatingFlows={nonOperatingFlows}
       totalIncome={totalIncome}
       totalExpense={totalExpense}

@@ -39,7 +39,7 @@ export function RecurringModal({
   const { error, setError, isPending, submit } = useFormSubmit(onClose)
   const [txType, setTxType] = useState<'income' | 'expense'>(editing?.type ?? 'expense')
   const [categoryId, setCategoryId] = useState(editing?.user_category_id ?? '')
-  const [walletId, setWalletId] = useState(editing?.wallet_id ?? wallets.find(w => w.is_default)?.id ?? '')
+  const [walletId, setWalletId] = useState((editing ? editing.wallet_id : wallets.find(w => w.is_default)?.id) ?? '')
   const [frequency, setFrequency] = useState<RecurringTransaction['frequency']>(editing?.frequency ?? 'monthly')
   const [startDate, setStartDate] = useState(editing?.start_date ?? localYMD())
   const [endDate, setEndDate] = useState(editing?.end_date ?? '')
@@ -67,10 +67,10 @@ export function RecurringModal({
       if (editing) {
         await recurringApi.update(editing.id, {
           amount, frequency,
-          user_category_id: categoryId || undefined,
-          wallet_id: walletId || undefined,
-          note: note || undefined,
-          end_date: endDate || undefined,
+          user_category_id: categoryId || null,
+          wallet_id: walletId || null,
+          note: note || null,
+          end_date: endDate || null,
           bank_fee: fee > 0 ? fee : null,
         })
       } else {

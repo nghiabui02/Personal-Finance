@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { readAllById } from './read-all-by-id'
 import { localYMD } from '@/lib/utils/date'
 
 // Minimal row shapes so callers can select only the columns they need.
@@ -25,7 +26,7 @@ type NetWorthBreakdown = {
 }
 
 // netWorth = (non-credit wallet balances + active lends) − (credit card debt + active borrows)
-export function computeNetWorth(
+function computeNetWorth(
   wallets: WalletBalanceRow[],
   debts: DebtBalanceRow[],
 ): NetWorthBreakdown {
@@ -61,7 +62,7 @@ export function computeNetWorth(
 }
 
 // Upserts today's snapshot so the history chart stays current.
-export async function recordNetWorthSnapshot(
+async function recordNetWorthSnapshot(
   supabase: SupabaseClient,
   userId: string,
   netWorth: number,
@@ -71,4 +72,17 @@ export async function recordNetWorthSnapshot(
     { onConflict: 'user_id,recorded_date' },
   )
   if (error) console.error('[net-worth] snapshot upsert failed:', error.message)
+}
+
+/** Only persist a snapshot after both complete, owner-scoped reads succeed. */
+export async function getNetWorthSnapshot(supabase: SupabaseClient, userId: string) {
+  const [wallets, debts] = await Promise.all([
+    readAllById('wallet balances', () => supabase.from('wallets')
+      .select('id, type, balance, credit_limit', { count: 'exact' }).eq('user_id', userId)),
+    readAllById('debt balances', () => supabase.from('debts')
+      .select('id, type, remaining_amount, status, due_date, person_name', { count: 'exact' }).eq('user_id', userId)),
+  ])
+  const sheet = computeNetWorth(wallets, debts)
+  await recordNetWorthSnapshot(supabase, userId, sheet.netWorth)
+  return { ...sheet, debts }
 }

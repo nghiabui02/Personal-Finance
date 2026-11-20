@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { localYMD, monthRange } from '@/lib/utils/date'
-import { onlyOperatingTransactions, getNonOperatingCategoryIds } from './transaction-reporting'
+import { getMonthlyExpenses } from './transaction-reporting'
 
 /**
  * Is this month tracking above or below how the last few months actually went?
@@ -35,7 +35,6 @@ function shiftMonth(month: string, by: number): string {
 
 export async function getSpendingPace(
   supabase: SupabaseClient,
-  userId: string,
   month: string,
   actualExpense: number,
 ): Promise<SpendingPace> {
@@ -55,20 +54,10 @@ export async function getSpendingPace(
   const lookbackStart = monthRange(shiftMonth(month, -LOOKBACK_MONTHS)).startDate
 
   // Compare operating spending consistently on both sides of the ratio.
-  const excludedCategoryIds = await getNonOperatingCategoryIds(supabase, userId)
-  const { data } = await onlyOperatingTransactions(
-    supabase
-      .from('transactions')
-      .select('amount, transaction_date')
-      .eq('user_id', userId)
-      .eq('type', 'expense')
-      .gte('transaction_date', lookbackStart)
-      .lt('transaction_date', startDate),
-    excludedCategoryIds,
-  )
+  const data = await getMonthlyExpenses(supabase, lookbackStart, startDate)
 
   const byMonth = new Map<string, number>()
-  for (const row of data ?? []) {
+  for (const row of data) {
     const key = String(row.transaction_date).slice(0, 7)
     byMonth.set(key, (byMonth.get(key) ?? 0) + Number(row.amount))
   }

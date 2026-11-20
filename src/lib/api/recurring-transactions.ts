@@ -37,11 +37,11 @@ export const recurringApi = {
 
   update(id: string, payload: Partial<{
     amount: number
-    user_category_id: string
-    wallet_id: string
-    note: string
+    user_category_id: string | null
+    wallet_id: string | null
+    note: string | null
     frequency: RecurringTransaction['frequency']
-    end_date: string
+    end_date: string | null
     bank_fee: number | null
   }>): Promise<RecurringTransaction> {
     return apiFetch(`/api/recurring-transactions/${id}`, { method: 'PATCH', body: JSON.stringify(payload) })
