@@ -1,8 +1,8 @@
 'use client'
 import { useTranslations } from 'next-intl'
 
-import Link from '@/components/ui/navigation-link'
-import { useNavigationPathname } from '@/components/ui/navigation-loading'
+import { useNavigation, useNavigationPathname } from '@/components/ui/navigation-loading'
+import { TabGroup } from './tab-group'
 
 /**
  * Sibling-screen switcher. Mobile used to reach these through a "More" tab,
@@ -18,28 +18,16 @@ export interface Segment {
 export function SegmentNav({ items }: { items: Segment[] }) {
   const t = useTranslations('navigation')
   const pathname = useNavigationPathname()
+  const navigation = useNavigation()
 
   return (
     <nav className="-mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto no-scrollbar">
-      <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800/60">
-        {items.map(item => {
-          const active = pathname === item.href || pathname.startsWith(item.href + '/')
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? 'page' : undefined}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                active
-                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-              }`}
-            >
-              {t(item.label)}
-            </Link>
-          )
-        })}
-      </div>
+      <TabGroup
+        tabs={items.map(item => ({ key: item.href, label: t(item.label) }))}
+        value={pathname}
+        onChange={href => navigation.push(href, { scroll: false })}
+        className="w-fit"
+      />
     </nav>
   )
 }

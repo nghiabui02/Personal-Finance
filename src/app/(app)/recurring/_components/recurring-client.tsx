@@ -3,7 +3,6 @@ import { useTranslations } from 'next-intl'
 
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
-import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Dot, Em } from '@/components/ui/verdict'
 import { formatVND } from '@/lib/utils/currency'
@@ -74,7 +73,6 @@ export default function RecurringClient({
             {nextRun && <><Dot /><span>{t('sentenceNextOn', { value0: nextRun })}</span></>}
           </>
         }
-        segments={MONEY_SEGMENTS}
         action={
           <AddButton onClick={() => { setEditingItem(null); setModalOpen(true) }}>{t('newRule')}</AddButton>
         }

@@ -2,7 +2,6 @@
 import { useTranslations } from 'next-intl'
 
 import { ConfirmModal } from '@/components/ui/confirm-modal'
-import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Dot, Em } from '@/components/ui/verdict'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -53,7 +52,6 @@ export default function WalletsClient({ wallets }: { wallets: Wallet[] }) {
         support={creditOwed > 0
           ? <><span className="text-rose-600 dark:text-rose-400">{t('sentenceOwedOnCards', { value0: formatVND(creditOwed) })}</span><Dot /><span>{t('sentenceAccountsTotal', { value0: wallets.length })}</span></>
           : undefined}
-        segments={MONEY_SEGMENTS}
         action={
           <AddButton onClick={() => openModal()}>{t('newWallet')}</AddButton>
         }

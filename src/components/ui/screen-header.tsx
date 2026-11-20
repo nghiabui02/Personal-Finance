@@ -1,4 +1,3 @@
-import { SegmentNav, type Segment } from '@/components/ui/segment-nav'
 import { Verdict } from '@/components/ui/verdict'
 
 /**
@@ -11,21 +10,18 @@ export function ScreenHeader({
   eyebrow,
   headline,
   support,
-  segments,
   controls,
   action,
 }: {
   eyebrow?: React.ReactNode
   headline: React.ReactNode
   support?: React.ReactNode
-  /** Sibling screens under the same bottom-nav tab. */
-  segments?: Segment[]
   /** Filters or view switches that belong to this screen only. */
   controls?: React.ReactNode
   /** The screen's primary action. */
   action?: React.ReactNode
 }) {
-  const hasBar = segments || controls || action
+  const hasBar = controls || action
 
   return (
     <div className="mb-5">
@@ -36,7 +32,6 @@ export function ScreenHeader({
       {hasBar && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <div className="flex flex-wrap items-center gap-2 min-w-0 w-full sm:w-auto">
-            {segments && <SegmentNav items={segments} />}
             {controls}
           </div>
           {action && <div className="shrink-0 ml-auto">{action}</div>}

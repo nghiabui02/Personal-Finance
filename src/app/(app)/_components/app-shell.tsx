@@ -10,6 +10,7 @@ import Header from './header'
 import Sidebar from './sidebar'
 import { QuickAddButton } from './quick-add-button'
 import { Toaster } from '@/components/ui/toast'
+import { MONEY_SEGMENTS, REPORT_SEGMENTS, SegmentNav } from '@/components/ui/segment-nav'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'dashboard',
@@ -53,7 +54,7 @@ const MONEY_ICON = (
 /**
  * Four tabs, not five, and no "More" drawer: every screen is one tap from a
  * tab. Reports/Budgets and Wallets/Debts/Goals/Recurring each collapse into one
- * tab and switch with a SegmentNav inside the screen.
+ * tab and switch with a persistent SegmentNav above the screen content.
  */
 const BOTTOM_NAV = [
   { href: '/dashboard',   label: 'overview',     icon: OVERVIEW_ICON,     group: ['/dashboard'] },
@@ -110,6 +111,9 @@ export default function AppShell({
   const pathname = useNavigationPathname()
   const currentPathname = usePathname()
   const { isPending } = useNavigation()
+  const segments = [MONEY_SEGMENTS, REPORT_SEGMENTS].find(items =>
+    items.some(item => item.href === pathname),
+  )
 
   const title = PAGE_TITLES[pathname] ?? Object.entries(PAGE_TITLES).find(([k]) => pathname.startsWith(k + '/'))?.at(1) ?? 'Finance'
   const isAccountSubPage = ACCOUNT_SUB_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
@@ -129,6 +133,7 @@ export default function AppShell({
       </div>
 
       <main className="pt-4 px-4 pb-bottom-nav md:pb-6 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pt-6 md:px-6 md:ml-60 md:min-w-0">
+        {segments && <div className="mb-5"><SegmentNav items={segments} /></div>}
         <LoadingContent className="contents" pending={isPending && pathname !== currentPathname}>{children}</LoadingContent>
       </main>
 

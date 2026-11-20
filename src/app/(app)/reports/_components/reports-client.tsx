@@ -8,7 +8,6 @@ import { formatVND } from '@/lib/utils/currency'
 import { LoadingContent, useNavigation, usePendingSearchParam } from '@/components/ui/navigation-loading'
 import { TabGroup } from '@/components/ui/tab-group'
 import { PeriodNav } from '@/components/ui/period-nav'
-import { REPORT_SEGMENTS } from '@/components/ui/segment-nav'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Dot, Em } from '@/components/ui/verdict'
 import { AIInsights } from './ai-insights'
@@ -113,7 +112,6 @@ export default function ReportsClient({
             <><span>{t('sentenceEarned', { value0: formatVND(totalIncome) })}</span><Dot /><span>{t('sentenceSpent', { value0: formatVND(totalExpense) })}</span></>
           )
         }
-        segments={REPORT_SEGMENTS}
         controls={
           <>
             <TabGroup

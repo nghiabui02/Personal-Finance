@@ -10,7 +10,6 @@ import { EmojiPickerInput } from '@/components/ui/emoji-picker'
 import { Input } from '@/components/ui/input'
 import { Modal, useModalClose } from '@/components/ui/modal'
 import { TabGroup } from '@/components/ui/tab-group'
-import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Dot, Em } from '@/components/ui/verdict'
 import { formatVND } from '@/lib/utils/currency'
@@ -230,7 +229,6 @@ export default function SavingGoalsClient({ goals }: { goals: SavingGoal[] }) {
         support={active.length > 0
           ? <><span>{t('sentenceOf', { value0: formatVND(totalSaved), value1: formatVND(totalTarget) })}</span><Dot /><span>{t('sentenceToGo', { value0: formatVND(totalTarget - totalSaved) })}</span></>
           : undefined}
-        segments={MONEY_SEGMENTS}
         controls={
           <TabGroup
             tabs={[

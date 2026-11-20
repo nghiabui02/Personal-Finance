@@ -3,7 +3,6 @@ import { useTranslations } from 'next-intl'
 
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { TabGroup } from '@/components/ui/tab-group'
-import { MONEY_SEGMENTS } from '@/components/ui/segment-nav'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Dot, Em } from '@/components/ui/verdict'
 import { formatVND } from '@/lib/utils/currency'
@@ -141,7 +140,6 @@ export default function DebtsClient({
               {nextDue && <><Dot /><span>{t('sentenceNextDue', { value0: nextDue.due_date ?? '' })}</span></>}
             </>
           : undefined}
-        segments={MONEY_SEGMENTS}
         controls={
           <TabGroup
             tabs={[

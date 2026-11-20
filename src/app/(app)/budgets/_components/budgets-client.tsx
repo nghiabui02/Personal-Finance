@@ -8,7 +8,6 @@ import { IconButton, EditIcon, TrashIcon } from '@/components/ui/icon-button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PeriodNav } from '@/components/ui/period-nav'
-import { REPORT_SEGMENTS } from '@/components/ui/segment-nav'
 import { ScreenHeader } from '@/components/ui/screen-header'
 import { Dot, Em } from '@/components/ui/verdict'
 import { TabGroup } from '@/components/ui/tab-group'
@@ -168,7 +167,6 @@ export default function BudgetsClient({ budgets, suggestions, expenseCategories,
               </span>
             </>
           : undefined}
-        segments={REPORT_SEGMENTS}
         controls={
           <PeriodNav label={monthLabel} onPrev={() => navigate(-1)} onNext={() => navigate(1)} />
         }
